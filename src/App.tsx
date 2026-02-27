@@ -44,6 +44,10 @@ import { dbService } from './dbService';
 import { translations, LanguageCode } from './translations';
 import { App as CapacitorApp } from '@capacitor/app';
 
+// --- Constants & Config ---
+const springTransition = { type: 'spring', stiffness: 500, damping: 28, mass: 0.5 };
+const layoutTransition = { type: 'spring', stiffness: 350, damping: 25 };
+
 // --- Sub-Components & Helpers ---
 
 const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) => {
@@ -62,9 +66,175 @@ const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) 
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${(colors as any)[difficulty] || 'bg-stone-100 text-stone-600'}`}>
-      {(labels as any)[difficulty] || difficulty}
+    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight border ${colors[difficulty as keyof typeof colors] || 'bg-stone-100 text-stone-600'}`}>
+      {labels[difficulty as keyof typeof labels]}
     </span>
+  );
+};
+
+const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite, t }: {
+  recipes: Recipe[],
+  setSelectedRecipe: (r: Recipe) => void,
+  currentUser: User | null,
+  toggleFavorite: (id: string) => void,
+  t: any
+}) => {
+  const [index, setIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isAutoScrolling = useRef(false);
+
+  useEffect(() => {
+    if (recipes.length <= 1) return;
+    const interval = setInterval(() => {
+      if (scrollRef.current && !isAutoScrolling.current) {
+        const nextIndex = (index + 1) % recipes.length;
+        const snapElements = Array.from(scrollRef.current.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+        const child = snapElements[nextIndex];
+        if (child) {
+          isAutoScrolling.current = true;
+          child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          setIndex(nextIndex);
+          setTimeout(() => { isAutoScrolling.current = false; }, 800);
+        }
+      }
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [recipes.length, index]);
+
+  return (
+    <div className="relative w-full overflow-hidden pb-6 pt-2">
+      <div
+        ref={scrollRef}
+        className="relative flex gap-[4vw] overflow-x-auto no-scrollbar snap-x snap-mandatory px-[15vw]"
+        style={{ scrollBehavior: 'smooth' }}
+        onScroll={(e) => {
+          if (isAutoScrolling.current) return;
+          const target = e.currentTarget;
+          const snapElements = Array.from(target.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+          if (!snapElements.length) return;
+
+          const containerCenter = target.scrollLeft + (target.offsetWidth / 2);
+
+          let closestIndex = 0;
+          let minDistance = Infinity;
+
+          snapElements.forEach((child, i) => {
+            const childCenter = child.offsetLeft + (child.offsetWidth / 2);
+            const distance = Math.abs(containerCenter - childCenter);
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestIndex = i;
+            }
+          });
+
+          if (closestIndex !== index) {
+            setIndex(closestIndex);
+          }
+        }}
+      >
+        {recipes.map((recipe, i) => {
+          const isActive = i === index;
+          return (
+            <motion.div
+              key={recipe.id}
+              initial={false}
+              animate={{
+                scale: isActive ? 1 : 0.85,
+                opacity: isActive ? 1 : 0.5,
+              }}
+              transition={{ type: 'spring', damping: 18, stiffness: 100, mass: 1.2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (!isActive && scrollRef.current) {
+                  const snapElements = Array.from(scrollRef.current.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+                  const child = snapElements[i];
+                  if (child) {
+                    isAutoScrolling.current = true;
+                    child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    setIndex(i);
+                    setTimeout(() => { isAutoScrolling.current = false; }, 800);
+                  }
+                } else {
+                  setSelectedRecipe(recipe);
+                }
+              }}
+              className="relative h-[420px] w-[70vw] flex-shrink-0 rounded-[40px] overflow-hidden shadow-2xl shadow-stone-300/30 cursor-pointer group snap-center"
+            >
+              {/* Full background Image */}
+              <img
+                src={recipe.image}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                alt={recipe.name}
+              />
+
+              {/* Premium Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/40 to-transparent opacity-90" />
+              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              {/* Top Icons Layer */}
+              <div className="absolute top-5 left-5 right-5 flex justify-between items-start z-10">
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-2xl flex items-center gap-1.5 text-white shadow-lg">
+                  <Star size={13} className="text-amber-400 fill-amber-400" />
+                  <span className="text-xs font-black tracking-wide">4.9</span>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
+                  className={`p-3 backdrop-blur-xl border rounded-full transition-all duration-300 ${currentUser?.favorites.includes(recipe.id) ? 'bg-white text-[#fb5607] border-white shadow-lg scale-110' : 'bg-black/20 text-white border-white/20 hover:bg-black/40'}`}
+                >
+                  <Heart size={20} fill={currentUser?.favorites.includes(recipe.id) ? 'currentColor' : 'none'} />
+                </button>
+              </div>
+
+              {/* Bottom Content Area */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col z-10 transform transition-transform duration-500">
+                <span className="inline-flex items-center w-max px-2.5 py-1 rounded-lg bg-[#fb5607]/20 border border-[#fb5607]/30 text-[10px] font-black text-[#fb5607] uppercase tracking-widest mb-3 backdrop-blur-md">
+                  Notre Recommandation
+                </span>
+
+                <h3 className="text-white font-black text-[26px] leading-[1.1] mb-4 drop-shadow-md pr-2">
+                  {recipe.name}
+                </h3>
+
+                <div className="flex items-center justify-between w-full border-t border-white/10 pt-4">
+                  <div className="flex items-center gap-2 text-sm font-bold text-stone-200">
+                    <MapPin size={14} className="text-stone-300/80 shrink-0" />
+                    <span className="truncate max-w-[120px]">{recipe.region}</span>
+                  </div>
+                  <span className="bg-white/10 backdrop-blur-md border border-white/10 text-white text-[11px] px-3 py-1.5 rounded-xl font-black shrink-0 flex items-center gap-1.5">
+                    <Clock size={12} className="text-stone-300" />{recipe.cookTime}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+        {/* Right padding specific spacing element to avoid iOS scroll cut off */}
+        <div className="w-[1vw] flex-shrink-0" />
+      </div>
+
+      {/* Modern Dots Indicator */}
+      <div className="flex justify-center gap-2 mt-6">
+        {recipes.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              if (scrollRef.current) {
+                const snapElements = Array.from(scrollRef.current.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+                const child = snapElements[i];
+                if (child) {
+                  isAutoScrolling.current = true;
+                  child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                  setIndex(i);
+                  setTimeout(() => { isAutoScrolling.current = false; }, 800);
+                }
+              }
+            }}
+            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${index === i ? 'w-8 bg-[#fb5607]' : 'w-2 bg-stone-300 hover:bg-stone-400'}`}
+            aria-label={`Aller à la diapositive ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -135,7 +305,7 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
   switch (securitySubView) {
     case 'password':
       return (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={springTransition} className="space-y-4">
           <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
             <h3 className="text-[10px] font-black uppercase text-stone-400 mb-4">{t.changePassword}</h3>
             <div className="space-y-4">
@@ -184,7 +354,7 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
       );
     case 'email':
       return (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={springTransition} className="space-y-4">
           <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
             <h3 className="text-[10px] font-black uppercase text-stone-400 mb-4">{t.changeEmail}</h3>
             <div className="space-y-4">
@@ -436,7 +606,38 @@ export default function App() {
       }
       setIsSyncing(false);
     };
+
     syncRecipes();
+
+    // 1. Realtime Sync Subscription
+    let channel: any;
+    if (dbService.supabase) {
+      channel = dbService.supabase
+        .channel('schema-db-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'recipes' },
+          () => {
+            console.log('Change detected in Supabase, re-syncing...');
+            syncRecipes();
+          }
+        )
+        .subscribe();
+    }
+
+    // 2. Foreground Sync (Capacitor)
+    const handleAppStateChange = (state: any) => {
+      if (state.isActive) {
+        console.log('App resumed, syncing recipes...');
+        syncRecipes();
+      }
+    };
+    const appListener = CapacitorApp.addListener('appStateChange', handleAppStateChange);
+
+    return () => {
+      if (channel) dbService.supabase?.removeChannel(channel);
+      appListener.then(l => l.remove());
+    };
   }, []);
 
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -609,8 +810,8 @@ export default function App() {
   }, [allRecipes, searchQuery, selectedCategory, selectedRegion]);
 
   const displayRecipes = filteredRecipes;
-  const featuredRecipe = displayRecipes[0] || allRecipes[0];
-  const otherRecipes = displayRecipes.length > 1 ? displayRecipes.slice(1) : (displayRecipes.length === 1 ? [] : allRecipes.slice(1));
+  const featuredRecipes = displayRecipes.slice(0, 5);
+  const otherRecipes = displayRecipes.length > 5 ? displayRecipes.slice(5) : allRecipes.filter(r => !featuredRecipes.find(fr => fr.id === r.id)).slice(0, 5);
 
   const navItems = [
     { id: 'home', icon: Home, label: t.home },
@@ -624,16 +825,27 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sticky Top Header with Search */}
-      <header className="px-6 pt-14 pb-4 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6">
+      <header className="px-6 pt-10 pb-4 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6">
         {/* Row 1: Logo & Greeting */}
-        <div className="flex items-center gap-3">
-          <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
-          <div className="flex flex-col">
-            <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1">
-              {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
-            </span>
-            <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em]">{t.homeSlogan}</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
+            <div className="flex flex-col">
+              <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1">
+                {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
+              </span>
+              <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em]">{t.homeSlogan}</h1>
+            </div>
           </div>
+          {isSyncing && (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+              className="text-[#fb5607]"
+            >
+              <Wifi size={16} />
+            </motion.div>
+          )}
         </div>
 
         {/* Row 2: Global Search Bar */}
@@ -707,7 +919,7 @@ export default function App() {
       </header>
 
       {/* Categories Horizontal Pills */}
-      <section className="mb-8 pl-6">
+      <section className="mt-6 mb-8 pl-6">
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pr-6">
           {[
             { name: 'Pâtes et Céréales (Wɔ̌)', short: t.catPates, icon: '🥣' },
@@ -731,42 +943,21 @@ export default function App() {
         </div>
       </section>
 
-      {/* Hero: "Sélection de Chef" (Glassmorphic) */}
-      <section className="px-6 mb-10">
-        <div className="flex justify-between items-end mb-4">
+      {/* Hero: "Sélection de Chef" Carrousel */}
+      <section className="mb-10">
+        <div className="px-6 flex justify-between items-end mb-4">
           <h2 className="text-xl font-black text-stone-800 tracking-tight">{t.chefSelection}</h2>
           <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>{t.viewAll} <ChevronRight size={14} /></span>
         </div>
 
-        {featuredRecipe && (
-          <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedRecipe(featuredRecipe)}
-            className="relative h-72 rounded-[32px] overflow-hidden shadow-2xl shadow-stone-200 cursor-pointer group"
-          >
-            <img src={featuredRecipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute top-4 right-4 z-10">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleFavorite(featuredRecipe.id); }}
-                className={`p-2.5 backdrop-blur-md border rounded-full transition-all ${currentUser?.favorites.includes(featuredRecipe.id) ? 'bg-white text-rose-500 border-white shadow-lg' : 'bg-white/30 text-white border-white/40 hover:bg-white/50'}`}
-              >
-                <Heart size={18} fill={currentUser?.favorites.includes(featuredRecipe.id) ? 'currentColor' : 'none'} />
-              </button>
-            </div>
-
-            {/* Glassmorphic Info Panel */}
-            <div className="absolute bottom-3 left-3 right-3 bg-white/50 backdrop-blur-xl border border-white/40 p-4 rounded-[24px] shadow-lg">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-black font-black text-xl w-3/4 leading-tight">{featuredRecipe.name}</h3>
-                <span className="bg-white text-stone-900 text-[10px] px-2.5 py-1.5 rounded-[10px] font-black shadow-sm">{featuredRecipe.cookTime}</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] font-bold">
-                <span className="flex items-center gap-1 text-[#fb5607] font-black"><Star size={12} fill="currentColor" /> 4.9 (120+)</span>
-                <span className="mx-1 text-black/40">•</span>
-                <span className="flex items-center gap-1 text-black"><MapPin size={12} /> {featuredRecipe.region}</span>
-              </div>
-            </div>
-          </motion.div>
+        {featuredRecipes.length > 0 && (
+          <HeroCarousel
+            recipes={featuredRecipes}
+            setSelectedRecipe={setSelectedRecipe}
+            currentUser={currentUser}
+            toggleFavorite={toggleFavorite}
+            t={t}
+          />
         )}
       </section>
 
@@ -866,7 +1057,7 @@ export default function App() {
 
       {/* Dynamic Content Area */}
       {searchQuery || selectedCategory ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="px-6 pt-6 grid grid-cols-2 gap-4">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="px-6 pt-6 grid grid-cols-2 gap-4">
           {displayRecipes.map(recipe => (
             <motion.div
               key={recipe.id}
@@ -1032,6 +1223,7 @@ export default function App() {
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
+                    transition={springTransition}
                     className="flex-shrink-0 w-32 h-72 rounded-[32px] bg-[#fb5607] p-5 flex flex-col justify-between text-[#ffffff] shadow-xl shadow-[#fb5607]/20 border border-[#fb5607]/30"
                   >
                     <Star size={24} className="text-white/80" />
@@ -1047,7 +1239,7 @@ export default function App() {
                       initial={{ opacity: 0, x: 50 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true, margin: "-50px" }}
-                      transition={{ type: 'spring', damping: 20, stiffness: 100, delay: idx * 0.1 }}
+                      transition={{ ...springTransition, delay: idx * 0.1 }}
                       whileTap={{ scale: 0.92, rotate: -1 }}
                       onClick={() => setSelectedRecipe(recipe)}
                       className="flex-shrink-0 w-52 relative cursor-pointer group"
@@ -1127,7 +1319,7 @@ export default function App() {
     <div className="flex-1 flex flex-col pb-44 pt-10 relative bg-stone-50">
       <AnimatePresence>
         {profileSubView && (
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="absolute inset-0 z-50 bg-white p-6 pt-12">
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className="absolute inset-0 z-50 bg-white p-6 pt-12">
             <header className="flex items-center gap-4 mb-8">
               <button onClick={goBack} className="p-2 bg-stone-50 rounded-xl"><ChevronLeft size={20} /></button>
               <h2 className="text-xl font-bold">{
@@ -1167,6 +1359,14 @@ export default function App() {
         </div>
         <h2 className="text-2xl font-bold text-stone-800">{currentUser?.name}</h2>
         <p className="text-stone-500 text-sm">{currentUser?.email}</p>
+
+        {/* Cloud Connection Status */}
+        <div className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-stone-100 shadow-sm">
+          <div className={`w-2 h-2 rounded-full animate-pulse ${dbService.supabase ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`} />
+          <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 flex items-center gap-1.5">
+            Cloud Sync: {dbService.supabase ? 'Activé' : 'Désactivé'}
+          </span>
+        </div>
       </header>
 
       <section className="px-6 space-y-3">
@@ -1187,6 +1387,26 @@ export default function App() {
             <ChevronRight size={18} className="text-stone-300" />
           </button>
         ))}
+
+        <button
+          onClick={() => window.location.reload()}
+          className="w-full flex items-center justify-between p-4 bg-white/50 rounded-3xl border border-dashed border-stone-200 shadow-sm active:bg-stone-50 transition-colors mt-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 bg-white rounded-xl flex items-center justify-center ${isSyncing ? 'text-terracotta' : 'text-stone-400'}`}>
+              <motion.div animate={isSyncing ? { rotate: 360 } : {}} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                <Wifi size={20} />
+              </motion.div>
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="font-bold text-stone-700 text-sm">Actualiser les recettes</span>
+              <span className="text-[10px] text-stone-400 font-medium tracking-tight">Vérifier les nouveaux plats sur le serveur</span>
+            </div>
+          </div>
+          <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${isSyncing ? 'bg-terracotta/10 text-terracotta' : 'bg-stone-100 text-stone-400'}`}>
+            {isSyncing ? 'Sync...' : 'Prêt'}
+          </div>
+        </button>
         <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 bg-rose-50 rounded-3xl text-rose-600 font-bold mt-6"><LogOut size={20} /> {t.logout}</button>
       </section>
     </div>
@@ -1209,7 +1429,7 @@ export default function App() {
 
     return (
       <motion.div
-        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 35, stiffness: 800, mass: 0.4 }}
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={springTransition}
         className="absolute inset-0 z-[100] bg-white overflow-hidden w-full flex flex-col"
       >
         <div className="absolute top-0 inset-x-0 z-[110] pointer-events-none p-6 pt-12">
@@ -1226,7 +1446,7 @@ export default function App() {
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2, ease: "linear" }}
+              transition={springTransition}
               className="absolute inset-x-0 top-0"
             >
               <div className="relative h-[40vh] w-full shrink-0">
@@ -1387,17 +1607,16 @@ export default function App() {
 
   // --- Return JSX ---
 
-  if (!currentUser) return <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl">{renderAuth()}</div>;
+  if (!currentUser) return <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,20px)]">{renderAuth()}</div>;
 
   return (
-    <div className="h-screen bg-stone-50 max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-all">
-      <div className="absolute top-0 left-0 right-0 h-10 bg-stone-50/80 backdrop-blur-md z-[100] pointer-events-none" />
+    <div className="h-screen bg-stone-50 max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-all pt-[env(safe-area-inset-top,20px)]">
       <main className="flex-1 overflow-y-auto no-scrollbar relative min-h-0">
         <AnimatePresence mode="wait">
-          {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">{renderHome()}</motion.div>}
-          {activeTab === 'search' && <motion.div key="search" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">{renderExplorer()}</motion.div>}
-          {activeTab === 'favs' && <motion.div key="favs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">{renderFavorites()}</motion.div>}
-          {activeTab === 'profile' && <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">{renderProfile()}</motion.div>}
+          {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="h-full">{renderHome()}</motion.div>}
+          {activeTab === 'search' && <motion.div key="search" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={springTransition} className="h-full">{renderExplorer()}</motion.div>}
+          {activeTab === 'favs' && <motion.div key="favs" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={springTransition} className="h-full">{renderFavorites()}</motion.div>}
+          {activeTab === 'profile' && <motion.div key="profile" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={springTransition} className="h-full">{renderProfile()}</motion.div>}
         </AnimatePresence>
       </main>
 
