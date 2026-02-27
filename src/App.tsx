@@ -371,7 +371,7 @@ export default function App() {
 
     const scroll = () => {
       if (container) {
-        container.scrollLeft += 0.5;
+        container.scrollLeft += 0.8;
         if (container.scrollLeft >= (container.scrollWidth - container.clientWidth) - 1) {
           container.scrollLeft = 0;
         }
@@ -718,7 +718,7 @@ export default function App() {
               <h2 className="text-2xl font-black text-stone-900 tracking-tight">L'Art des Jus 🍹</h2>
               <span className="text-[10px] font-black text-[#fb5607] uppercase tracking-widest">8 Saveurs Béninoises</span>
             </div>
-            <div ref={juicesRef} className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-6 scroll-smooth">
+            <div ref={juicesRef} className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-6">
               {benineseJuices.map((juice) => (
                 <motion.div
                   key={juice.id}
