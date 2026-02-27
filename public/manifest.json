@@ -1,0 +1,17 @@
+{
+    "name": "AfroCuisto",
+    "short_name": "AfroCuisto",
+    "description": "Le patrimoine culinaire du Bénin dans votre poche.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#BF4E30",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
