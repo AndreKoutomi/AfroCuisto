@@ -60,14 +60,14 @@ const DifficultyBadge = ({ difficulty }: { difficulty: Difficulty }) => {
 // --- Data Juices ---
 
 const benineseJuices = [
-  { id: 'j1', name: 'Jus de Bissap', image: '/images/juices/bissap.png', description: 'Le rafraîchissement iconique à l\'hibiscus rouge.' },
-  { id: 'j2', name: 'Jus de Baobab', image: 'https://picsum.photos/seed/baobab/600/800', description: 'Onctueux, riche en vitamine C et calcium.' },
-  { id: 'j3', name: 'Jus d\'Ananas', image: 'https://picsum.photos/seed/pineapple/600/800', description: 'La douceur pure de l\'ananas Pain de Sucre.' },
-  { id: 'j4', name: 'Jus de Tamarin', image: 'https://picsum.photos/seed/tamarin/600/800', description: 'Une saveur acidulée, digestive et rafraîchissante.' },
-  { id: 'j5', name: 'Jus de Mangue', image: 'https://picsum.photos/seed/mango/600/800', description: 'Le velouté des meilleures mangues du Bénin.' },
-  { id: 'j6', name: 'Jus de Corossol', image: 'https://picsum.photos/seed/corossol/600/800', description: 'Une texture onctueuse aux notes exotiques.' },
-  { id: 'j7', name: 'Jus de Passion', image: 'https://picsum.photos/seed/passion/600/800', description: 'Un parfum intense et une acidité parfaite.' },
-  { id: 'j8', name: 'Jus de Gingembre', image: 'https://picsum.photos/seed/ginger/600/800', description: 'Un punch naturel, tonifiant et épicé.' },
+  { id: 'J01', name: 'Jus de Bissap', image: '/images/juices/bissap.png', description: 'Le rafraîchissement iconique à l\'hibiscus rouge.' },
+  { id: 'J02', name: 'Jus de Baobab', image: '/images/juices/baobab.jpg', description: 'Onctueux, riche en vitamine C et calcium.' },
+  { id: 'J03', name: 'Jus d\'Ananas', image: '/images/juices/ananas.jpg', description: 'La douceur pure de l\'ananas Pain de Sucre.' },
+  { id: 'J04', name: 'Jus de Tamarin', image: '/images/juices/tamarin.jpg', description: 'Une saveur acidulée, digestive et rafraîchissante.' },
+  { id: 'J05', name: 'Jus de Mangue', image: '/images/juices/mangue.jpg', description: 'Le velouté des meilleures mangues du Bénin.' },
+  { id: 'J06', name: 'Jus de Corossol', image: 'https://picsum.photos/seed/corossol/600/800', description: 'Une texture onctueuse aux notes exotiques.' },
+  { id: 'J07', name: 'Jus de Passion', image: 'https://picsum.photos/seed/passion/600/800', description: 'Un parfum intense et une acidité parfaite.' },
+  { id: 'J08', name: 'Jus de Gingembre', image: 'https://picsum.photos/seed/ginger/600/800', description: 'Un punch naturel, tonifiant et épicé.' },
 ];
 
 // --- Deep Views ---
@@ -379,9 +379,16 @@ export default function App() {
       }
     };
 
-    animationId = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animationId);
   }, [activeTab, selectedRecipe]);
+
+  const detailScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedRecipe && detailScrollRef.current) {
+      detailScrollRef.current.scrollTo(0, 0);
+    }
+  }, [selectedRecipe]);
 
   // Navigation Logic
   const navigateTo = (tab: string) => {
@@ -540,17 +547,74 @@ export default function App() {
       </header>
 
       {/* Global Search Bar */}
-      <section className="px-6 mb-6 mt-2">
+      <section className="px-6 mb-6 mt-2 relative z-[60]">
         <div className="flex gap-2">
           <div className="relative flex-1 group shadow-sm rounded-2xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
             <input
               type="text"
               placeholder="Chercher un plat, une envie..."
-              onClick={() => setActiveTab('search')}
-              readOnly
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
             />
+
+            {/* Suggestions Dropdown */}
+            <AnimatePresence>
+              {searchQuery.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-[70] max-h-80 overflow-y-auto no-scrollbar"
+                >
+                  {recipes
+                    .filter(r =>
+                      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      r.region.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .slice(0, 6)
+                    .map((recipe, i) => (
+                      <motion.div
+                        key={recipe.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => {
+                          setSelectedRecipe(recipe);
+                          setSearchQuery('');
+                        }}
+                        className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors"
+                      >
+                        <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={recipe.name} />
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-stone-900 leading-tight">{recipe.name}</span>
+                          <span className="text-[10px] text-stone-400 font-medium flex items-center gap-1 mt-1">
+                            <MapPin size={10} /> {recipe.region} • {recipe.difficulty}
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))}
+
+                  {recipes.filter(r =>
+                    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    r.region.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length === 0 && (
+                      <div className="p-8 text-center bg-stone-50/50">
+                        <Search size={32} className="mx-auto mb-2 text-stone-300" />
+                        <p className="text-xs text-stone-500 font-bold uppercase tracking-widest">Aucun résultat trouvé</p>
+                      </div>
+                    )}
+
+                  <div
+                    onClick={() => { setActiveTab('search'); }}
+                    className="p-3 bg-terracotta/5 text-center border-t border-stone-100 cursor-pointer"
+                  >
+                    <span className="text-[10px] font-black text-terracotta uppercase tracking-[0.2em]">Voir tous les résultats</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </section>
@@ -723,7 +787,11 @@ export default function App() {
                 <motion.div
                   key={juice.id}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-shrink-0 w-72 h-[450px] relative rounded-[32px] overflow-hidden shadow-2xl group"
+                  className="flex-shrink-0 w-72 h-[450px] relative rounded-[32px] overflow-hidden shadow-2xl group cursor-pointer"
+                  onClick={() => {
+                    const recipe = recipes.find(r => r.id === juice.id);
+                    if (recipe) setSelectedRecipe(recipe);
+                  }}
                 >
                   <img src={juice.image} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -1027,105 +1095,132 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-36 relative min-h-0">
-          <div className="relative h-[40vh] w-full shrink-0">
-            <img src={selectedRecipe.image} className="w-full h-full object-cover" />
-          </div>
-          <div className="p-6 -mt-8 bg-white rounded-t-[32px] relative z-10">
-            <h1 className="text-2xl font-bold text-stone-800 mb-2">{selectedRecipe.name}</h1>
-            <p className="text-terracotta font-bold text-sm mb-6 flex items-center gap-1"><MapPin size={16} />{selectedRecipe.region}</p>
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-stone-50 p-4 rounded-2xl flex flex-col items-center"><Clock size={18} className="text-terracotta" /><span className="text-[10px] uppercase font-black text-stone-400 mt-2">Prép</span><span className="text-sm font-bold">{selectedRecipe.prepTime}</span></div>
-              <div className="bg-stone-50 p-4 rounded-2xl flex flex-col items-center"><Flame size={18} className="text-terracotta" /><span className="text-[10px] uppercase font-black text-stone-400 mt-2">Cuisson</span><span className="text-sm font-bold">{selectedRecipe.cookTime}</span></div>
-              <div className="bg-stone-50 p-4 rounded-2xl flex flex-col items-center"><UtensilsCrossed size={18} className="text-terracotta" /><span className="text-[10px] uppercase font-black text-stone-400 mt-2">Niveau</span><span className="text-sm font-bold">{selectedRecipe.difficulty}</span></div>
-            </div>
-
-            <h3 className="text-lg font-bold mb-4">Ingrédients</h3>
-            <ul className="space-y-2 mb-8">
-              {selectedRecipe.ingredients?.map((ing, i) => (
-                <li key={i} className="flex justify-between p-3 bg-stone-50 rounded-xl text-sm font-medium">
-                  <span>{ing.item}</span>
-                  <span className="text-terracotta font-bold">{ing.amount}</span>
-                </li>
-              ))}
-            </ul>
-
-            <h3 className="text-lg font-bold mb-4">Préparation</h3>
-            <div className="space-y-4 mb-8">
-              {selectedRecipe.steps?.map((step, i) => (
-                <div key={i} className="flex gap-4">
-                  <span className="w-6 h-6 flex-shrink-0 bg-terracotta text-white rounded-full text-[10px] flex items-center justify-center font-bold shadow-sm">{i + 1}</span>
-                  <p className="text-stone-600 text-sm leading-relaxed">{step}</p>
-                </div>
-              ))}
-            </div>
-
-            <hr className="mb-8 border-stone-100" />
-
-            {/* Nutrition Section */}
-            <h3 className="text-lg font-bold mb-4">Valeurs Nutritionnelles (est.)</h3>
-            <div className="bg-stone-50 border border-stone-100 rounded-3xl p-5 mb-8">
-              <div className="grid grid-cols-4 gap-2 text-center divide-x divide-stone-200/60">
-                <div>
-                  <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Calories</span>
-                  <span className="text-lg font-black text-terracotta">{fakeCalories}</span>
-                  <span className="text-[9px] text-stone-400 font-bold block mt-0.5">kcal</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Protéines</span>
-                  <span className="text-lg font-black text-stone-800">{fakeProtein}</span>
-                  <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Glucides</span>
-                  <span className="text-lg font-black text-stone-800">{fakeCarbs}</span>
-                  <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Lipides</span>
-                  <span className="text-lg font-black text-stone-800">{fakeFat}</span>
-                  <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
-                </div>
+        <div ref={detailScrollRef} className="flex-1 overflow-y-auto no-scrollbar pb-36 relative min-h-0 bg-white">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedRecipe.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="absolute inset-x-0 top-0"
+            >
+              <div className="relative h-[40vh] w-full shrink-0">
+                <img src={selectedRecipe.image} className="w-full h-full object-cover" alt={selectedRecipe.name} />
               </div>
-            </div>
+              <div className="p-6 -mt-8 bg-white rounded-t-[32px] relative z-10 min-h-screen shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
+                <h1 className="text-2xl font-black text-stone-900 mb-2 leading-tight">{selectedRecipe.name}</h1>
+                <p className="text-[#fb5607] font-black text-xs mb-6 uppercase tracking-wider flex items-center gap-1.5"><MapPin size={14} />{selectedRecipe.region}</p>
 
-            {/* Video Section */}
-            <h3 className="text-lg font-bold mb-4">Guide en Vidéo</h3>
-            <div className="mb-10 rounded-[24px] overflow-hidden bg-stone-900 h-56 relative shadow-md group">
-              <iframe
-                className="w-full h-full absolute inset-0 z-10"
-                src={`https://www.youtube.com/embed?listType=search&list=${youtubeQuery}&controls=1`}
-                title="Tutoriel de préparation"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-              {/* Fallback pattern underneath while loading */}
-              <div className="absolute inset-0 flex items-center justify-center flex-col text-stone-500 bg-stone-100 z-0">
-                <span className="w-12 h-12 border-4 border-stone-200 border-t-terracotta rounded-full animate-spin mb-3"></span>
-                <p className="text-xs font-bold uppercase tracking-widest">Chargement Vidéo...</p>
-              </div>
-            </div>
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                  <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
+                    <Clock size={18} className="text-[#fb5607] mb-2" />
+                    <span className="text-[10px] uppercase font-black text-stone-400">Prép</span>
+                    <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.prepTime}</span>
+                  </div>
+                  <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
+                    <Flame size={18} className="text-[#fb5607] mb-2" />
+                    <span className="text-[10px] uppercase font-black text-stone-400">Cuisson</span>
+                    <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.cookTime}</span>
+                  </div>
+                  <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
+                    <UtensilsCrossed size={18} className="text-[#fb5607] mb-2" />
+                    <span className="text-[10px] uppercase font-black text-stone-400">Niveau</span>
+                    <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.difficulty}</span>
+                  </div>
+                </div>
 
-            {/* Related Recipes Section */}
-            {related.length > 0 && (
-              <>
-                <h3 className="text-lg font-bold mb-4">Plats similaires</h3>
-                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-6 pr-6 -mr-6">
-                  {related.map(r => (
-                    <motion.div whileTap={{ scale: 0.95 }} key={r.id} onClick={() => setSelectedRecipe(r)} className="flex-shrink-0 w-36 cursor-pointer group">
-                      <div className="h-32 rounded-[20px] overflow-hidden mb-3 relative shadow-sm border border-stone-100">
-                        <img src={r.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      </div>
-                      <h4 className="font-bold text-sm text-stone-800 leading-tight truncate mb-1">{r.name}</h4>
-                      <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1"><Clock size={10} className="text-terracotta" /> {r.cookTime} • {r.difficulty}</span>
-                    </motion.div>
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Ingrédients</h3>
+                <ul className="space-y-2.5 mb-8">
+                  {selectedRecipe.ingredients?.map((ing, i) => (
+                    <li key={i} className="flex justify-between p-4 bg-stone-50 rounded-2xl text-sm font-bold border border-stone-100/50">
+                      <span className="text-stone-700">{ing.item}</span>
+                      <span className="text-[#fb5607]">{ing.amount}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Préparation</h3>
+                <div className="space-y-6 mb-8">
+                  {selectedRecipe.steps?.map((step, i) => (
+                    <div key={i} className="flex gap-5">
+                      <span className="w-7 h-7 flex-shrink-0 bg-[#fb5607] text-white rounded-xl text-xs flex items-center justify-center font-black shadow-lg shadow-[#fb5607]/20">{i + 1}</span>
+                      <p className="text-stone-600 text-[13px] font-medium leading-relaxed">{step}</p>
+                    </div>
                   ))}
                 </div>
-              </>
-            )}
 
-          </div>
+                <hr className="mb-8 border-stone-100" />
+
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Valeurs Nutritionnelles (est.)</h3>
+                <div className="bg-stone-50 border border-stone-100 rounded-3xl p-5 mb-10 shadow-inner">
+                  <div className="grid grid-cols-4 gap-2 text-center divide-x divide-stone-200/60">
+                    <div>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Calories</span>
+                      <span className="text-lg font-black text-[#fb5607]">{250 + (selectedRecipe.id.length * 15) % 300}</span>
+                      <span className="text-[9px] text-stone-400 font-bold block mt-0.5">kcal</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Protéines</span>
+                      <span className="text-lg font-black text-stone-900">{10 + (selectedRecipe.id.length * 2) % 30}</span>
+                      <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Glucides</span>
+                      <span className="text-lg font-black text-stone-900">{20 + (selectedRecipe.id.length * 5) % 50}</span>
+                      <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Lipides</span>
+                      <span className="text-lg font-black text-stone-900">{5 + (selectedRecipe.id.length * 3) % 25}</span>
+                      <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Guide en Vidéo</h3>
+                <div className="mb-10 rounded-[32px] overflow-hidden bg-stone-900 h-56 relative shadow-xl group border border-stone-200">
+                  <iframe
+                    className="w-full h-full absolute inset-0 z-10"
+                    src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('recette ' + selectedRecipe.name)}&controls=1`}
+                    title="Tutoriel de préparation"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+
+                {related.length > 0 && (
+                  <>
+                    <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Plats similaires</h3>
+                    <div className="flex gap-4 overflow-x-auto no-scrollbar pb-10 pr-6 -mr-6">
+                      {related.map(r => (
+                        <motion.div
+                          whileTap={{ scale: 0.95 }}
+                          key={r.id}
+                          onClick={() => {
+                            // Scroll back to top for the new recipe
+                            const container = document.querySelector('.overflow-y-auto');
+                            if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+                            setSelectedRecipe(r);
+                          }}
+                          className="flex-shrink-0 w-36 cursor-pointer group"
+                        >
+                          <div className="h-32 rounded-[24px] overflow-hidden mb-3 relative shadow-md border border-stone-100 transition-transform group-hover:scale-95 duration-500">
+                            <img src={r.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={r.name} />
+                          </div>
+                          <h4 className="font-bold text-sm text-stone-900 leading-tight truncate mb-1">{r.name}</h4>
+                          <span className="text-[10px] font-black text-stone-400 flex items-center gap-1 uppercase tracking-tighter">
+                            <Clock size={10} className="text-[#fb5607]" /> {r.cookTime} • {r.difficulty}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
     );

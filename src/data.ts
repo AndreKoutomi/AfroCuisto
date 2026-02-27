@@ -802,4 +802,193 @@ export const recipes: Recipe[] = [
       "Servir avec de l'huile, du piment et du poisson frit."
     ]
   },
+  {
+    id: "J01",
+    name: "Jus de Bissap",
+    region: "National",
+    category: "Boissons & Douceurs",
+    difficulty: "Très Facile",
+    prepTime: "10 min",
+    cookTime: "15 min",
+    image: "/images/juices/bissap.png",
+    description: "L'infusion d'hibiscus rouge rafraîchissante, parfaite pour accompagner tout repas béninois.",
+    ingredients: [
+      { item: "Fleurs d'hibiscus (Bissap)", amount: "200g" },
+      { item: "Eau", amount: "2L" },
+      { item: "Sucre", amount: "150g" },
+      { item: "Feuilles de menthe fraîche", amount: "1 poignée" }
+    ],
+    steps: [
+      "Laver soigneusement les fleurs à l'eau froide.",
+      "Porter l'eau à ébullition dans une grande casserole.",
+      "Ajouter l'hibiscus et laisser bouillir 15 minutes.",
+      "Retirer du feu, ajouter la menthe et laisser infuser.",
+      "Filtrer le mélange à l'aide d'un tamis fin.",
+      "Sucrer selon votre goût et mettre au réfrigérateur au moins 3h."
+    ]
+  },
+  {
+    id: "J02",
+    name: "Jus de Baobab (Bouye)",
+    region: "Nord-Bénin",
+    category: "Boissons & Douceurs",
+    difficulty: "Facile",
+    prepTime: "15 min",
+    cookTime: "0 min",
+    image: "/images/juices/baobab.jpg",
+    description: "Une boisson onctueuse et laiteuse extraite de la pulpe du fruit du baobab.",
+    ingredients: [
+      { item: "Pain de singe (pulpe de baobab)", amount: "300g" },
+      { item: "Eau tiède", amount: "1.5L" },
+      { item: "Lait concentré sucré", amount: "1 boîte" },
+      { item: "Extrait de vanille ou Muscade", amount: "1 càc" }
+    ],
+    steps: [
+      "Faire tremper la pulpe de baobab dans l'eau tiède pendant 2h.",
+      "Malaxer à la main pour séparer la pulpe des graines.",
+      "Filtrer pour obtenir un jus épais et lisse.",
+      "Ajouter le lait concentré et les épices.",
+      "Bien mélanger et servir très frais."
+    ]
+  },
+  {
+    id: "J03",
+    name: "Jus d'Ananas Pain de Sucre",
+    region: "Plateau / National",
+    category: "Boissons & Douceurs",
+    difficulty: "Très Facile",
+    prepTime: "20 min",
+    cookTime: "0 min",
+    image: "/images/juices/ananas.jpg",
+    description: "Le célèbre ananas du Bénin, naturellement sucré et sans acidité.",
+    ingredients: [
+      { item: "Ananas Pain de sucre bien mûr", amount: "2 gros" },
+      { item: "Gingembre frais (optionnel)", amount: "30g" },
+      { item: "Eau", amount: "20cl" }
+    ],
+    steps: [
+      "Peler l'ananas et le couper en dés.",
+      "Mixer les morceaux avec le gingembre et un peu d'eau.",
+      "Filtrer le jus à l'aide d'un linge propre ou d'un tamis très fin.",
+      "Ne pas ajouter de sucre (l'ananas béninois se suffit à lui-même).",
+      "Refroidir avant dégustation."
+    ]
+  },
+  {
+    id: "J04",
+    name: "Jus de Tamarin",
+    region: "Nord/Centre",
+    category: "Boissons & Douceurs",
+    difficulty: "Facile",
+    prepTime: "15 min",
+    cookTime: "10 min",
+    image: "/images/juices/tamarin.jpg",
+    description: "Un jus acidulé et tonique, excellent pour la digestion.",
+    ingredients: [
+      { item: "Gousses de tamarin", amount: "250g" },
+      { item: "Eau", amount: "1.5L" },
+      { item: "Sucre de canne", amount: "200g" }
+    ],
+    steps: [
+      "Retirer les coques des tamarins.",
+      "Faire bouillir l'eau et y plonger les fruits.",
+      "Laisser bouillir 10 minutes pour ramollir la pulpe.",
+      "Laisser refroidir, puis frotter pour extraire le jus.",
+      "Filtrer soigneusement pour enlever les fibres et les noyaux.",
+      "Sucrer et servir frais."
+    ]
+  },
+  {
+    id: "J05",
+    name: "Jus de Mangue",
+    region: "National",
+    category: "Boissons & Douceurs",
+    difficulty: "Très Facile",
+    prepTime: "15 min",
+    cookTime: "0 min",
+    image: "/images/juices/mangue.jpg",
+    description: "Le velouté pur des mangues gorgées de soleil.",
+    ingredients: [
+      { item: "Mangues charnues (Gouverneur)", amount: "4" },
+      { item: "Jus d'un citron vert", amount: "1" },
+      { item: "Eau fraîche", amount: "50cl" }
+    ],
+    steps: [
+      "Récupérer la chair des mangues.",
+      "Mixer avec le jus de citron et l'eau jusqu'à onctuosité.",
+      "Ajuster la texture avec un peu plus d'eau si nécessaire.",
+      "Servir sur un lit de glaçons."
+    ]
+  },
+  {
+    id: "J06",
+    name: "Jus de Corossol",
+    region: "Sud-Bénin",
+    category: "Boissons & Douceurs",
+    difficulty: "Facile",
+    prepTime: "25 min",
+    cookTime: "0 min",
+    image: "https://picsum.photos/seed/corossol/600/800",
+    description: "Une texture crèmeuse et un goût subtilement acidulé.",
+    ingredients: [
+      { item: "Corossol bien mûr", amount: "1 gros" },
+      { item: "Eau", amount: "1L" },
+      { item: "Lait concentré sucré (optionnel)", amount: "QS" }
+    ],
+    steps: [
+      "Peler le fruit et retirer les graines noires à la main.",
+      "Mettre la pulpe blanche dans un mixeur avec l'eau.",
+      "Mixer brièvement pour ne pas broyer les fibres.",
+      "Filtrer le mélange.",
+      "Ajouter du lait ou du sucre si désiré."
+    ]
+  },
+  {
+    id: "J07",
+    name: "Jus de Passion",
+    region: "Sud-Bénin",
+    category: "Boissons & Douceurs",
+    difficulty: "Très Facile",
+    prepTime: "15 min",
+    cookTime: "0 min",
+    image: "https://picsum.photos/seed/passion/600/800",
+    description: "Un parfum tropical puissant et une fraîcheur incomparable.",
+    ingredients: [
+      { item: "Fruits de la passion", amount: "1kg" },
+      { item: "Eau", amount: "1L" },
+      { item: "Sirop de sucre", amount: "150ml" }
+    ],
+    steps: [
+      "Couper les fruits en deux et récupérer la pulpe à la cuillère.",
+      "Mixer par impulsions très courtes (pour ne pas briser les graines).",
+      "Passer au chinois pour extraire uniquement le jus.",
+      "Mélanger avec l'eau et le sirop.",
+      "Servir glacé."
+    ]
+  },
+  {
+    id: "J08",
+    name: "Jus de Gingembre",
+    region: "National",
+    category: "Boissons & Douceurs",
+    difficulty: "Moyen",
+    prepTime: "20 min",
+    cookTime: "0 min",
+    image: "https://picsum.photos/seed/ginger/600/800",
+    description: "Le 'Gnamankou' africain, piquant, tonique et médicinal.",
+    ingredients: [
+      { item: "Racine de gingembre frais", amount: "500g" },
+      { item: "Eau", amount: "2L" },
+      { item: "Jus d'ananas ou Citron vert", amount: "QS" },
+      { item: "Sucre", amount: "200g" }
+    ],
+    steps: [
+      "Laver, peler et râper le gingembre.",
+      "Mixer avec un peu d'eau pour obtenir une purée.",
+      "Laisser reposer 30 minutes dans le reste de l'eau.",
+      "Presser et filtrer soigneusement.",
+      "Ajouter le sucre et le jus de citron ou d'ananas pour adoucir le piquant.",
+      "Boire très frais avec modération."
+    ]
+  },
 ];
