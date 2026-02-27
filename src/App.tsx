@@ -589,89 +589,88 @@ export default function App() {
 
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
-      {/* Sticky Top Header */}
-      <header className="px-6 pt-14 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-50 flex items-center gap-3">
-        <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
-        <div className="flex flex-col">
-          <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1 mb-1">
-            {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
-          </span>
-          <h1 className="text-sm font-bold text-stone-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis z-10">{t.homeSlogan}</h1>
-        </div>
-      </header>
-
-      {/* Global Search Bar */}
-      <section className="px-6 mb-6 mt-2 relative z-[60]">
-        <div className="flex gap-2">
-          <div className="relative flex-1 group shadow-sm rounded-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
-            />
-
-            {/* Suggestions Dropdown */}
-            <AnimatePresence>
-              {searchQuery.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-[70] max-h-80 overflow-y-auto no-scrollbar"
-                >
-                  {recipes
-                    .filter(r =>
-                      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      r.region.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .slice(0, 6)
-                    .map((recipe, i) => (
-                      <motion.div
-                        key={recipe.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.15, delay: i * 0.03 }}
-                        onClick={() => {
-                          setSelectedRecipe(recipe);
-                          setSearchQuery('');
-                        }}
-                        className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors"
-                      >
-                        <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={recipe.name} style={{ transform: 'translateZ(0)' }} />
-                        <div className="flex flex-col">
-                          <span className="font-bold text-sm text-stone-900 leading-tight">{recipe.name}</span>
-                          <span className="text-[10px] text-stone-400 font-medium flex items-center gap-1 mt-1">
-                            <MapPin size={10} /> {recipe.region} • {recipe.difficulty}
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))}
-
-                  {recipes.filter(r =>
-                    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    r.region.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).length === 0 && (
-                      <div className="p-8 text-center bg-stone-50/50">
-                        <Search size={32} className="mx-auto mb-2 text-stone-300" />
-                        <p className="text-xs text-stone-500 font-bold uppercase tracking-widest">Aucun résultat trouvé</p>
-                      </div>
-                    )}
-
-                  <div
-                    onClick={() => { setActiveTab('search'); }}
-                    className="p-3 bg-terracotta/5 text-center border-t border-stone-100 cursor-pointer"
-                  >
-                    <span className="text-[10px] font-black text-terracotta uppercase tracking-[0.2em]">Voir tous les résultats</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+      {/* Sticky Top Header with Search */}
+      <header className="px-6 pt-14 pb-4 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6">
+        {/* Row 1: Logo & Greeting */}
+        <div className="flex items-center gap-3">
+          <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
+          <div className="flex flex-col">
+            <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1">
+              {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
+            </span>
+            <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em]">{t.homeSlogan}</h1>
           </div>
         </div>
-      </section>
+
+        {/* Row 2: Global Search Bar */}
+        <div className="relative group shadow-sm rounded-2xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
+          <input
+            type="text"
+            placeholder={t.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
+          />
+
+          {/* Suggestions Dropdown */}
+          <AnimatePresence>
+            {searchQuery.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-[110] max-h-80 overflow-y-auto no-scrollbar"
+              >
+                {recipes
+                  .filter(r =>
+                    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    r.region.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .slice(0, 6)
+                  .map((recipe, i) => (
+                    <motion.div
+                      key={recipe.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.15, delay: i * 0.03 }}
+                      onClick={() => {
+                        setSelectedRecipe(recipe);
+                        setSearchQuery('');
+                      }}
+                      className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors"
+                    >
+                      <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={recipe.name} style={{ transform: 'translateZ(0)' }} />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-stone-900 leading-tight">{recipe.name}</span>
+                        <span className="text-[10px] text-stone-400 font-medium flex items-center gap-1 mt-1">
+                          <MapPin size={10} /> {recipe.region} • {recipe.difficulty}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                {recipes.filter(r =>
+                  r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  r.region.toLowerCase().includes(searchQuery.toLowerCase())
+                ).length === 0 && (
+                    <div className="p-8 text-center bg-stone-50/50">
+                      <Search size={32} className="mx-auto mb-2 text-stone-300" />
+                      <p className="text-xs text-stone-500 font-bold uppercase tracking-widest">Aucun résultat trouvé</p>
+                    </div>
+                  )}
+
+                <div
+                  onClick={() => { setActiveTab('search'); }}
+                  className="p-3 bg-terracotta/5 text-center border-t border-stone-100 cursor-pointer"
+                >
+                  <span className="text-[10px] font-black text-terracotta uppercase tracking-[0.2em]">Voir tous les résultats</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </header>
 
       {/* Categories Horizontal Pills */}
       <section className="mb-8 pl-6">
