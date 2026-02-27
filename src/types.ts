@@ -38,6 +38,12 @@ export interface Recipe {
   style?: string;
   origine_humaine?: string; // Avoiding collision with 'origine' if used as region
 }
+export interface UserSettings {
+  darkMode: boolean;
+  language: 'fr' | 'en' | 'es';
+  unitSystem: 'metric' | 'imperial';
+}
+
 export interface User {
   id: string;
   name: string;
@@ -46,6 +52,7 @@ export interface User {
   avatar?: string;
   favorites: string[]; // List of recipe IDs
   joinedDate: string;
+  settings?: UserSettings;
 }
 
 export interface AuthState {

@@ -11,7 +11,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "10 min",
     cookTime: "20 min",
-    image: "https://picsum.photos/seed/P01/800/600",
+    image: "/images/pate_blanche_1772192522680.png",
     description: "La pâte de maïs blanche, aliment de base consommé quotidiennement au Bénin.",
     ingredients: [
       { item: "Farine de maïs fine", amount: "500g" },
@@ -38,7 +38,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "15 min",
     cookTime: "30 min",
-    image: "https://picsum.photos/seed/P02/800/600",
+    image: "/images/amiwo_poulet_1772192535717.png",
     description: "Pâte de maïs cuite dans un bouillon de tomate et d'épices, souvent accompagnée de poulet frité.",
     ingredients: [
       { item: "Farine de maïs", amount: "500g" },
@@ -68,7 +68,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "20 min",
     cookTime: "30 min",
-    image: "https://picsum.photos/seed/P03/800/600",
+    image: "/images/agoun_igname_1772192553037.png",
     description: "Igname cuite puis pilée jusqu'à obtenir une texture élastique et lisse.",
     ingredients: [
       { item: "Igname (variété Laboco de préférence)", amount: "2kg" },
@@ -93,7 +93,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "10 min",
     cookTime: "20 min",
-    image: "https://picsum.photos/seed/P04/800/600",
+    image: "/images/telibo_wo_1772192566532.png",
     description: "Pâte faite à base de farine de cossettes d'igname séchées au soleil.",
     ingredients: [
       { item: "Farine de Télibô", amount: "500g" },
@@ -117,7 +117,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "3 jours",
     cookTime: "30 min",
-    image: "https://picsum.photos/seed/P05/800/600",
+    image: "/images/akassa_1772192596776.png",
     description: "Pâte de maïs fermentée et cuite, de texture fine et légèrement acide.",
     ingredients: [
       { item: "Amidion de maïs fermenté (Ogui)", amount: "500g" },
@@ -143,7 +143,7 @@ export const recipes: Recipe[] = [
     difficulty: "Difficile",
     prepTime: "2h",
     cookTime: "20 min",
-    image: "https://picsum.photos/seed/P06/800/600",
+    image: "/images/ablo_1772192776472.png",
     description: "Petits pains de maïs et riz légèrement sucrés et cuits à la vapeur.",
     ingredients: [
       { item: "Riz moulu", amount: "300g" },
@@ -170,7 +170,7 @@ export const recipes: Recipe[] = [
     difficulty: "Très Facile",
     prepTime: "5 min",
     cookTime: "10 min",
-    image: "https://picsum.photos/seed/P07/800/600",
+    image: "/images/piron_blanc_1772192948416.png",
     description: "Pâte rapide faite à base de gari (semoule de manioc séchée) et d'eau bouillante.",
     ingredients: [
       { item: "Gari (blanc)", amount: "500g" },
@@ -194,7 +194,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "15 min",
     cookTime: "45 min",
-    image: "https://picsum.photos/seed/P11/800/600",
+    image: "/images/atassi_1772192610097.png",
     description: "Mélange cuit de riz et de haricots, souvent consommé avec une friture de tomate (Dja).",
     ingredients: [
       { item: "Riz", amount: "500g" },
@@ -219,7 +219,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "48h",
     cookTime: "30 min",
-    image: "https://picsum.photos/seed/P13/800/600",
+    image: "/images/kom_dokounou_1772192961914.png",
     description: "Pâte de maïs fermentée, moulée dans des feuilles de maïs et cuite à la vapeur.",
     ingredients: [
       { item: "Mawè (Farine de maïs fermentée)", amount: "500g" },
@@ -245,7 +245,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "30 min",
     cookTime: "40 min",
-    image: "https://picsum.photos/seed/S01/800/600",
+    image: "/images/gboman_1772192977053.png",
     description: "Sauce à base de feuilles de Grande Morelle, très riche en fer.",
     ingredients: [
       { item: "Feuilles de Gboman", amount: "1kg" },
@@ -271,7 +271,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "20 min",
     cookTime: "15 min",
-    image: "https://picsum.photos/seed/S02/800/600",
+    image: "/images/ademe_crincrin_1772193087836.png",
     description: "Sauce gluante à base de corète potagère, idéale avec l'Akassa.",
     ingredients: [
       { item: "Feuilles d'Adémè frais", amount: "500g" },
@@ -296,7 +296,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "15 min",
     cookTime: "20 min",
-    image: "https://picsum.photos/seed/S03/800/600",
+    image: "/images/fevi_gombo_1772193101830.png",
     description: "Sauce gombo classique, onctueuse et savoureuse.",
     ingredients: [
       { item: "Gombos frais", amount: "300g" },
@@ -321,7 +321,7 @@ export const recipes: Recipe[] = [
     difficulty: "Difficile",
     prepTime: "1h",
     cookTime: "1.5h",
-    image: "https://picsum.photos/seed/S05/800/600",
+    image: "/images/dekoun_graine_1772193114112.png",
     description: "Sauce onctueuse extraite de la pulpe des noix de palme.",
     ingredients: [
       { item: "Noix de palme fraîches", amount: "1kg" },
@@ -347,7 +347,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "20 min",
     cookTime: "40 min",
-    image: "https://picsum.photos/seed/S06/800/600",
+    image: "/images/azin_arachide_1772193124987.png",
     description: "Sauce à base de pâte d'arachide, onctueuse et très nutritive.",
     ingredients: [
       { item: "Pâte d'arachide", amount: "200g" },
@@ -371,7 +371,7 @@ export const recipes: Recipe[] = [
     difficulty: "Difficile",
     prepTime: "45 min",
     cookTime: "1h",
-    image: "https://picsum.photos/seed/S12/800/600",
+    image: "/images/man_tindjan_1772194012289.png",
     description: "La 'Sauce Coincée', extrêmement riche en obstacles (viandes, poissons, crabes) et légumes.",
     ingredients: [
       { item: "Feuilles de Gboman et Tchiayo", amount: "1kg" },
@@ -397,7 +397,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "30 min",
     cookTime: "40 min",
-    image: "https://picsum.photos/seed/S17/800/600",
+    image: "/images/goussi_1772194027152.png",
     description: "Sauce à base de graines de courge moulues, souvent préparée avec des épinards.",
     ingredients: [
       { item: "Farine de Goussi", amount: "200g" },
@@ -422,7 +422,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "20 min",
     cookTime: "30 min",
-    image: "https://picsum.photos/seed/S08/800/600",
+    image: "/images/tchiayo_1772194040696.png",
     description: "Sauce à base de feuilles de basilic africain, très parfumée et digestive.",
     ingredients: [
       { item: "Feuilles de Tchiayo", amount: "500g" },
@@ -446,7 +446,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "20 min",
     cookTime: "30 min",
-    image: "https://picsum.photos/seed/S08/800/600",
+    image: "/images/tchiayo_1772194040696.png",
     description: "Sauce à base de feuilles de basilic africain, très parfumée et digestive.",
     ingredients: [
       { item: "Feuilles de Tchiayo", amount: "500g" },
