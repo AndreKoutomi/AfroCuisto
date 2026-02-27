@@ -31,6 +31,7 @@ import {
   Ruler,
   ShieldCheck,
   Eye,
+  EyeOff,
   Key,
   CheckCircle2,
   Camera,
@@ -85,6 +86,7 @@ const benineseJuices = [
 const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack }: any) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({ current: '', new: '', confirm: '', email: currentUser?.email || '' });
+  const [showPass, setShowPass] = useState({ current: false, new: false, confirm: false });
 
   const handleSave = () => {
     if (!currentUser) return;
@@ -137,27 +139,42 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
           <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
             <h3 className="text-[10px] font-black uppercase text-stone-400 mb-4">{t.changePassword}</h3>
             <div className="space-y-4">
-              <input
-                type="password"
-                placeholder={t.currentPassword}
-                className="w-full bg-white border border-stone-100 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-terracotta"
-                value={formData.current}
-                onChange={e => setFormData({ ...formData, current: e.target.value })}
-              />
-              <input
-                type="password"
-                placeholder={t.newPassword}
-                className="w-full bg-white border border-stone-100 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-terracotta"
-                value={formData.new}
-                onChange={e => setFormData({ ...formData, new: e.target.value })}
-              />
-              <input
-                type="password"
-                placeholder={t.confirmPassword}
-                className="w-full bg-white border border-stone-100 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-terracotta"
-                value={formData.confirm}
-                onChange={e => setFormData({ ...formData, confirm: e.target.value })}
-              />
+              <div className="relative">
+                <input
+                  type={showPass.current ? "text" : "password"}
+                  placeholder={t.currentPassword}
+                  className="w-full bg-white border border-stone-100 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-terracotta"
+                  value={formData.current}
+                  onChange={e => setFormData({ ...formData, current: e.target.value })}
+                />
+                <button type="button" onClick={() => setShowPass({ ...showPass, current: !showPass.current })} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 p-1">
+                  {showPass.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPass.new ? "text" : "password"}
+                  placeholder={t.newPassword}
+                  className="w-full bg-white border border-stone-100 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-terracotta"
+                  value={formData.new}
+                  onChange={e => setFormData({ ...formData, new: e.target.value })}
+                />
+                <button type="button" onClick={() => setShowPass({ ...showPass, new: !showPass.new })} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 p-1">
+                  {showPass.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPass.confirm ? "text" : "password"}
+                  placeholder={t.confirmPassword}
+                  className="w-full bg-white border border-stone-100 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-terracotta"
+                  value={formData.confirm}
+                  onChange={e => setFormData({ ...formData, confirm: e.target.value })}
+                />
+                <button type="button" onClick={() => setShowPass({ ...showPass, confirm: !showPass.confirm })} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 p-1">
+                  {showPass.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <p className="mt-4 text-[10px] text-stone-400 italic">{t.passwordSecurityNote}</p>
           </div>
@@ -404,6 +421,23 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(dbService.getCurrentUser());
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authFormData, setAuthFormData] = useState({ name: '', email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Cloud Sync
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>(recipes);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    const syncRecipes = async () => {
+      setIsSyncing(true);
+      const remote = await dbService.getRemoteRecipes();
+      if (remote && remote.length > 0) {
+        setAllRecipes(remote);
+      }
+      setIsSyncing(false);
+    };
+    syncRecipes();
+  }, []);
 
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [activeTab, setActiveTab] = useState('home');
@@ -557,12 +591,12 @@ export default function App() {
 
   useEffect(() => {
     if (currentUser) {
-      getAIRecipeRecommendation(recipes, currentUser.name).then(setAiRecommendation);
+      getAIRecipeRecommendation(allRecipes, currentUser.name).then(setAiRecommendation);
     }
   }, [currentUser]);
 
   const filteredRecipes = useMemo(() => {
-    let result = recipes;
+    let result = allRecipes;
     if (searchQuery) {
       result = result.filter(r =>
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -572,11 +606,11 @@ export default function App() {
     if (selectedCategory) result = result.filter(r => r.category === selectedCategory);
     if (selectedRegion) result = result.filter(r => r.region.toLowerCase().includes(selectedRegion.toLowerCase()));
     return result;
-  }, [searchQuery, selectedCategory, selectedRegion]);
+  }, [allRecipes, searchQuery, selectedCategory, selectedRegion]);
 
   const displayRecipes = filteredRecipes;
-  const featuredRecipe = displayRecipes[0] || recipes[0];
-  const otherRecipes = displayRecipes.length > 1 ? displayRecipes.slice(1) : (displayRecipes.length === 1 ? [] : recipes.slice(1));
+  const featuredRecipe = displayRecipes[0] || allRecipes[0];
+  const otherRecipes = displayRecipes.length > 1 ? displayRecipes.slice(1) : (displayRecipes.length === 1 ? [] : allRecipes.slice(1));
 
   const navItems = [
     { id: 'home', icon: Home, label: t.home },
@@ -622,7 +656,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-[110] max-h-80 overflow-y-auto no-scrollbar"
               >
-                {recipes
+                {allRecipes
                   .filter(r =>
                     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     r.region.toLowerCase().includes(searchQuery.toLowerCase())
@@ -650,7 +684,7 @@ export default function App() {
                     </motion.div>
                   ))}
 
-                {recipes.filter(r =>
+                {allRecipes.filter(r =>
                   r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   r.region.toLowerCase().includes(searchQuery.toLowerCase())
                 ).length === 0 && (
@@ -776,6 +810,38 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      {/* All Dishes Section */}
+      <section className="px-6 mb-10">
+        <div className="flex justify-between items-end mb-5">
+          <h2 className="text-xl font-black text-stone-800 tracking-tight">Tous les plats</h2>
+          <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{allRecipes.length} Plats</span>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {allRecipes.map(recipe => (
+            <motion.div
+              key={recipe.id}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedRecipe(recipe)}
+              className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100/80 flex flex-col h-full cursor-pointer hover:shadow-md transition-all group"
+            >
+              <div className="h-32 relative flex-shrink-0">
+                <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={recipe.name} />
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-stone-800 text-[9px] font-black shadow-sm tracking-widest uppercase">
+                  {recipe.cookTime}
+                </div>
+              </div>
+              <div className="p-3 flex-1 flex flex-col">
+                <h4 className="font-bold text-stone-800 text-xs leading-tight line-clamp-2 mb-1 group-hover:text-terracotta transition-colors">{recipe.name}</h4>
+                <div className="mt-auto pt-2 flex items-center justify-between">
+                  <span className="text-[9px] text-stone-400 font-medium flex items-center gap-1"><MapPin size={8} /> {recipe.region}</span>
+                  <DifficultyBadge difficulty={recipe.difficulty} t={t} />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 
@@ -842,7 +908,7 @@ export default function App() {
                   whileTap={{ scale: 0.98 }}
                   className="flex-shrink-0 w-72 h-[450px] relative rounded-[32px] overflow-hidden shadow-2xl group cursor-pointer"
                   onClick={() => {
-                    const recipe = recipes.find(r => r.id === juice.id);
+                    const recipe = allRecipes.find(r => r.id === juice.id);
                     if (recipe) setSelectedRecipe(recipe);
                   }}
                 >
@@ -870,7 +936,7 @@ export default function App() {
               <h2 className="text-xl font-black text-stone-800 tracking-tight">{t.quickRecipes} ⚡</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-6">
-              {recipes.filter(r => r.difficulty === 'Facile' || r.difficulty === 'Très Facile').slice(0, 6).map(recipe => (
+              {allRecipes.filter(r => r.difficulty === 'Facile' || r.difficulty === 'Très Facile').slice(0, 6).map(recipe => (
                 <motion.div whileTap={{ scale: 0.95 }} key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="flex-shrink-0 w-36 cursor-pointer group">
                   <div className="h-32 rounded-[24px] overflow-hidden mb-3 relative shadow-sm border border-stone-100">
                     <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -892,7 +958,7 @@ export default function App() {
               <h2 className="text-xl font-black tracking-tight text-[#ffffff]">{t.maquisStarsEmoji}</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-2 relative z-10">
-              {recipes.slice(1, 7).map(recipe => (
+              {allRecipes.slice(1, 7).map(recipe => (
                 <motion.div whileTap={{ scale: 0.95 }} key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="flex-shrink-0 w-44 cursor-pointer group">
                   <div className="h-44 rounded-[28px] overflow-hidden mb-3 relative shadow-xl shadow-black/30 border border-white/20">
                     <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -915,7 +981,7 @@ export default function App() {
               <h2 className="text-xl font-black text-stone-800 tracking-tight">{t.hiddenTreasuresEmoji}</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-6">
-              {recipes.slice(-6).map(recipe => (
+              {allRecipes.slice(-6).map(recipe => (
                 <motion.div whileTap={{ scale: 0.95 }} key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="flex-shrink-0 w-36 cursor-pointer group">
                   <div className="h-32 rounded-[24px] overflow-hidden mb-3 relative shadow-sm border border-stone-100">
                     <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter sepia-[0.3]" />
@@ -932,7 +998,7 @@ export default function App() {
 
           {/* Regional Tours */}
           {['Sud', 'Centre', 'Nord'].map((regionFilter, index) => {
-            const regionalRecipes = recipes.filter(r => r.region.toLowerCase().includes(regionFilter.toLowerCase()));
+            const regionalRecipes = allRecipes.filter(r => r.region.toLowerCase().includes(regionFilter.toLowerCase()));
             if (regionalRecipes.length === 0) return null;
 
             const regionNames: Record<string, string> = {
@@ -1022,7 +1088,7 @@ export default function App() {
   );
 
   const renderFavorites = () => {
-    const favoriteRecipes = dbService.getFavorites(currentUser!, recipes);
+    const favoriteRecipes = dbService.getFavorites(currentUser!, allRecipes);
 
     return (
       <div className="flex-1 flex flex-col pb-44 pt-10">
@@ -1133,9 +1199,9 @@ export default function App() {
     const fakeCarbs = 20 + (charCodeSum % 50);
     const fakeFat = 5 + (charCodeSum % 25);
 
-    let related = recipes.filter(r => r.category === selectedRecipe.category && r.id !== selectedRecipe.id).slice(0, 3);
+    let related = allRecipes.filter(r => r.category === selectedRecipe.category && r.id !== selectedRecipe.id).slice(0, 3);
     if (related.length === 0) {
-      related = recipes.filter(r => r.id !== selectedRecipe.id).slice(0, 3);
+      related = allRecipes.filter(r => r.id !== selectedRecipe.id).slice(0, 3);
     }
     const youtubeQuery = encodeURIComponent(`préparation recette ${selectedRecipe.name}`);
 
@@ -1295,7 +1361,23 @@ export default function App() {
       <form onSubmit={authMode === 'login' ? handleLogin : handleSignup} className="space-y-4">
         {authMode === 'signup' && <input type="text" placeholder="Nom complet" required value={authFormData.name} onChange={e => setAuthFormData({ ...authFormData, name: e.target.value })} className="w-full bg-stone-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-terracotta/20 font-medium" />}
         <input type="email" placeholder="Email" required value={authFormData.email} onChange={e => setAuthFormData({ ...authFormData, email: e.target.value })} className="w-full bg-stone-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-terracotta/20 font-medium" />
-        <input type="password" placeholder="Mot de passe" required value={authFormData.password} onChange={e => setAuthFormData({ ...authFormData, password: e.target.value })} className="w-full bg-stone-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-terracotta/20 font-medium" />
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Mot de passe"
+            required
+            value={authFormData.password}
+            onChange={e => setAuthFormData({ ...authFormData, password: e.target.value })}
+            className="w-full bg-stone-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-terracotta/20 font-medium"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-6 top-1/2 -translate-y-1/2 text-stone-400 p-2 hover:text-terracotta transition-colors"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
         <button type="submit" className="w-full bg-terracotta text-white py-4 rounded-2xl font-bold shadow-lg shadow-terracotta/20">{authMode === 'login' ? 'Se connecter' : "C'est parti !"}</button>
       </form>
     </div>

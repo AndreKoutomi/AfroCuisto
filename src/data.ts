@@ -532,6 +532,33 @@ export const recipes: Recipe[] = [
       "Servir la purée chaude garnie d'huile rouge et d'oignons croustillants."
     ]
   },
+  {
+    id: "R04",
+    name: "Abobo",
+    style: "Haricots bouillis au Zomi",
+    region: "Sud-Bénin",
+    category: "Plats de Résistance & Ragoûts",
+    difficulty: "Facile",
+    prepTime: "10 min",
+    cookTime: "50 min",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/abobo_benin.png",
+    description: "Plat traditionnel de haricots rouges (niébé) cuits à l'eau, servis avec de l'huile de palme brute et du gari.",
+    ingredients: [
+      { item: "Haricots niébé rouges", amount: "500g" },
+      { item: "Huile de palme rouge (Zomi)", amount: "10cl" },
+      { item: "Oignon", amount: "1 gros" },
+      { item: "Gari (semoule de manioc)", amount: "QS" },
+      { item: "Sel", amount: "QS" }
+    ],
+    steps: [
+      "Trier les haricots et les laver à l'eau claire.",
+      "Mettre les haricots dans une marmite avec 3 fois leur volume d'eau et porter à ébullition.",
+      "Cuire à feu moyen jusqu'à ce que les haricots soient très tendres (ne saler qu'en fin de cuisson).",
+      "Pendant ce temps, faire chauffer légèrement l'huile rouge avec quelques tranches d'oignon pour la parfumer.",
+      "Une fois les haricots cuits et salés, les servir dans une assiette ou un bol.",
+      "Arroser généreusement d'huile rouge (Zomi) et saupoudrer de friture d'oignon et de gari blanc."
+    ]
+  },
 
   // --- Protéines & Grillades ---
   {

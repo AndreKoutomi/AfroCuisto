@@ -1,9 +1,59 @@
 import { User, Recipe } from './types';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const USERS_KEY = 'afrocuisto_users';
 const CURRENT_USER_KEY = 'afrocuisto_current_user';
+const REMOTE_RECIPES_KEY = 'afrocuisto_remote_recipes';
 
 export const dbService = {
+    // Recipe Sync
+    async getRemoteRecipes(): Promise<Recipe[]> {
+        try {
+            const { data, error } = await supabase
+                .from('recipes')
+                .select('*')
+                .order('name');
+
+            if (error) throw error;
+
+            if (data) {
+                const recipes: Recipe[] = data.map(r => ({
+                    id: r.id,
+                    name: r.name,
+                    alias: r.alias,
+                    base: r.base,
+                    type: r.type,
+                    style: r.style,
+                    region: r.region,
+                    category: r.category,
+                    difficulty: r.difficulty,
+                    prepTime: r.prep_time,
+                    cookTime: r.cook_time,
+                    image: r.image,
+                    description: r.description,
+                    ingredients: r.ingredients,
+                    steps: r.steps,
+                    techniqueTitle: r.technique_title,
+                    techniqueDescription: r.technique_description,
+                    benefits: r.benefits
+                }));
+                // Cache locally for offline use
+                localStorage.setItem(REMOTE_RECIPES_KEY, JSON.stringify(recipes));
+                return recipes;
+            }
+        } catch (err) {
+            console.error('Remote sync error:', err);
+        }
+
+        // Fallback to local storage if offline/error
+        const cached = localStorage.getItem(REMOTE_RECIPES_KEY);
+        return cached ? JSON.parse(cached) : [];
+    },
     // User Management
     getUsers: (): User[] => {
         const data = localStorage.getItem(USERS_KEY);
