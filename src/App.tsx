@@ -1228,7 +1228,10 @@ export default function App() {
 
   const renderAuth = () => (
     <div className="flex-1 flex flex-col bg-white p-8 justify-center h-full">
-      <div className="text-center mb-10"><ChefHat size={60} className="text-terracotta mx-auto mb-4" /><h1 className="text-3xl font-black text-stone-800">AfroCuisto</h1></div>
+      <div className="text-center mb-10">
+        <img src="/images/auth_logo.png" className="w-24 h-24 mx-auto mb-6 object-contain" alt="AfroCuisto Logo" />
+        <h1 className="text-3xl font-black text-stone-800 tracking-tight">AfroCuisto</h1>
+      </div>
       <div className="bg-stone-50 p-1 rounded-2xl flex mb-8">
         <button onClick={() => setAuthMode('login')} className={`flex-1 py-3 rounded-xl font-bold ${authMode === 'login' ? 'bg-white shadow-sm' : 'text-stone-400'}`}>Connexion</button>
         <button onClick={() => setAuthMode('signup')} className={`flex-1 py-3 rounded-xl font-bold ${authMode === 'signup' ? 'bg-white shadow-sm' : 'text-stone-400'}`}>Inscription</button>
