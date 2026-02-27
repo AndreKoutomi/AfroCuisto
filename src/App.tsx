@@ -685,7 +685,7 @@ export default function App() {
               className="relative h-72 rounded-[32px] overflow-hidden shadow-2xl shadow-stone-300/50 cursor-pointer group"
               onClick={() => setSelectedRecipe(recipes[Math.floor(Math.random() * recipes.length)])}
             >
-              <img src="https://picsum.photos/seed/culinary/800/600" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+              <img src="/images/art_pilon.jpg" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
               <div className="absolute top-4 left-4">
