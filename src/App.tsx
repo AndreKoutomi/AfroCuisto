@@ -495,7 +495,7 @@ export default function App() {
     <div className="flex-1 flex flex-col pb-44">
       {/* Sticky Top Header */}
       <header className="px-6 pt-14 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-50 border-b border-stone-100/50 shadow-sm flex items-center gap-3">
-        <div className="w-10 h-10 bg-[#fb5607] shrink-0" style={{ WebkitMaskImage: 'url(/images/chef_icon.png)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url(/images/chef_icon.png)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
+        <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
         <div className="flex flex-col">
           <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1 mb-1">
             Bonjour, {currentUser?.name?.split(' ')[0]} 👋
