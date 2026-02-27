@@ -234,6 +234,32 @@ export const recipes: Recipe[] = [
       "Cuire à la vapeur pendant 30 minutes."
     ]
   },
+  {
+    id: "P14",
+    name: "Couscous au Poulet Frit",
+    base: "Blé",
+    region: "National",
+    category: "Pâtes et Céréales (Wɔ̌)",
+    difficulty: "Moyen",
+    prepTime: "20 min",
+    cookTime: "40 min",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/couscous_poulet.png",
+    description: "Semoule de blé fine et légère accompagnée d'un ragoût de légumes et de morceaux de poulet frits croustillants.",
+    ingredients: [
+      { item: "Semoule de couscous fine", amount: "500g" },
+      { item: "Poulet découpé", amount: "1/2 poulet" },
+      { item: "Légumes (Carottes, Courgettes)", amount: "300g" },
+      { item: "Tomate concentrée", amount: "1 càs" },
+      { item: "Oignon et ail", amount: "QS" },
+      { item: "Huile de friture", amount: "QS" }
+    ],
+    steps: [
+      "Assaisonner et faire frire le poulet jusqu'à ce qu'il soit bien doré et croustillant.",
+      "Préparer une sauce tomate légère avec les légumes coupés en dés.",
+      "Faire cuire le couscous à la vapeur ou à l'eau bouillante selon la méthode traditionnelle pour qu'il soit bien égrainé.",
+      "Servir le couscous chaud nappé de la sauce aux légumes, avec le poulet frit sur le côté."
+    ]
+  },
 
   // --- Sauces (Nùsúnnú) ---
   {
