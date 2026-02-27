@@ -57,6 +57,19 @@ const DifficultyBadge = ({ difficulty }: { difficulty: Difficulty }) => {
   );
 };
 
+// --- Data Juices ---
+
+const benineseJuices = [
+  { id: 'j1', name: 'Jus de Bissap', image: '/images/juices/bissap.png', description: 'Le rafraîchissement iconique à l\'hibiscus rouge.' },
+  { id: 'j2', name: 'Jus de Baobab', image: 'https://picsum.photos/seed/baobab/600/800', description: 'Onctueux, riche en vitamine C et calcium.' },
+  { id: 'j3', name: 'Jus d\'Ananas', image: 'https://picsum.photos/seed/pineapple/600/800', description: 'La douceur pure de l\'ananas Pain de Sucre.' },
+  { id: 'j4', name: 'Jus de Tamarin', image: 'https://picsum.photos/seed/tamarin/600/800', description: 'Une saveur acidulée, digestive et rafraîchissante.' },
+  { id: 'j5', name: 'Jus de Mangue', image: 'https://picsum.photos/seed/mango/600/800', description: 'Le velouté des meilleures mangues du Bénin.' },
+  { id: 'j6', name: 'Jus de Corossol', image: 'https://picsum.photos/seed/corossol/600/800', description: 'Une texture onctueuse aux notes exotiques.' },
+  { id: 'j7', name: 'Jus de Passion', image: 'https://picsum.photos/seed/passion/600/800', description: 'Un parfum intense et une acidité parfaite.' },
+  { id: 'j8', name: 'Jus de Gingembre', image: 'https://picsum.photos/seed/ginger/600/800', description: 'Un punch naturel, tonifiant et épicé.' },
+];
+
 // --- Deep Views ---
 
 const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack }: any) => {
@@ -677,33 +690,32 @@ export default function App() {
         <div className="pt-2 space-y-12 pb-10">
 
           {/* Hero Section: Discovery of the day */}
-          <section className="px-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="relative h-72 rounded-[32px] overflow-hidden shadow-2xl shadow-stone-300/50 cursor-pointer group"
-              onClick={() => setSelectedRecipe(recipes[Math.floor(Math.random() * recipes.length)])}
-            >
-              <img src="/images/art_pilon.jpg" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+          {/* Beninese Juices Carousel */}
+          <section className="px-6 mb-10 overflow-hidden">
+            <div className="flex justify-between items-end mb-5">
+              <h2 className="text-2xl font-black text-stone-900 tracking-tight">L'Art des Jus 🍹</h2>
+              <span className="text-[10px] font-black text-[#fb5607] uppercase tracking-widest">8 Saveurs Béninoises</span>
+            </div>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-6">
+              {benineseJuices.map((juice) => (
+                <motion.div
+                  key={juice.id}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-shrink-0 w-72 h-[450px] relative rounded-[32px] overflow-hidden shadow-2xl group"
+                >
+                  <img src={juice.image} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-              <div className="absolute top-4 left-4">
-                <span className="bg-terracotta text-white text-[10px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
-                  <Flame size={12} /> Découverte du jour
-                </span>
-              </div>
-
-              <div className="absolute bottom-6 left-6 right-6">
-                <h2 className="text-3xl font-black text-white mb-2 leading-tight">L'Art du Pilon</h2>
-                <p className="text-white/80 text-sm font-medium leading-relaxed mb-4 line-clamp-2">
-                  Plongez dans les secrets ancestraux de la préparation de l'Agoun et du Télibô. Une expérience texturale unique.
-                </p>
-                <button className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 group-hover:bg-white group-hover:text-terracotta transition-colors">
-                  <BookOpen size={14} /> Lire l'histoire
-                </button>
-              </div>
-            </motion.div>
+                  <div className="absolute bottom-8 left-6 right-6">
+                    <h3 className="text-2xl font-black text-white mb-2">{juice.name}</h3>
+                    <p className="text-white/70 text-sm mb-6 line-clamp-3 font-medium leading-relaxed">{juice.description}</p>
+                    <button className="bg-[#fb5607] text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#fb5607]/40 active:scale-95 transition-all w-full flex items-center justify-center gap-2">
+                      Découvrir
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </section>
 
           {/* Special Collections */}
