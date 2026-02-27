@@ -59,5 +59,20 @@ export const dbService = {
     // Dynamic Querying (Simulation)
     getFavorites: (user: User, allRecipes: Recipe[]): Recipe[] => {
         return allRecipes.filter(r => user.favorites.includes(r.id));
+    },
+
+    updateAvatar: (userId: string, avatarData: string): User | null => {
+        const users = dbService.getUsers();
+        const user = users.find(u => u.id === userId);
+        if (!user) return null;
+
+        user.avatar = avatarData;
+        dbService.saveUser(user);
+
+        const currentUser = dbService.getCurrentUser();
+        if (currentUser && currentUser.id === userId) {
+            dbService.setCurrentUser(user);
+        }
+        return user;
     }
 };

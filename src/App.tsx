@@ -32,7 +32,9 @@ import {
   ShieldCheck,
   Eye,
   Key,
-  CheckCircle2
+  CheckCircle2,
+  Camera,
+  Edit2
 } from 'lucide-react';
 import { recipes } from './data';
 import { Recipe, Difficulty, User, UserSettings } from './types';
@@ -43,16 +45,24 @@ import { App as CapacitorApp } from '@capacitor/app';
 
 // --- Sub-Components & Helpers ---
 
-const DifficultyBadge = ({ difficulty }: { difficulty: Difficulty }) => {
+const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) => {
   const colors = {
     'Facile': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Très Facile': 'bg-emerald-50 text-emerald-600 border-emerald-100',
     'Moyen': 'bg-amber-100 text-amber-700 border-amber-200',
     'Difficile': 'bg-rose-100 text-rose-700 border-rose-200'
   };
 
+  const labels = {
+    'Facile': t.easy,
+    'Très Facile': t.veryEasy,
+    'Moyen': t.medium,
+    'Difficile': t.hard
+  };
+
   return (
-    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colors[difficulty]}`}>
-      {difficulty}
+    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${(colors as any)[difficulty] || 'bg-stone-100 text-stone-600'}`}>
+      {(labels as any)[difficulty] || difficulty}
     </span>
   );
 };
@@ -202,34 +212,77 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
 
 const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack, updateSettings, handleLogout, settings, handleSaveSettings }: any) => {
   const views: Record<string, () => React.JSX.Element> = {
-    'Informations personnelles': () => (
-      <div className="space-y-6">
-        <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
-          <h3 className="text-xs font-black uppercase text-stone-400 mb-4 tracking-widest">{t.identity}</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="text-[10px] font-bold text-stone-400 uppercase">{t.fullName}</label>
-              <p className="font-bold text-stone-800 border-b border-stone-100 pb-2">{currentUser?.name}</p>
+    'personalInfo': () => {
+      const fileInputRef = useRef<HTMLInputElement>(null);
+
+      const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && currentUser) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64String = reader.result as string;
+            const updatedUser = dbService.updateAvatar(currentUser.id, base64String);
+            if (updatedUser) {
+              setCurrentUser(updatedUser);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative group">
+              <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-stone-100">
+                <img
+                  src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 p-2.5 bg-terracotta text-white rounded-full shadow-lg border-2 border-white hover:scale-110 active:scale-95 transition-all"
+              >
+                <Camera size={18} />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-stone-400 uppercase">{t.emailAddr}</label>
-              <p className="font-bold text-stone-800 border-b border-stone-100 pb-2">{currentUser?.email}</p>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-stone-400 uppercase">{t.memberSince}</label>
-              <p className="font-bold text-stone-800">{currentUser?.joinedDate}</p>
+            <p className="mt-3 text-[10px] font-black text-stone-400 uppercase tracking-widest">{t.changeProfilePhoto}</p>
+          </div>
+          <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
+            <h3 className="text-xs font-black uppercase text-stone-400 mb-4 tracking-widest">{t.identity}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-stone-400 uppercase">{t.fullName}</label>
+                <p className="font-bold text-stone-800 border-b border-stone-100 pb-2">{currentUser?.name}</p>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-stone-400 uppercase">{t.emailAddr}</label>
+                <p className="font-bold text-stone-800 border-b border-stone-100 pb-2">{currentUser?.email}</p>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-stone-400 uppercase">{t.memberSince}</label>
+                <p className="font-bold text-stone-800">{currentUser?.joinedDate}</p>
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => alert("Fonctionnalité d'édition bientôt disponible")}
+            className="w-full bg-terracotta text-white py-4 rounded-2xl font-bold font-sm shadow-lg shadow-terracotta/20 active:scale-95 transition-transform"
+          >
+            {t.edit} {t.personalInfo.toLowerCase()}
+          </button>
         </div>
-        <button
-          onClick={() => alert("Fonctionnalité d'édition bientôt disponible")}
-          className="w-full bg-terracotta text-white py-4 rounded-2xl font-bold font-sm shadow-lg shadow-terracotta/20 active:scale-95 transition-transform"
-        >
-          {t.edit} {t.personalInfo.toLowerCase()}
-        </button>
-      </div>
-    ),
-    'Notifications': () => (
+      );
+    },
+    'notifications': () => (
       <div className="flex flex-col items-center justify-center py-20 text-center bg-stone-50 rounded-3xl border border-stone-100">
         <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 mb-4">
           <Bell size={32} />
@@ -238,7 +291,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         <p className="text-stone-400 text-xs">{t.notificationDesc}</p>
       </div>
     ),
-    'Paramètres': () => (
+    'settings': () => (
       <div className="space-y-3">
         <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
           <div className="flex items-center gap-3 mb-3">
@@ -275,7 +328,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         </div>
         <button
           onClick={() => {
-            setProfileSubView('Sécurité du compte');
+            setProfileSubView('security');
             setSecuritySubView('main');
           }}
           className="w-full flex items-center justify-between p-4 bg-stone-50 rounded-2xl border border-stone-100 active:bg-stone-100 transition-colors"
@@ -297,7 +350,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         </button>
       </div>
     ),
-    'Sécurité du compte': () => (
+    'security': () => (
       <AccountSecurityView
         currentUser={currentUser}
         setCurrentUser={setCurrentUser}
@@ -307,7 +360,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         goBack={goBack}
       />
     ),
-    'Confidentialité': () => (
+    'privacy': () => (
       <div className="space-y-6">
         <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
           <h3 className="text-[10px] font-black uppercase text-stone-400 mb-6">{t.privacyMenu}</h3>
@@ -328,7 +381,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         </button>
       </div>
     ),
-    'À propos d\'AfroCuisto': () => (
+    'about': () => (
       <div className="space-y-6 text-center">
         <div className="w-16 h-16 bg-terracotta/10 rounded-2xl flex items-center justify-center text-terracotta mx-auto mb-4">
           <ChefHat size={32} />
@@ -341,7 +394,8 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
     )
   };
 
-  return views[profileSubView] ? views[profileSubView]() : null;
+  const renderView = views[profileSubView] || views['settings'] || (() => null);
+  return renderView();
 };
 
 // --- Main Application ---
@@ -525,10 +579,10 @@ export default function App() {
   const otherRecipes = displayRecipes.length > 1 ? displayRecipes.slice(1) : (displayRecipes.length === 1 ? [] : recipes.slice(1));
 
   const navItems = [
-    { id: 'home', icon: Home, label: 'Accueil' },
-    { id: 'search', icon: Search, label: 'Explorer' },
-    { id: 'favs', icon: Heart, label: 'Favoris' },
-    { id: 'profile', icon: UserIcon, label: 'Profil' },
+    { id: 'home', icon: Home, label: t.home },
+    { id: 'search', icon: Search, label: t.explorer },
+    { id: 'favs', icon: Heart, label: t.favorites },
+    { id: 'profile', icon: UserIcon, label: t.profile },
   ];
 
   // --- Sub-Renderers (extracted for clarity) ---
@@ -536,13 +590,13 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sticky Top Header */}
-      <header className="px-6 pt-14 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-50 border-b border-stone-100/50 shadow-sm flex items-center gap-3">
+      <header className="px-6 pt-14 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-50 flex items-center gap-3">
         <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
         <div className="flex flex-col">
           <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1 mb-1">
-            Bonjour, {currentUser?.name?.split(' ')[0]} 👋
+            {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
           </span>
-          <h1 className="text-sm font-bold text-stone-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis z-10">L'âme de la cuisine béninoise</h1>
+          <h1 className="text-sm font-bold text-stone-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis z-10">{t.homeSlogan}</h1>
         </div>
       </header>
 
@@ -553,7 +607,7 @@ export default function App() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
             <input
               type="text"
-              placeholder="Chercher un plat, une envie..."
+              placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
@@ -579,14 +633,14 @@ export default function App() {
                         key={recipe.id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
+                        transition={{ duration: 0.15, delay: i * 0.03 }}
                         onClick={() => {
                           setSelectedRecipe(recipe);
                           setSearchQuery('');
                         }}
                         className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors"
                       >
-                        <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={recipe.name} />
+                        <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={recipe.name} style={{ transform: 'translateZ(0)' }} />
                         <div className="flex flex-col">
                           <span className="font-bold text-sm text-stone-900 leading-tight">{recipe.name}</span>
                           <span className="text-[10px] text-stone-400 font-medium flex items-center gap-1 mt-1">
@@ -623,10 +677,10 @@ export default function App() {
       <section className="mb-8 pl-6">
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pr-6">
           {[
-            { name: 'Pâtes et Céréales (Wɔ̌)', short: 'Pâtes', icon: '🥣' },
-            { name: 'Sauces (Nùsúnnú)', short: 'Sauces', icon: '🍲' },
-            { name: 'Protéines & Grillades', short: 'Grillades', icon: '🍗' },
-            { name: 'Boissons & Douceurs', short: 'Boissons', icon: '🍹' },
+            { name: 'Pâtes et Céréales (Wɔ̌)', short: t.catPates, icon: '🥣' },
+            { name: 'Sauces (Nùsúnnú)', short: t.catSauces, icon: '🍲' },
+            { name: 'Protéines & Grillades', short: t.catGrillades, icon: '🍗' },
+            { name: 'Boissons & Douceurs', short: t.catBoissons, icon: '🍹' },
           ].map((cat, i) => (
             <motion.div
               key={cat.short}
@@ -647,8 +701,8 @@ export default function App() {
       {/* Hero: "Sélection de Chef" (Glassmorphic) */}
       <section className="px-6 mb-10">
         <div className="flex justify-between items-end mb-4">
-          <h2 className="text-xl font-black text-stone-800 tracking-tight">Sélection du Chef</h2>
-          <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>Voir tout <ChevronRight size={14} /></span>
+          <h2 className="text-xl font-black text-stone-800 tracking-tight">{t.chefSelection}</h2>
+          <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>{t.viewAll} <ChevronRight size={14} /></span>
         </div>
 
         <motion.div
@@ -683,7 +737,7 @@ export default function App() {
 
       {/* Trending Recipes List */}
       <section className="px-6 mb-10">
-        <h2 className="text-xl font-black text-stone-800 mb-5 tracking-tight">Tendances actuelles</h2>
+        <h2 className="text-xl font-black text-stone-800 mb-5 tracking-tight">{t.trending}</h2>
         <div className="space-y-5">
           {otherRecipes.slice(0, 5).map(recipe => (
             <motion.div
@@ -713,7 +767,7 @@ export default function App() {
                 </div>
                 <p className="text-[11px] text-stone-500 mb-3 font-medium flex items-center gap-1.5"><MapPin size={10} className="text-stone-400" /> {recipe.region}</p>
                 <div className="flex items-center gap-2">
-                  <DifficultyBadge difficulty={recipe.difficulty} />
+                  <DifficultyBadge difficulty={recipe.difficulty} t={t} />
                   <span className="text-[9px] bg-stone-100 text-stone-600 font-bold px-2 py-1 rounded-md border border-stone-200 uppercase tracking-widest flex items-center gap-1">
                     <Clock size={10} /> {recipe.cookTime}
                   </span>
@@ -729,7 +783,7 @@ export default function App() {
   const renderExplorer = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Immersive Search Header */}
-      <header className="px-6 pt-14 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-40 border-b border-stone-100/50 shadow-sm">
+      <header className="px-6 pt-14 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-40">
         <h1 className="text-3xl font-black text-stone-900 mb-6 drop-shadow-sm">{selectedCategory || 'Explorer'}</h1>
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
@@ -737,7 +791,7 @@ export default function App() {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un plat, une région..."
+            placeholder={t.searchDishRegion}
             className="w-full bg-white border border-stone-100/80 rounded-[20px] py-4 pl-12 pr-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta/30 transition-all font-medium"
           />
         </div>
@@ -763,13 +817,13 @@ export default function App() {
                 <h4 className="font-bold text-stone-800 text-sm leading-tight line-clamp-2 mb-1">{recipe.name}</h4>
                 <p className="text-[10px] text-stone-400 mb-2 font-medium flex items-center gap-1"><MapPin size={10} /> {recipe.region}</p>
                 <div className="flex items-center justify-between mt-auto pt-2 border-t border-stone-50">
-                  <DifficultyBadge difficulty={recipe.difficulty} />
+                  <DifficultyBadge difficulty={recipe.difficulty} t={t} />
                 </div>
               </div>
             </motion.div>
           ))}
           {displayRecipes.length === 0 && (
-            <div className="col-span-2 py-20 text-center text-stone-400 font-medium">Aucun résultat trouvé.</div>
+            <div className="col-span-2 py-20 text-center text-stone-400 font-medium">{t.noResults}</div>
           )}
         </motion.div>
       ) : (
@@ -779,8 +833,8 @@ export default function App() {
           {/* Beninese Juices Carousel */}
           <section className="px-6 mb-10 overflow-hidden">
             <div className="flex justify-between items-end mb-5">
-              <h2 className="text-2xl font-black text-stone-900 tracking-tight">L'Art des Jus 🍹</h2>
-              <span className="text-[10px] font-black text-[#fb5607] uppercase tracking-widest">8 Saveurs Béninoises</span>
+              <h2 className="text-2xl font-black text-stone-900 tracking-tight">{t.artOfJuice}</h2>
+              <span className="text-[10px] font-black text-[#fb5607] uppercase tracking-widest">{t.juiceCount}</span>
             </div>
             <div ref={juicesRef} className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-6">
               {benineseJuices.map((juice) => (
@@ -800,7 +854,7 @@ export default function App() {
                     <h3 className="text-2xl font-black text-white mb-2">{juice.name}</h3>
                     <p className="text-white/70 text-sm mb-6 line-clamp-3 font-medium leading-relaxed">{juice.description}</p>
                     <button className="bg-[#fb5607] text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#fb5607]/40 active:scale-95 transition-all w-full flex items-center justify-center gap-2">
-                      Découvrir
+                      {t.discover}
                     </button>
                   </div>
                 </motion.div>
@@ -808,41 +862,13 @@ export default function App() {
             </div>
           </section>
 
-          {/* Special Collections */}
-          <section>
-            <div className="px-6 flex justify-between items-end mb-5">
-              <h2 className="text-xl font-bold text-stone-800 tracking-tight">Collections</h2>
-            </div>
-            <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-4 pt-1">
-              {[
-                { title: 'Épices & Feu', desc: 'Plats relevés', img: 'https://picsum.photos/seed/spicy/400/400' },
-                { title: 'Douceurs', desc: 'Desserts locaux', img: 'https://picsum.photos/seed/sweet/400/400' },
-                { title: 'Street Food', desc: 'Sur le pouce', img: 'https://picsum.photos/seed/street/400/400' },
-              ].map((collection, i) => (
-                <motion.div
-                  key={collection.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-40 h-40 rounded-[28px] overflow-hidden relative cursor-pointer shadow-lg shadow-stone-200/50 group"
-                >
-                  <img src={collection.img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
-                  <div className="absolute inset-x-0 bottom-0 p-4">
-                    <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest mb-1">{collection.desc}</p>
-                    <h3 className="text-white font-black text-lg leading-tight">{collection.title}</h3>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </section>
+
 
           {/* --- Nouvelles Sections --- */}
           {/* Plats Faciles */}
           <section className="mt-8">
             <div className="px-6 flex justify-between items-end mb-4">
-              <h2 className="text-xl font-black text-stone-800 tracking-tight">Vite fait, bien fait ⚡</h2>
+              <h2 className="text-xl font-black text-stone-800 tracking-tight">{t.quickRecipes} ⚡</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-6">
               {recipes.filter(r => r.difficulty === 'Facile' || r.difficulty === 'Très Facile').slice(0, 6).map(recipe => (
@@ -864,7 +890,7 @@ export default function App() {
           <section className="mt-2 bg-[#fb5607] py-8 text-[#ffffff] rounded-[40px] shadow-inner mx-2 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full bg-white/5 pointer-events-none mix-blend-overlay"></div>
             <div className="px-6 flex justify-between items-end mb-5 relative z-10">
-              <h2 className="text-xl font-black tracking-tight text-[#ffffff]">Stars des Maquis 🍽️</h2>
+              <h2 className="text-xl font-black tracking-tight text-[#ffffff]">{t.maquisStarsEmoji}</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-2 relative z-10">
               {recipes.slice(1, 7).map(recipe => (
@@ -875,7 +901,7 @@ export default function App() {
                     <div className="absolute bottom-3 left-3 right-3">
                       <h4 className="font-bold text-[13px] text-[#ffffff] leading-tight mb-1">{recipe.name}</h4>
                       <div className="flex items-center gap-1.5 text-[9px] font-bold text-white/90 uppercase tracking-widest">
-                        <Star size={10} fill="currentColor" /> Très demandé
+                        <Star size={10} fill="currentColor" /> {t.popular}
                       </div>
                     </div>
                   </div>
@@ -887,7 +913,7 @@ export default function App() {
           {/* Plats Moins Connus */}
           <section className="mt-8 mb-6">
             <div className="px-6 flex justify-between items-end mb-4">
-              <h2 className="text-xl font-black text-stone-800 tracking-tight">Trésors cachés 🗺️</h2>
+              <h2 className="text-xl font-black text-stone-800 tracking-tight">{t.hiddenTreasuresEmoji}</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-6">
               {recipes.slice(-6).map(recipe => (
@@ -895,7 +921,7 @@ export default function App() {
                   <div className="h-32 rounded-[24px] overflow-hidden mb-3 relative shadow-sm border border-stone-100">
                     <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter sepia-[0.3]" />
                     <div className="absolute top-2 right-2 bg-stone-900/80 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-black shadow-sm tracking-widest uppercase">
-                      Rare
+                      {t.rare}
                     </div>
                   </div>
                   <h4 className="font-bold text-sm text-stone-800 leading-tight truncate mb-1">{recipe.name}</h4>
@@ -910,20 +936,26 @@ export default function App() {
             const regionalRecipes = recipes.filter(r => r.region.toLowerCase().includes(regionFilter.toLowerCase()));
             if (regionalRecipes.length === 0) return null;
 
+            const regionNames: Record<string, string> = {
+              'Sud': t.south,
+              'Centre': t.center,
+              'Nord': t.north
+            };
+
             const regionDescriptions: Record<string, string> = {
-              'Sud': "Sublime mariage de produits marins, d'huile rouge et de maïs.",
-              'Centre': "Terre de tubercules, de sauces gluantes et de viandes fumées.",
-              'Nord': "Saveurs robustes, céréales anciennes et grillades épicées."
+              'Sud': t.southDesc,
+              'Centre': t.centerDesc,
+              'Nord': t.northDesc
             };
 
             return (
               <section key={regionFilter} className="relative">
                 <div className="px-6 mb-5">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="items-center gap-3 mb-2 flex">
                     <div className="w-10 h-10 rounded-2xl bg-terracotta/10 text-terracotta flex items-center justify-center">
                       <MapPin size={20} />
                     </div>
-                    <h2 className="text-2xl font-black text-stone-900 tracking-tight">Saveurs du {regionFilter}</h2>
+                    <h2 className="text-2xl font-black text-stone-900 tracking-tight">{t.flavorsOf} {regionNames[regionFilter]}</h2>
                   </div>
                   <p className="text-stone-500 text-sm font-medium italic pl-13">"{regionDescriptions[regionFilter]}"</p>
                 </div>
@@ -938,7 +970,7 @@ export default function App() {
                     <Star size={24} className="text-white/80" />
                     <div>
                       <h3 className="text-2xl font-black leading-none mb-2">{regionalRecipes.length}</h3>
-                      <p className="text-xs font-bold text-white/90 uppercase tracking-widest">Recettes</p>
+                      <p className="text-xs font-bold text-white/90 uppercase tracking-widest">{t.recipesLabel}</p>
                     </div>
                   </motion.div>
 
@@ -972,7 +1004,7 @@ export default function App() {
                           </span>
                           <h4 className="font-black text-white text-lg leading-tight mb-2 drop-shadow-md">{recipe.name}</h4>
                           <div className="flex items-center justify-between mt-3">
-                            <DifficultyBadge difficulty={recipe.difficulty} />
+                            <DifficultyBadge difficulty={recipe.difficulty} t={t} />
                             <div className="flex items-center gap-1 text-white/50 text-xs font-bold">
                               <ChefHat size={14} /> Pro
                             </div>
@@ -990,25 +1022,39 @@ export default function App() {
     </div>
   );
 
-  const renderFavorites = () => (
-    <div className="flex-1 flex flex-col pb-44 pt-10">
-      <header className="p-6 pt-8">
-        <h1 className="text-2xl font-bold text-stone-800 tracking-tight">Favoris</h1>
-      </header>
-      <div className="px-6 space-y-4">
-        {dbService.getFavorites(currentUser!, recipes).map(recipe => (
-          <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="bg-white p-3 rounded-3xl border border-stone-100 flex items-center gap-4">
-            <img src={recipe.image} className="w-16 h-16 rounded-2xl object-cover" />
-            <div className="flex-1">
-              <h4 className="font-bold text-stone-800 text-sm">{recipe.name}</h4>
-              <p className="text-[10px] text-stone-400">{recipe.region}</p>
+  const renderFavorites = () => {
+    const favoriteRecipes = dbService.getFavorites(currentUser!, recipes);
+
+    return (
+      <div className="flex-1 flex flex-col pb-44 pt-10">
+        <header className="p-6 pt-8">
+          <h1 className="text-2xl font-bold text-stone-800 tracking-tight">{t.favorites}</h1>
+        </header>
+        <div className="px-6 space-y-4">
+          {favoriteRecipes.length > 0 ? (
+            favoriteRecipes.map(recipe => (
+              <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="bg-white p-3 rounded-3xl border border-stone-100 flex items-center gap-4">
+                <img src={recipe.image} className="w-16 h-16 rounded-2xl object-cover" />
+                <div className="flex-1">
+                  <h4 className="font-bold text-stone-800 text-sm">{recipe.name}</h4>
+                  <p className="text-[10px] text-stone-400">{recipe.region}</p>
+                </div>
+                <button onClick={e => { e.stopPropagation(); toggleFavorite(recipe.id); }} className="text-rose-500 p-2"><Heart size={20} fill="currentColor" /></button>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-20 h-20 bg-stone-100 rounded-full flex items-center justify-center text-stone-300 mb-6">
+                <Heart size={40} />
+              </div>
+              <h3 className="text-lg font-bold text-stone-800 mb-2">{t.noFavorites}</h3>
+              <p className="text-stone-400 text-sm max-w-[200px] leading-relaxed italic">"{t.noFavoritesDesc}"</p>
             </div>
-            <button onClick={e => { e.stopPropagation(); toggleFavorite(recipe.id); }} className="text-rose-500 p-2"><Heart size={20} fill="currentColor" /></button>
-          </div>
-        ))}
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderProfile = () => (
     <div className="flex-1 flex flex-col pb-44 pt-10 relative bg-stone-50">
@@ -1017,7 +1063,15 @@ export default function App() {
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="absolute inset-0 z-50 bg-white p-6 pt-12">
             <header className="flex items-center gap-4 mb-8">
               <button onClick={goBack} className="p-2 bg-stone-50 rounded-xl"><ChevronLeft size={20} /></button>
-              <h2 className="text-xl font-bold">{profileSubView}</h2>
+              <h2 className="text-xl font-bold">{
+                profileSubView === 'personalInfo' ? t.personalInfo :
+                  profileSubView === 'settings' ? t.settings :
+                    profileSubView === 'about' ? t.about :
+                      profileSubView === 'security' ? t.security :
+                        profileSubView === 'notifications' ? t.notifications :
+                          profileSubView === 'privacy' ? t.privacy :
+                            profileSubView
+              }</h2>
             </header>
             <ProfileSubViewRenderer
               profileSubView={profileSubView}
@@ -1038,8 +1092,11 @@ export default function App() {
       </AnimatePresence>
 
       <header className="flex flex-col items-center py-10">
-        <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden mb-4">
-          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name}`} className="w-full h-full object-cover" />
+        <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden mb-4 bg-stone-100">
+          <img
+            src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name}`}
+            className="w-full h-full object-cover"
+          />
         </div>
         <h2 className="text-2xl font-bold text-stone-800">{currentUser?.name}</h2>
         <p className="text-stone-500 text-sm">{currentUser?.email}</p>
@@ -1047,9 +1104,9 @@ export default function App() {
 
       <section className="px-6 space-y-3">
         {[
-          { icon: UserIcon, label: t.personalInfo, view: 'Informations personnelles' },
-          { icon: Settings, label: t.settings, view: 'Paramètres' },
-          { icon: Info, label: t.about, view: "À propos d'AfroCuisto" },
+          { icon: UserIcon, label: t.personalInfo, view: 'personalInfo' },
+          { icon: Settings, label: t.settings, view: 'settings' },
+          { icon: Info, label: t.about, view: 'about' },
         ].map(item => (
           <button
             key={item.label}
@@ -1085,7 +1142,7 @@ export default function App() {
 
     return (
       <motion.div
-        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 350, mass: 0.8 }}
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 35, stiffness: 800, mass: 0.4 }}
         className="absolute inset-0 z-[100] bg-white overflow-hidden w-full flex flex-col"
       >
         <div className="absolute top-0 inset-x-0 z-[110] pointer-events-none p-6 pt-12">
@@ -1099,10 +1156,10 @@ export default function App() {
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedRecipe.id}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2, ease: "linear" }}
               className="absolute inset-x-0 top-0"
             >
               <div className="relative h-[40vh] w-full shrink-0">
@@ -1115,22 +1172,22 @@ export default function App() {
                 <div className="grid grid-cols-3 gap-3 mb-8">
                   <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
                     <Clock size={18} className="text-[#fb5607] mb-2" />
-                    <span className="text-[10px] uppercase font-black text-stone-400">Prép</span>
+                    <span className="text-[10px] uppercase font-black text-stone-400">{t.prepTime}</span>
                     <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.prepTime}</span>
                   </div>
                   <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
                     <Flame size={18} className="text-[#fb5607] mb-2" />
-                    <span className="text-[10px] uppercase font-black text-stone-400">Cuisson</span>
+                    <span className="text-[10px] uppercase font-black text-stone-400">{t.cookTime}</span>
                     <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.cookTime}</span>
                   </div>
                   <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
                     <UtensilsCrossed size={18} className="text-[#fb5607] mb-2" />
-                    <span className="text-[10px] uppercase font-black text-stone-400">Niveau</span>
+                    <span className="text-[10px] uppercase font-black text-stone-400">{t.level}</span>
                     <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.difficulty}</span>
                   </div>
                 </div>
 
-                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Ingrédients</h3>
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.ingredients}</h3>
                 <ul className="space-y-2.5 mb-8">
                   {selectedRecipe.ingredients?.map((ing, i) => (
                     <li key={i} className="flex justify-between p-4 bg-stone-50 rounded-2xl text-sm font-bold border border-stone-100/50">
@@ -1140,7 +1197,7 @@ export default function App() {
                   ))}
                 </ul>
 
-                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Préparation</h3>
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.preparation}</h3>
                 <div className="space-y-6 mb-8">
                   {selectedRecipe.steps?.map((step, i) => (
                     <div key={i} className="flex gap-5">
@@ -1152,33 +1209,33 @@ export default function App() {
 
                 <hr className="mb-8 border-stone-100" />
 
-                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Valeurs Nutritionnelles (est.)</h3>
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.nutrition}</h3>
                 <div className="bg-stone-50 border border-stone-100 rounded-3xl p-5 mb-10 shadow-inner">
                   <div className="grid grid-cols-4 gap-2 text-center divide-x divide-stone-200/60">
                     <div>
-                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Calories</span>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.calories}</span>
                       <span className="text-lg font-black text-[#fb5607]">{250 + (selectedRecipe.id.length * 15) % 300}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">kcal</span>
                     </div>
                     <div>
-                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Protéines</span>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.proteins}</span>
                       <span className="text-lg font-black text-stone-900">{10 + (selectedRecipe.id.length * 2) % 30}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
                     </div>
                     <div>
-                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Glucides</span>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.carbs}</span>
                       <span className="text-lg font-black text-stone-900">{20 + (selectedRecipe.id.length * 5) % 50}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
                     </div>
                     <div>
-                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">Lipides</span>
+                      <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.lipids}</span>
                       <span className="text-lg font-black text-stone-900">{5 + (selectedRecipe.id.length * 3) % 25}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
                     </div>
                   </div>
                 </div>
 
-                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Guide en Vidéo</h3>
+                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.videoGuide}</h3>
                 <div className="mb-10 rounded-[32px] overflow-hidden bg-stone-900 h-56 relative shadow-xl group border border-stone-200">
                   <iframe
                     className="w-full h-full absolute inset-0 z-10"
@@ -1192,7 +1249,7 @@ export default function App() {
 
                 {related.length > 0 && (
                   <>
-                    <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">Plats similaires</h3>
+                    <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.similarDishes}</h3>
                     <div className="flex gap-4 overflow-x-auto no-scrollbar pb-10 pr-6 -mr-6">
                       {related.map(r => (
                         <motion.div
@@ -1211,7 +1268,7 @@ export default function App() {
                           </div>
                           <h4 className="font-bold text-sm text-stone-900 leading-tight truncate mb-1">{r.name}</h4>
                           <span className="text-[10px] font-black text-stone-400 flex items-center gap-1 uppercase tracking-tighter">
-                            <Clock size={10} className="text-[#fb5607]" /> {r.cookTime} • {r.difficulty}
+                            <Clock size={10} className="text-[#fb5607]" /> {r.cookTime} • <DifficultyBadge difficulty={r.difficulty} t={t} />
                           </span>
                         </motion.div>
                       ))}
@@ -1265,24 +1322,32 @@ export default function App() {
         {selectedRecipe && renderDetail()}
       </AnimatePresence>
 
-      {/* Floating Glassmorphic Bottom Navigation */}
-      <nav className="absolute bottom-6 left-6 right-6 bg-[#fb5607] backdrop-blur-3xl border border-[#fb5607]/80 px-6 py-3 rounded-[32px] flex justify-between items-center z-[110] shadow-[0_20px_40px_rgba(251,86,7,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]">
-        {navItems.map(item => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button key={item.id} onClick={() => navigateTo(item.id)} className={`flex flex-col items-center relative transition-all duration-300 ${isActive ? 'text-[#fb5607]' : 'text-white/70 hover:text-white'}`}>
-              <motion.div
-                whileTap={{ scale: 0.8 }}
-                className={`p-2.5 rounded-2xl relative transition-all duration-300 ${isActive ? 'bg-white text-[#fb5607] shadow-lg shadow-black/10 scale-110 -translate-y-2' : ''}`}
-              >
-                <Icon size={22} fill={isActive ? 'currentColor' : 'none'} strokeWidth={isActive ? 2.5 : 2} />
-              </motion.div>
-              {!isActive && <span className="text-[9px] font-bold mt-1 text-white/80">{item.label}</span>}
-            </button>
-          );
-        })}
-      </nav>
+      <AnimatePresence>
+        {!selectedRecipe && (
+          <motion.nav
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 500 }}
+            className="absolute bottom-6 left-6 right-6 bg-[#fb5607] backdrop-blur-3xl border border-[#fb5607]/80 px-8 py-4 rounded-[32px] flex justify-between items-center z-[110] shadow-[0_20px_40px_rgba(251,86,7,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
+          >
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button key={item.id} onClick={() => navigateTo(item.id)} className={`flex flex-col items-center relative transition-all duration-300 ${isActive ? 'text-[#fb5607]' : 'text-white/70 hover:text-white'}`}>
+                  <motion.div
+                    whileTap={{ scale: 0.8 }}
+                    className={`p-2.5 rounded-2xl relative transition-all duration-300 ${isActive ? 'bg-white text-[#fb5607] shadow-lg shadow-black/10 scale-110 -translate-y-2' : ''}`}
+                  >
+                    <Icon size={24} fill={isActive ? 'currentColor' : 'none'} strokeWidth={isActive ? 2.5 : 2} />
+                  </motion.div>
+                </button>
+              );
+            })}
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
