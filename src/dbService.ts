@@ -4,7 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
 
 const USERS_KEY = 'afrocuisto_users';
 const CURRENT_USER_KEY = 'afrocuisto_current_user';
@@ -14,6 +16,10 @@ export const dbService = {
     // Recipe Sync
     async getRemoteRecipes(): Promise<Recipe[]> {
         try {
+            if (!supabase) {
+                console.warn('Supabase not configured');
+                throw new Error('Supabase client not initialized');
+            }
             const { data, error } = await supabase
                 .from('recipes')
                 .select('*')
