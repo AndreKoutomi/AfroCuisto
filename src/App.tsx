@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ChefHat,
@@ -361,6 +361,28 @@ export default function App() {
   const [securitySubView, setSecuritySubView] = useState<'main' | 'password' | 'email' | 'validation'>('main');
   const [aiRecommendation, setAiRecommendation] = useState<string>("Chargement de votre suggestion personnalisée...");
 
+  const juicesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'home' || !juicesRef.current) return;
+
+    let animationId: number;
+    const container = juicesRef.current;
+
+    const scroll = () => {
+      if (container) {
+        container.scrollLeft += 0.5;
+        if (container.scrollLeft >= (container.scrollWidth - container.clientWidth) - 1) {
+          container.scrollLeft = 0;
+        }
+        animationId = requestAnimationFrame(scroll);
+      }
+    };
+
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [activeTab, selectedRecipe]);
+
   // Navigation Logic
   const navigateTo = (tab: string) => {
     if (tab === activeTab) return;
@@ -696,7 +718,7 @@ export default function App() {
               <h2 className="text-2xl font-black text-stone-900 tracking-tight">L'Art des Jus 🍹</h2>
               <span className="text-[10px] font-black text-[#fb5607] uppercase tracking-widest">8 Saveurs Béninoises</span>
             </div>
-            <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-6">
+            <div ref={juicesRef} className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-6 scroll-smooth">
               {benineseJuices.map((juice) => (
                 <motion.div
                   key={juice.id}
