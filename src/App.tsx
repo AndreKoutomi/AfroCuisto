@@ -738,34 +738,36 @@ export default function App() {
           <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>{t.viewAll} <ChevronRight size={14} /></span>
         </div>
 
-        <motion.div
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setSelectedRecipe(featuredRecipe)}
-          className="relative h-72 rounded-[32px] overflow-hidden shadow-2xl shadow-stone-200 cursor-pointer group"
-        >
-          <img src={featuredRecipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          <div className="absolute top-4 right-4 z-10">
-            <button
-              onClick={(e) => { e.stopPropagation(); toggleFavorite(featuredRecipe.id); }}
-              className={`p-2.5 backdrop-blur-md border rounded-full transition-all ${currentUser?.favorites.includes(featuredRecipe.id) ? 'bg-white text-rose-500 border-white shadow-lg' : 'bg-white/30 text-white border-white/40 hover:bg-white/50'}`}
-            >
-              <Heart size={18} fill={currentUser?.favorites.includes(featuredRecipe.id) ? 'currentColor' : 'none'} />
-            </button>
-          </div>
+        {featuredRecipe && (
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setSelectedRecipe(featuredRecipe)}
+            className="relative h-72 rounded-[32px] overflow-hidden shadow-2xl shadow-stone-200 cursor-pointer group"
+          >
+            <img src={featuredRecipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleFavorite(featuredRecipe.id); }}
+                className={`p-2.5 backdrop-blur-md border rounded-full transition-all ${currentUser?.favorites.includes(featuredRecipe.id) ? 'bg-white text-rose-500 border-white shadow-lg' : 'bg-white/30 text-white border-white/40 hover:bg-white/50'}`}
+              >
+                <Heart size={18} fill={currentUser?.favorites.includes(featuredRecipe.id) ? 'currentColor' : 'none'} />
+              </button>
+            </div>
 
-          {/* Glassmorphic Info Panel */}
-          <div className="absolute bottom-3 left-3 right-3 bg-white/50 backdrop-blur-xl border border-white/40 p-4 rounded-[24px] shadow-lg">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-black font-black text-xl w-3/4 leading-tight">{featuredRecipe.name}</h3>
-              <span className="bg-white text-stone-900 text-[10px] px-2.5 py-1.5 rounded-[10px] font-black shadow-sm">{featuredRecipe.cookTime}</span>
+            {/* Glassmorphic Info Panel */}
+            <div className="absolute bottom-3 left-3 right-3 bg-white/50 backdrop-blur-xl border border-white/40 p-4 rounded-[24px] shadow-lg">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-black font-black text-xl w-3/4 leading-tight">{featuredRecipe.name}</h3>
+                <span className="bg-white text-stone-900 text-[10px] px-2.5 py-1.5 rounded-[10px] font-black shadow-sm">{featuredRecipe.cookTime}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] font-bold">
+                <span className="flex items-center gap-1 text-[#fb5607] font-black"><Star size={12} fill="currentColor" /> 4.9 (120+)</span>
+                <span className="mx-1 text-black/40">•</span>
+                <span className="flex items-center gap-1 text-black"><MapPin size={12} /> {featuredRecipe.region}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-[11px] font-bold">
-              <span className="flex items-center gap-1 text-[#fb5607] font-black"><Star size={12} fill="currentColor" /> 4.9 (120+)</span>
-              <span className="mx-1 text-black/40">•</span>
-              <span className="flex items-center gap-1 text-black"><MapPin size={12} /> {featuredRecipe.region}</span>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
       </section>
 
       {/* Trending Recipes List */}
