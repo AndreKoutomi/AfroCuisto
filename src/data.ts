@@ -260,6 +260,35 @@ export const recipes: Recipe[] = [
       "Servir le couscous chaud nappé de la sauce aux légumes, avec le poulet frit sur le côté."
     ]
   },
+  {
+    id: "P15",
+    name: "Spaghetti Africain",
+    base: "Blé",
+    region: "National",
+    category: "Pâtes et Céréales (Wɔ̌)",
+    difficulty: "Très Facile",
+    prepTime: "10 min",
+    cookTime: "25 min",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/spaghetti_africain.png",
+    description: "Plat de pâtes généreux sauté dans une sauce tomate épicée avec des légumes croquants et du bœuf ou du poisson.",
+    ingredients: [
+      { item: "Spaghetti", amount: "500g" },
+      { item: "Tomates fraîches mixées", amount: "300g" },
+      { item: "Oignons", amount: "2 gros" },
+      { item: "Bœuf coupé en dés", amount: "250g" },
+      { item: "Petit pois et Carottes", amount: "150g" },
+      { item: "Huile de tournesol", amount: "QS" },
+      { item: "Œufs bouillis", amount: "2" }
+    ],
+    steps: [
+      "Faire cuire les spaghetti dans de l'eau bouillante salée, les égoutter 'al dente'.",
+      "Faire revenir le bœuf dans l'huile chaude jusqu'à coloration, puis ajouter les oignons.",
+      "Verser la tomate et laisser réduire à feu moyen jusqu'à l'obtention d'une sauce onctueuse.",
+      "Ajouter les légumes et laisser mijoter 5 minutes.",
+      "Mélanger les spaghetti à la sauce, bien enrober chaque brin de pâtes.",
+      "Servir chaud garni d'un œuf bouilli coupé en deux."
+    ]
+  },
 
   // --- Sauces (Nùsúnnú) ---
   {

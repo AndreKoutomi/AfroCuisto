@@ -8,14 +8,14 @@ const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 async function upload() {
-    const filePath = 'd:/AfriHub/public/images/couscous_poulet.png';
+    const filePath = 'd:/AfriHub/public/images/spaghetti_africain.png';
     const fileBuffer = fs.readFileSync(filePath);
 
     console.log('Uploading image to Supabase Storage...');
 
     const { data, error } = await supabase.storage
         .from('recipe-images')
-        .upload('couscous_poulet.png', fileBuffer, {
+        .upload('spaghetti_africain.png', fileBuffer, {
             contentType: 'image/png',
             upsert: true
         });
@@ -26,7 +26,7 @@ async function upload() {
         console.log('Successfully uploaded image!', data);
         const { data: publicURLData } = supabase.storage
             .from('recipe-images')
-            .getPublicUrl('couscous_poulet.png');
+            .getPublicUrl('spaghetti_africain.png');
         console.log('Public URL:', publicURLData.publicUrl);
     }
 }

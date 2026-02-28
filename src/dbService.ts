@@ -13,6 +13,7 @@ const CURRENT_USER_KEY = 'afrocuisto_current_user';
 const REMOTE_RECIPES_KEY = 'afrocuisto_remote_recipes';
 
 export const dbService = {
+    supabase, // Expose for realtime sub
     // Recipe Sync
     async getRemoteRecipes(): Promise<Recipe[]> {
         try {

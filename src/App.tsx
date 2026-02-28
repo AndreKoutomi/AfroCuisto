@@ -79,20 +79,46 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
   toggleFavorite: (id: string) => void,
   t: any
 }) => {
-  const [index, setIndex] = useState(0);
+  // We add a clone of the last item at the start and a clone of the first item at the end
+  const extendedRecipes = recipes.length > 1 ? [recipes[recipes.length - 1], ...recipes, recipes[0]] : recipes;
+  const [index, setIndex] = useState(1); // Start at the first "real" item
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAutoScrolling = useRef(false);
+  const isJumping = useRef(false);
+
+  // Initial scroll to the first real recipe
+  useEffect(() => {
+    if (recipes.length > 1 && scrollRef.current) {
+      const container = scrollRef.current;
+      setTimeout(() => {
+        const snapElements = Array.from(container.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+        const firstReal = snapElements[1];
+        if (firstReal) {
+          const targetScrollLeft = firstReal.offsetLeft - (container.offsetWidth - firstReal.offsetWidth) / 2;
+          container.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
+        }
+      }, 50);
+    }
+  }, [recipes.length]);
 
   useEffect(() => {
     if (recipes.length <= 1) return;
     const interval = setInterval(() => {
-      if (scrollRef.current && !isAutoScrolling.current) {
-        const nextIndex = (index + 1) % recipes.length;
-        const snapElements = Array.from(scrollRef.current.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+      if (scrollRef.current) {
+        const rect = scrollRef.current.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+        if (!isVisible) return;
+      }
+
+      if (scrollRef.current && !isAutoScrolling.current && !isJumping.current) {
+        const nextIndex = index + 1;
+        const container = scrollRef.current;
+        const snapElements = Array.from(container.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
         const child = snapElements[nextIndex];
         if (child) {
           isAutoScrolling.current = true;
-          child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          const targetScrollLeft = child.offsetLeft - (container.offsetWidth - child.offsetWidth) / 2;
+          container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
           setIndex(nextIndex);
           setTimeout(() => { isAutoScrolling.current = false; }, 800);
         }
@@ -101,6 +127,56 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
     return () => clearInterval(interval);
   }, [recipes.length, index]);
 
+  const [targetIndex, setTargetIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (targetIndex !== null && scrollRef.current) {
+      const container = scrollRef.current;
+      const snapElements = Array.from(container.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+      const child = snapElements[targetIndex];
+      if (child) {
+        isAutoScrolling.current = true;
+        const targetScrollLeft = child.offsetLeft - (container.offsetWidth - child.offsetWidth) / 2;
+        container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+        setIndex(targetIndex);
+        setTimeout(() => { isAutoScrolling.current = false; }, 800);
+      }
+      setTargetIndex(null);
+    }
+  }, [targetIndex]);
+
+  // Jump logic for infinite loop
+  const handleInfiniteJump = (target: HTMLDivElement) => {
+    if (isAutoScrolling.current || recipes.length <= 1) return;
+
+    const snapElements = Array.from(target.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
+
+    // If we are at the very first clone (last item clone)
+    if (index === 0) {
+      isJumping.current = true;
+      const realIndex = recipes.length;
+      const realItem = snapElements[realIndex];
+      if (realItem) {
+        const targetLeft = realItem.offsetLeft - (target.offsetWidth - realItem.offsetWidth) / 2;
+        target.scrollTo({ left: targetLeft, behavior: 'auto' });
+        setIndex(realIndex);
+      }
+      setTimeout(() => { isJumping.current = false; }, 50);
+    }
+    // If we are at the very last clone (first item clone)
+    else if (index === extendedRecipes.length - 1) {
+      isJumping.current = true;
+      const realIndex = 1;
+      const realItem = snapElements[realIndex];
+      if (realItem) {
+        const targetLeft = realItem.offsetLeft - (target.offsetWidth - realItem.offsetWidth) / 2;
+        target.scrollTo({ left: targetLeft, behavior: 'auto' });
+        setIndex(realIndex);
+      }
+      setTimeout(() => { isJumping.current = false; }, 50);
+    }
+  };
+
   return (
     <div className="relative w-full overflow-hidden pb-6 pt-2">
       <div
@@ -108,7 +184,7 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
         className="relative flex gap-[4vw] overflow-x-auto no-scrollbar snap-x snap-mandatory px-[15vw]"
         style={{ scrollBehavior: 'smooth' }}
         onScroll={(e) => {
-          if (isAutoScrolling.current) return;
+          if (isAutoScrolling.current || isJumping.current) return;
           const target = e.currentTarget;
           const snapElements = Array.from(target.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
           if (!snapElements.length) return;
@@ -131,12 +207,20 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
             setIndex(closestIndex);
           }
         }}
+        onScrollEnd={(e) => handleInfiniteJump(e.currentTarget as HTMLDivElement)}
+        // Fallback for browsers that don't support onScrollEnd
+        onTouchEnd={() => {
+          setTimeout(() => {
+            if (scrollRef.current) handleInfiniteJump(scrollRef.current);
+          }, 350);
+        }}
       >
-        {recipes.map((recipe, i) => {
+        {extendedRecipes.map((recipe, i) => {
+          // The visual active index for dots is adjusted because of the prepended clone
           const isActive = i === index;
           return (
             <motion.div
-              key={recipe.id}
+              key={`${recipe.id}-${i}`}
               initial={false}
               animate={{
                 scale: isActive ? 1 : 0.85,
@@ -145,15 +229,8 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
               transition={{ type: 'spring', damping: 18, stiffness: 100, mass: 1.2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                if (!isActive && scrollRef.current) {
-                  const snapElements = Array.from(scrollRef.current.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-                  const child = snapElements[i];
-                  if (child) {
-                    isAutoScrolling.current = true;
-                    child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    setIndex(i);
-                    setTimeout(() => { isAutoScrolling.current = false; }, 800);
-                  }
+                if (!isActive) {
+                  setTargetIndex(i);
                 } else {
                   setSelectedRecipe(recipe);
                 }
@@ -217,19 +294,8 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
         {recipes.map((_, i) => (
           <button
             key={i}
-            onClick={() => {
-              if (scrollRef.current) {
-                const snapElements = Array.from(scrollRef.current.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-                const child = snapElements[i];
-                if (child) {
-                  isAutoScrolling.current = true;
-                  child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                  setIndex(i);
-                  setTimeout(() => { isAutoScrolling.current = false; }, 800);
-                }
-              }
-            }}
-            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${index === i ? 'w-8 bg-[#fb5607]' : 'w-2 bg-stone-300 hover:bg-stone-400'}`}
+            onClick={() => setTargetIndex(i + 1)}
+            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${(index - 1 + recipes.length) % recipes.length === i ? 'w-8 bg-[#fb5607]' : 'w-2 bg-stone-300 hover:bg-stone-400'}`}
             aria-label={`Aller à la diapositive ${i + 1}`}
           />
         ))}
