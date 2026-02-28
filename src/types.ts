@@ -45,6 +45,15 @@ export interface UserSettings {
   unitSystem: 'metric' | 'imperial';
 }
 
+export interface ShoppingItem {
+  id: string;
+  item: string;
+  amount: string;
+  isPurchased: boolean;
+  recipeName?: string;
+  recipeId?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -52,6 +61,7 @@ export interface User {
   password?: string;
   avatar?: string;
   favorites: string[]; // List of recipe IDs
+  shoppingList: ShoppingItem[];
   joinedDate: string;
   settings?: UserSettings;
 }

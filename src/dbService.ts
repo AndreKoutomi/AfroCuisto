@@ -131,5 +131,20 @@ export const dbService = {
             dbService.setCurrentUser(user);
         }
         return user;
+    },
+
+    updateShoppingList: (userId: string, shoppingList: any[]): User | null => {
+        const users = dbService.getUsers();
+        const user = users.find(u => u.id === userId);
+        if (!user) return null;
+
+        user.shoppingList = shoppingList;
+        dbService.saveUser(user);
+
+        const currentUser = dbService.getCurrentUser();
+        if (currentUser && currentUser.id === userId) {
+            dbService.setCurrentUser(user);
+        }
+        return user;
     }
 };

@@ -43,10 +43,12 @@ import {
   Trash2,
   Plus,
   XCircle,
-  SearchIcon
+  SearchIcon,
+  Sparkles,
+  Check
 } from 'lucide-react';
 import { recipes } from './data';
-import { Recipe, Difficulty, User, UserSettings } from './types';
+import { Recipe, Difficulty, User, UserSettings, ShoppingItem } from './types';
 import { getAIRecipeRecommendation } from './aiService';
 import { dbService } from './dbService';
 import { translations, LanguageCode } from './translations';
@@ -748,6 +750,7 @@ export default function App() {
   const [profileSubView, setProfileSubView] = useState<string | null>(null);
   const [securitySubView, setSecuritySubView] = useState<'main' | 'password' | 'email' | 'validation'>('main');
   const [aiRecommendation, setAiRecommendation] = useState<string>("Chargement de votre suggestion personnalisée...");
+  const [kidPageIndex, setKidPageIndex] = useState(0);
 
   const juicesRef = useRef<HTMLDivElement>(null);
 
@@ -875,6 +878,7 @@ export default function App() {
       email: authFormData.email,
       password: authFormData.password,
       favorites: [],
+      shoppingList: [],
       joinedDate: new Date().toLocaleDateString(),
       settings: { darkMode: false, language: 'fr', unitSystem: 'metric' }
     };
@@ -886,6 +890,12 @@ export default function App() {
   const toggleFavorite = (recipeId: string) => {
     if (!currentUser) return;
     const updatedUser = dbService.toggleFavorite(currentUser.id, recipeId);
+    if (updatedUser) setCurrentUser({ ...updatedUser });
+  };
+
+  const updateShoppingList = (newList: ShoppingItem[]) => {
+    if (!currentUser) return;
+    const updatedUser = dbService.updateShoppingList(currentUser.id, newList);
     if (updatedUser) setCurrentUser({ ...updatedUser });
   };
 
@@ -1059,6 +1069,76 @@ export default function App() {
           />
         )}
       </section>
+
+      {/* Coin des P'tits Chefs Section (AI Powered) */}
+      {!selectedCategory && !selectedRegion && !searchQuery && (
+        <section className="px-6 mt-2 mb-6">
+          <div className="bg-[#D0F0C0] p-6 rounded-[40px] border border-stone-200/20 relative overflow-hidden shadow-xl shadow-stone-200/5">
+            {/* AI Decorative Glow */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-[60px]" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400/10 rounded-full blur-[60px]" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6">
+                  <span className="text-2xl">🧸</span>
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-xl font-black text-stone-800 tracking-tight leading-none mb-1">Coin des P'tits Chefs</h2>
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-stone-900 uppercase tracking-widest">
+                    <Sparkles size={12} className="text-stone-900" /> Propulsé par Gemini AI
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-stone-500 text-xs font-medium leading-relaxed mb-6 pr-8">
+                Besoin d'idées pour les enfants ? Notre IA sélectionne les plats les plus doux, nutritifs et amusants à manger !
+              </p>
+
+              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 relative">
+                <AnimatePresence mode="popLayout">
+                  {(() => {
+                    const kidsBase = allRecipes.filter(r => r.difficulty === 'Très Facile' || r.name.toLowerCase().includes('akassa') || r.name.toLowerCase().includes('banane') || r.name.toLowerCase().includes('beignet') || r.category === 'Boissons & Douceurs');
+                    const startIndex = (kidPageIndex * 3) % kidsBase.length;
+                    return kidsBase.slice(startIndex, startIndex + 3).map((recipe, idx) => (
+                      <motion.div
+                        key={`${recipe.id}-${kidPageIndex}`}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, x: -20 }}
+                        transition={{ duration: 0.4, delay: idx * 0.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedRecipe(recipe)}
+                        className="flex-shrink-0 w-32 group cursor-pointer"
+                      >
+                        <div className="h-40 rounded-3xl overflow-hidden mb-2 relative shadow-md border border-white">
+                          <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={recipe.name} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-[10px] font-black text-white leading-tight truncate">{recipe.name}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ));
+                  })()}
+                </AnimatePresence>
+
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setKidPageIndex(prev => prev + 1)}
+                  className="flex-shrink-0 w-32 h-40 rounded-3xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center gap-2 bg-white/50 cursor-pointer hover:bg-stone-50 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-600">
+                    <Plus size={16} />
+                  </div>
+                  <span className="text-[9px] font-black text-stone-900 uppercase">Plus d'idées AI</span>
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Trending Recipes List */}
       <section className="px-6 mb-10">
@@ -1444,33 +1524,102 @@ export default function App() {
     <div className="flex-1 flex flex-col pb-44 pt-10 relative bg-stone-50">
       <AnimatePresence>
         {profileSubView && (
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className="absolute inset-0 z-50 bg-white p-6 pt-12">
-            <header className="flex items-center gap-4 mb-8">
-              <button onClick={goBack} className="p-2 bg-stone-50 rounded-xl"><ChevronLeft size={20} /></button>
-              <h2 className="text-xl font-bold">{
-                profileSubView === 'personalInfo' ? t.personalInfo :
-                  profileSubView === 'settings' ? t.settings :
-                    profileSubView === 'about' ? t.about :
-                      profileSubView === 'security' ? t.security :
-                        profileSubView === 'notifications' ? t.notifications :
-                          profileSubView === 'privacy' ? t.privacy :
-                            profileSubView
-              }</h2>
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className="absolute inset-0 z-50 bg-white p-6 pt-12 flex flex-col">
+            <header className="flex items-center gap-4 mb-8 shrink-0">
+              <button onClick={() => setProfileSubView(null)} className="p-2 bg-stone-50 rounded-xl"><ChevronLeft size={20} /></button>
+              <h2 className="text-xl font-black text-stone-800 tracking-tight">
+                {profileSubView === 'personalInfo' ? t.personalInfo :
+                  profileSubView === 'security' ? t.security :
+                    profileSubView === 'notifications' ? t.notifications :
+                      profileSubView === 'shopping' ? "Ma liste de courses" :
+                        t.settings}
+              </h2>
             </header>
-            <ProfileSubViewRenderer
-              profileSubView={profileSubView}
-              setProfileSubView={setProfileSubView}
-              currentUser={currentUser}
-              setCurrentUser={setCurrentUser}
-              t={t}
-              securitySubView={securitySubView}
-              setSecuritySubView={setSecuritySubView}
-              goBack={goBack}
-              updateSettings={updateSettings}
-              handleLogout={handleLogout}
-              settings={settings}
-              handleSaveSettings={handleSaveSettings}
-            />
+
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
+              {profileSubView === 'shopping' ? (
+                <div className="space-y-6">
+                  {currentUser?.shoppingList && currentUser.shoppingList.length > 0 ? (
+                    <div className="space-y-3">
+                      {currentUser.shoppingList.map((shopItem) => (
+                        <motion.div
+                          key={shopItem.id}
+                          layout
+                          className={`p-4 rounded-[28px] border transition-all flex items-center gap-4 ${shopItem.isPurchased ? 'bg-emerald-50 border-emerald-100 opacity-70' : 'bg-white border-stone-100 shadow-sm'}`}
+                        >
+                          <button
+                            onClick={() => {
+                              const newList = currentUser.shoppingList.map(i =>
+                                i.id === shopItem.id ? { ...i, isPurchased: !i.isPurchased } : i
+                              );
+                              updateShoppingList(newList);
+                            }}
+                            className={`w-6 h-6 rounded-xl flex items-center justify-center transition-all ${shopItem.isPurchased ? 'bg-emerald-500 scale-110 rotate-[360deg]' : 'bg-stone-50 border-2 border-stone-200'}`}
+                          >
+                            {shopItem.isPurchased && <Check size={14} className="text-white" />}
+                          </button>
+                          <div className="flex-1">
+                            <p className={`text-[13px] font-bold leading-none mb-1 transition-all ${shopItem.isPurchased ? 'text-emerald-900 line-through' : 'text-stone-800'}`}>{shopItem.item}</p>
+                            <p className={`text-[11px] font-medium ${shopItem.isPurchased ? 'text-emerald-600' : 'text-[#fb5607]'}`}>{shopItem.amount}</p>
+                            {shopItem.recipeName && (
+                              <p className="text-[9px] font-bold text-stone-400 mt-1 uppercase tracking-widest">{shopItem.recipeName}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newList = currentUser.shoppingList.filter(i => i.id !== shopItem.id);
+                              updateShoppingList(newList);
+                            }}
+                            className="p-2 text-stone-300 hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </motion.div>
+                      ))}
+
+                      <button
+                        onClick={() => {
+                          if (confirm("Vider toute la liste de courses ?")) {
+                            updateShoppingList([]);
+                          }
+                        }}
+                        className="w-full py-4 text-rose-500 font-bold text-xs uppercase tracking-widest mt-4"
+                      >
+                        Vider la liste
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-6 relative">
+                        <span className="text-4xl">🛒</span>
+                        <div className="absolute -top-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md">
+                          <Plus size={16} className="text-stone-300" />
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-black text-stone-800 mb-2 tracking-tight">Liste vide</h3>
+                      <p className="text-stone-400 text-xs max-w-[220px] leading-relaxed font-medium">
+                        Ajoutez des ingrédients depuis les fiches de recettes pour préparer vos prochaines courses !
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <ProfileSubViewRenderer
+                  profileSubView={profileSubView}
+                  setProfileSubView={setProfileSubView}
+                  currentUser={currentUser}
+                  setCurrentUser={setCurrentUser}
+                  t={t}
+                  securitySubView={securitySubView}
+                  setSecuritySubView={setSecuritySubView}
+                  goBack={goBack}
+                  updateSettings={updateSettings}
+                  handleLogout={handleLogout}
+                  settings={settings}
+                  handleSaveSettings={handleSaveSettings}
+                />
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1495,23 +1644,51 @@ export default function App() {
       </header>
 
       <section className="px-6 space-y-3">
-        {[
-          { icon: UserIcon, label: t.personalInfo, view: 'personalInfo' },
-          { icon: Settings, label: t.settings, view: 'settings' },
-          { icon: Info, label: t.about, view: 'about' },
-        ].map(item => (
-          <button
-            key={item.label}
-            onClick={() => setProfileSubView(item.view)}
-            className="w-full flex items-center justify-between p-4 bg-white rounded-3xl border border-stone-100 shadow-sm active:bg-stone-50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-stone-50 rounded-xl flex items-center justify-center text-stone-600"><item.icon size={20} /></div>
-              <span className="font-bold text-stone-700 text-sm">{item.label}</span>
+        <button onClick={() => setProfileSubView('personalInfo')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+              <UserIcon size={20} />
             </div>
+            <span className="font-black text-stone-800 text-sm tracking-tight">{t.personalInfo}</span>
+          </div>
+          <ChevronRight size={18} className="text-stone-300" />
+        </button>
+
+        {/* New Shopping List Menu */}
+        <button onClick={() => setProfileSubView('shopping')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
+              <span className="text-lg">🛒</span>
+            </div>
+            <span className="font-black text-stone-800 text-sm tracking-tight">Ma liste de courses</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {currentUser?.shoppingList && currentUser.shoppingList.length > 0 && (
+              <span className="bg-[#fb5607] text-white text-[9px] font-black px-2 py-1 rounded-full">{currentUser.shoppingList.length}</span>
+            )}
             <ChevronRight size={18} className="text-stone-300" />
-          </button>
-        ))}
+          </div>
+        </button>
+
+        <button onClick={() => setProfileSubView('security')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+              <Settings size={20} />
+            </div>
+            <span className="font-black text-stone-800 text-sm tracking-tight">{t.settings}</span>
+          </div>
+          <ChevronRight size={18} className="text-stone-300" />
+        </button>
+
+        <button onClick={() => setProfileSubView('about')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+              <Info size={20} />
+            </div>
+            <span className="font-black text-stone-800 text-sm tracking-tight">{t.about}</span>
+          </div>
+          <ChevronRight size={18} className="text-stone-300" />
+        </button>
 
         <button
           onClick={() => window.location.reload()}
@@ -1537,7 +1714,7 @@ export default function App() {
     </div>
   );
 
-  const RecipeDetail = ({ recipe, allRecipes, currentUser, toggleFavorite, goBack, detailScrollRef, t }: {
+  const RecipeDetail = ({ recipe, allRecipes, currentUser, toggleFavorite, goBack, detailScrollRef, t, updateShoppingList }: {
     recipe: Recipe;
     allRecipes: Recipe[];
     currentUser: User | null;
@@ -1545,8 +1722,10 @@ export default function App() {
     goBack: () => void;
     detailScrollRef: React.RefObject<HTMLDivElement>;
     t: any;
+    updateShoppingList: (newList: ShoppingItem[]) => void;
   }) => {
-    const charCodeSum = recipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const [selectedIngs, setSelectedIngs] = useState<number[]>([]);
+    const charCodeSum = recipe.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const fakeCalories = 250 + (charCodeSum % 300);
     const fakeProtein = 10 + (charCodeSum % 30);
     const fakeCarbs = 20 + (charCodeSum % 50);
@@ -1640,15 +1819,64 @@ export default function App() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.ingredients}</h3>
-                <ul className="space-y-2.5 mb-8">
-                  {recipe.ingredients?.map((ing, i) => (
-                    <li key={i} className="flex justify-between p-4 bg-stone-50 rounded-2xl text-sm font-bold border border-stone-100/50">
-                      <span className="text-stone-700">{ing.item}</span>
-                      <span className="text-[#fb5607]">{ing.amount}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-black text-stone-900 tracking-tight">{t.ingredients}</h3>
+                  <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-none">Cochez pour préparer</p>
+                </div>
+
+                <div className="space-y-2.5 mb-6">
+                  {recipe.ingredients?.map((ing, i) => {
+                    const isSelected = selectedIngs.includes(i);
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => {
+                          if (isSelected) setSelectedIngs(selectedIngs.filter(idx => idx !== i));
+                          else setSelectedIngs([...selectedIngs, i]);
+                        }}
+                        className={`flex items-center gap-4 p-4 rounded-[24px] border transition-all duration-300 cursor-pointer ${isSelected ? 'bg-amber-50 border-amber-200' : 'bg-stone-50 border-stone-100 hover:border-stone-200 active:scale-[0.98]'}`}
+                      >
+                        <div className={`w-6 h-6 rounded-xl flex items-center justify-center transition-all duration-500 ${isSelected ? 'bg-amber-500 scale-110 rotate-[360deg] shadow-lg shadow-amber-500/30' : 'bg-white border-2 border-stone-200'}`}>
+                          {isSelected && <Check size={14} className="text-white" />}
+                        </div>
+                        <div className="flex-1">
+                          <p className={`text-[13px] font-bold leading-none mb-1 transition-colors ${isSelected ? 'text-amber-900' : 'text-stone-700'}`}>{ing.item}</p>
+                          <p className={`text-[11px] font-medium transition-colors ${isSelected ? 'text-amber-600' : 'text-[#fb5607]'}`}>{ing.amount}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => {
+                    const selectedList = (recipe.ingredients || [])
+                      .filter((_, i) => selectedIngs.includes(i))
+                      .map(ing => ({
+                        id: Math.random().toString(36).substr(2, 9),
+                        item: ing.item,
+                        amount: ing.amount,
+                        isPurchased: false,
+                        recipeName: recipe.name,
+                        recipeId: recipe.id
+                      }));
+
+                    const currentList = currentUser?.shoppingList || [];
+                    updateShoppingList([...currentList, ...selectedList]);
+                    alert(`${selectedList.length} ingrédients ajoutés à votre liste de courses !`);
+                    setSelectedIngs([]);
+                  }}
+                  disabled={selectedIngs.length === 0}
+                  className={`w-full py-4 rounded-3xl font-black text-sm flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${selectedIngs.length > 0 ? 'bg-stone-900 text-white shadow-stone-900/20 active:scale-95' : 'bg-stone-100 text-stone-400 opacity-60 grayscale cursor-not-allowed'}`}
+                >
+                  <Plus size={20} />
+                  Ajouter à ma liste de courses ({selectedIngs.length})
+                </button>
+
+                <div className="h-px bg-stone-100 my-8" />
 
                 <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.preparation}</h3>
                 <div className="space-y-4 mb-8">
@@ -1797,6 +2025,7 @@ export default function App() {
             goBack={goBack}
             detailScrollRef={detailScrollRef}
             t={t}
+            updateShoppingList={updateShoppingList}
           />
         )}
       </AnimatePresence>
@@ -1808,18 +2037,40 @@ export default function App() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 500 }}
-            className="absolute bottom-6 left-6 right-6 bg-[#fb5607] backdrop-blur-3xl border border-[#fb5607]/80 px-8 py-4 rounded-[32px] flex justify-between items-center z-[110] shadow-[0_20px_40px_rgba(251,86,7,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
+            className="absolute bottom-6 left-6 right-6 bg-[#fb5607]/60 backdrop-blur-[25px] border border-white/25 px-6 py-3 rounded-[36px] flex justify-between items-center z-[110] shadow-[0_20px_45px_rgba(251,86,7,0.2),inset_0_1px_1px_rgba(255,255,255,0.3)]"
           >
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
-                <button key={item.id} onClick={() => navigateTo(item.id)} className={`flex flex-col items-center relative transition-all duration-300 ${isActive ? 'text-[#fb5607]' : 'text-white/70 hover:text-white'}`}>
+                <button
+                  key={item.id}
+                  onClick={() => navigateTo(item.id)}
+                  className="relative flex flex-col items-center justify-center w-14 h-14"
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-pill"
+                      className="absolute inset-0 bg-white border border-white rounded-[22px] shadow-lg shadow-black/10"
+                      transition={{ type: 'spring', bounce: 0.25, duration: 0.6 }}
+                    />
+                  )}
                   <motion.div
-                    whileTap={{ scale: 0.8 }}
-                    className={`p-2.5 rounded-2xl relative transition-all duration-300 ${isActive ? 'bg-white text-[#fb5607] shadow-lg shadow-black/10 scale-110 -translate-y-2' : ''}`}
+                    animate={{
+                      y: isActive ? -4 : 0,
+                      scale: isActive ? 1.1 : 1
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    className={`relative z-10 flex flex-col items-center ${isActive ? 'text-[#fb5607]' : 'text-white/70'}`}
                   >
-                    <Icon size={24} fill={isActive ? 'currentColor' : 'none'} strokeWidth={isActive ? 2.5 : 2} />
+                    <Icon size={24} fill={isActive ? 'currentColor' : 'none'} strokeWidth={isActive ? 2.8 : 2} />
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-dot"
+                        className="w-1.5 h-1.5 bg-[#fb5607] rounded-full mt-1.5 shadow-[0_0_8px_rgba(251,86,7,0.3)]"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
                   </motion.div>
                 </button>
               );
