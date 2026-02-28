@@ -37,6 +37,7 @@ export interface Recipe {
   base?: string;
   style?: string;
   origine_humaine?: string; // Avoiding collision with 'origine' if used as region
+  videoUrl?: string;
 }
 export interface UserSettings {
   darkMode: boolean;

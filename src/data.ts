@@ -82,7 +82,8 @@ export const recipes: Recipe[] = [
       "Mettre les morceaux chauds dans un mortier.",
       "Piler énergiquement avec un pilon en ajoutant progressivement un peu d'eau de cuisson.",
       "Continuer jusqu'à ce que la pâte soit lisse, élastique et sans morceaux."
-    ]
+    ],
+    videoUrl: "https://youtu.be/_H1PaAbpdQc?si=QaiDgbZG02OHAtQW"
   },
   {
     id: "P04",

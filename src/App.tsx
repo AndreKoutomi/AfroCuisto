@@ -35,7 +35,15 @@ import {
   Key,
   CheckCircle2,
   Camera,
-  Edit2
+  Edit2,
+  Play,
+  Bookmark,
+  Share2,
+  MoreVertical,
+  Trash2,
+  Plus,
+  XCircle,
+  SearchIcon
 } from 'lucide-react';
 import { recipes } from './data';
 import { Recipe, Difficulty, User, UserSettings } from './types';
@@ -69,6 +77,31 @@ const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) 
     <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight border ${colors[difficulty as keyof typeof colors] || 'bg-stone-100 text-stone-600'}`}>
       {labels[difficulty as keyof typeof labels]}
     </span>
+  );
+};
+
+const PreparationStep = ({ step, index, recipeId }: { step: string; index: number; recipeId: string }) => {
+  const [isDone, setIsDone] = useState(false);
+  return (
+    <motion.div
+      key={`${recipeId}-step-${index}`}
+      initial={{ opacity: 0, x: -10 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.05 }}
+      onClick={() => setIsDone(!isDone)}
+      className={`group flex gap-4 p-4 rounded-[24px] transition-all duration-300 cursor-pointer border ${isDone ? 'bg-emerald-50/40 border-emerald-100/50' : 'bg-stone-50 border-stone-100/50 active:bg-stone-100'}`}
+    >
+      <div className="flex-shrink-0 mt-0.5">
+        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isDone ? 'bg-emerald-500 border-emerald-500 shadow-sm shadow-emerald-200' : 'bg-white border-stone-200 group-hover:border-terracotta'}`}>
+          {isDone && <CheckCircle2 size={14} className="text-white" />}
+          {!isDone && <span className="text-[10px] font-black text-stone-400">{index + 1}</span>}
+        </div>
+      </div>
+      <p className={`text-[13px] font-medium leading-relaxed transition-all duration-300 ${isDone ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+        {step}
+      </p>
+    </motion.div>
   );
 };
 
@@ -891,7 +924,7 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sticky Top Header with Search */}
-      <header className="px-6 pt-10 pb-4 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6">
+      <header className="px-6 pt-4 pb-4 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-4">
         {/* Row 1: Logo & Greeting */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -1070,37 +1103,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* All Dishes Section */}
-      <section className="px-6 mb-10">
-        <div className="flex justify-between items-end mb-5">
-          <h2 className="text-xl font-black text-stone-800 tracking-tight">Tous les plats</h2>
-          <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{allRecipes.length} Plats</span>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {allRecipes.map(recipe => (
-            <motion.div
-              key={recipe.id}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedRecipe(recipe)}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100/80 flex flex-col h-full cursor-pointer hover:shadow-md transition-all group"
-            >
-              <div className="h-32 relative flex-shrink-0">
-                <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={recipe.name} />
-                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-stone-800 text-[9px] font-black shadow-sm tracking-widest uppercase">
-                  {recipe.cookTime}
-                </div>
-              </div>
-              <div className="p-3 flex-1 flex flex-col">
-                <h4 className="font-bold text-stone-800 text-xs leading-tight line-clamp-2 mb-1 group-hover:text-terracotta transition-colors">{recipe.name}</h4>
-                <div className="mt-auto pt-2 flex items-center justify-between">
-                  <span className="text-[9px] text-stone-400 font-medium flex items-center gap-1"><MapPin size={8} /> {recipe.region}</span>
-                  <DifficultyBadge difficulty={recipe.difficulty} t={t} />
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 
@@ -1211,15 +1213,15 @@ export default function App() {
           </section>
 
           {/* Plats des Restaurants (Stars des Maquis) */}
-          <section className="mt-2 bg-[#fb5607] py-8 text-[#ffffff] rounded-[40px] shadow-inner mx-2 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full bg-white/5 pointer-events-none mix-blend-overlay"></div>
+          <section className="mt-2 bg-[#E5E4E2] py-8 text-stone-800 rounded-[40px] shadow-sm mx-2 relative overflow-hidden border border-stone-200/50">
+            <div className="absolute top-0 left-0 w-full h-full bg-white/10 pointer-events-none mix-blend-overlay"></div>
             <div className="px-6 flex justify-between items-end mb-5 relative z-10">
-              <h2 className="text-xl font-black tracking-tight text-[#ffffff]">{t.maquisStarsEmoji}</h2>
+              <h2 className="text-xl font-black tracking-tight text-stone-800">{t.maquisStarsEmoji}</h2>
             </div>
-            <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-2 relative z-10">
+            <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-4 relative z-10">
               {allRecipes.slice(1, 7).map(recipe => (
                 <motion.div whileTap={{ scale: 0.95 }} key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="flex-shrink-0 w-44 cursor-pointer group">
-                  <div className="h-44 rounded-[28px] overflow-hidden mb-3 relative shadow-xl shadow-black/30 border border-white/20">
+                  <div className="h-44 rounded-[28px] overflow-hidden mb-3 relative shadow-xl shadow-stone-200/50 border border-stone-200/50">
                     <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3">
@@ -1279,33 +1281,26 @@ export default function App() {
                     <div className="w-10 h-10 rounded-2xl bg-terracotta/10 text-terracotta flex items-center justify-center">
                       <MapPin size={20} />
                     </div>
-                    <h2 className="text-2xl font-black text-stone-900 tracking-tight">{t.flavorsOf} {regionNames[regionFilter]}</h2>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-2xl font-black text-stone-900 tracking-tight">{t.flavorsOf} {regionNames[regionFilter]}</h2>
+                        <span className="bg-terracotta text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm shadow-terracotta/20">{regionalRecipes.length}</span>
+                      </div>
+                      <p className="text-stone-500 text-xs font-bold uppercase tracking-[0.15em] mt-0.5">{t.recipesLabel}</p>
+                    </div>
                   </div>
-                  <p className="text-stone-500 text-sm font-medium italic pl-13">"{regionDescriptions[regionFilter]}"</p>
+                  <p className="text-stone-400 text-[11px] font-medium italic pl-13 leading-relaxed">"{regionDescriptions[regionFilter]}"</p>
                 </div>
 
                 <div className="flex gap-5 overflow-x-auto px-6 no-scrollbar pb-8 pt-2">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={springTransition}
-                    className="flex-shrink-0 w-32 h-72 rounded-[32px] bg-[#fb5607] p-5 flex flex-col justify-between text-[#ffffff] shadow-xl shadow-[#fb5607]/20 border border-[#fb5607]/30"
-                  >
-                    <Star size={24} className="text-white/80" />
-                    <div>
-                      <h3 className="text-2xl font-black leading-none mb-2">{regionalRecipes.length}</h3>
-                      <p className="text-xs font-bold text-white/90 uppercase tracking-widest">{t.recipesLabel}</p>
-                    </div>
-                  </motion.div>
 
                   {regionalRecipes.map((recipe, idx) => (
                     <motion.div
                       key={recipe.id}
-                      initial={{ opacity: 0, x: 50 }}
+                      initial={{ opacity: 0, x: 30 }}
                       whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true, margin: "-50px" }}
-                      transition={{ ...springTransition, delay: idx * 0.1 }}
+                      viewport={{ once: true, margin: "-20px" }}
+                      transition={{ type: 'spring', stiffness: 700, damping: 35, delay: idx * 0.03 }}
                       whileTap={{ scale: 0.92, rotate: -1 }}
                       onClick={() => setSelectedRecipe(recipe)}
                       className="flex-shrink-0 w-52 relative cursor-pointer group"
@@ -1342,6 +1337,70 @@ export default function App() {
               </section>
             );
           })}
+
+          {/* All Dishes Section (excluding juices) */}
+          <section className="px-6 mt-12 mb-10">
+            <div className="flex justify-between items-end mb-5">
+              <h2 className="text-xl font-black text-stone-800 tracking-tight">Tous les plats</h2>
+              <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{allRecipes.filter(r => r.category !== 'Boissons & Douceurs').length} Plats</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {allRecipes.filter(r => r.category !== 'Boissons & Douceurs').map(recipe => (
+                <motion.div
+                  key={recipe.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedRecipe(recipe)}
+                  className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100/80 flex flex-col h-full cursor-pointer hover:shadow-md transition-all group"
+                >
+                  <div className="h-32 relative flex-shrink-0">
+                    <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={recipe.name} />
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-stone-800 text-[9px] font-black shadow-sm tracking-widest uppercase">
+                      {recipe.cookTime}
+                    </div>
+                  </div>
+                  <div className="p-3 flex-1 flex flex-col">
+                    <h4 className="font-bold text-stone-800 text-xs leading-tight line-clamp-2 mb-1 group-hover:text-terracotta transition-colors">{recipe.name}</h4>
+                    <div className="mt-auto pt-2 flex items-center justify-between">
+                      <span className="text-[9px] text-stone-400 font-medium flex items-center gap-1"><MapPin size={8} /> {recipe.region}</span>
+                      <DifficultyBadge difficulty={recipe.difficulty} t={t} />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+
+          {/* Juices & Drinks Section */}
+          <section className="px-6 mt-4 mb-10">
+            <div className="flex justify-between items-end mb-5">
+              <h2 className="text-xl font-black text-stone-800 tracking-tight">Jus, boissons et autres</h2>
+              <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{allRecipes.filter(r => r.category === 'Boissons & Douceurs').length} Boissons</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {allRecipes.filter(r => r.category === 'Boissons & Douceurs').map(recipe => (
+                <motion.div
+                  key={recipe.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedRecipe(recipe)}
+                  className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100/80 flex flex-col h-full cursor-pointer hover:shadow-md transition-all group"
+                >
+                  <div className="h-32 relative flex-shrink-0">
+                    <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={recipe.name} />
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-stone-800 text-[9px] font-black shadow-sm tracking-widest uppercase">
+                      {recipe.cookTime}
+                    </div>
+                  </div>
+                  <div className="p-3 flex-1 flex flex-col">
+                    <h4 className="font-bold text-stone-800 text-xs leading-tight line-clamp-2 mb-1 group-hover:text-terracotta transition-colors">{recipe.name}</h4>
+                    <div className="mt-auto pt-2 flex items-center justify-between">
+                      <span className="text-[9px] text-stone-400 font-medium flex items-center gap-1"><MapPin size={8} /> {recipe.region}</span>
+                      <DifficultyBadge difficulty={recipe.difficulty} t={t} />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
         </div>
       )}
     </div>
@@ -1478,20 +1537,33 @@ export default function App() {
     </div>
   );
 
-  const renderDetail = () => {
-    if (!selectedRecipe) return null;
-
-    const charCodeSum = selectedRecipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const RecipeDetail = ({ recipe, allRecipes, currentUser, toggleFavorite, goBack, detailScrollRef, t }: {
+    recipe: Recipe;
+    allRecipes: Recipe[];
+    currentUser: User | null;
+    toggleFavorite: (id: string) => void;
+    goBack: () => void;
+    detailScrollRef: React.RefObject<HTMLDivElement>;
+    t: any;
+  }) => {
+    const charCodeSum = recipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const fakeCalories = 250 + (charCodeSum % 300);
     const fakeProtein = 10 + (charCodeSum % 30);
     const fakeCarbs = 20 + (charCodeSum % 50);
     const fakeFat = 5 + (charCodeSum % 25);
 
-    let related = allRecipes.filter(r => r.category === selectedRecipe.category && r.id !== selectedRecipe.id).slice(0, 3);
+    let related = allRecipes.filter(r => r.category === recipe.category && r.id !== recipe.id).slice(0, 3);
     if (related.length === 0) {
-      related = allRecipes.filter(r => r.id !== selectedRecipe.id).slice(0, 3);
+      related = allRecipes.filter(r => r.id !== recipe.id).slice(0, 3);
     }
-    const youtubeQuery = encodeURIComponent(`préparation recette ${selectedRecipe.name}`);
+    const youtubeQuery = encodeURIComponent(`préparation recette ${recipe.name}`);
+
+    const [showStepHint, setShowStepHint] = useState(true);
+
+    useEffect(() => {
+      const timer = setTimeout(() => setShowStepHint(false), 6000);
+      return () => clearTimeout(timer);
+    }, [recipe.id]);
 
     return (
       <motion.div
@@ -1501,14 +1573,14 @@ export default function App() {
         <div className="absolute top-0 inset-x-0 z-[110] pointer-events-none p-6 pt-12">
           <div className="relative w-full flex justify-between items-start pointer-events-none">
             <button onClick={goBack} className="w-10 h-10 bg-[#fb5607]/80 backdrop-blur-md rounded-full text-white flex items-center justify-center border border-white/30 shadow-lg shadow-[#fb5607]/20 pointer-events-auto"><ChevronLeft size={24} /></button>
-            <button onClick={() => toggleFavorite(selectedRecipe.id)} className={`w-10 h-10 rounded-full flex items-center justify-center border shadow-md transition-all pointer-events-auto ${currentUser?.favorites.includes(selectedRecipe.id) ? 'bg-white border-white text-rose-500' : 'bg-white border-stone-100 text-stone-400'}`}><Heart size={20} fill={currentUser?.favorites.includes(selectedRecipe.id) ? 'currentColor' : 'none'} /></button>
+            <button onClick={() => toggleFavorite(recipe.id)} className={`w-10 h-10 rounded-full flex items-center justify-center border shadow-md transition-all pointer-events-auto ${currentUser?.favorites.includes(recipe.id) ? 'bg-white border-white text-rose-500' : 'bg-white border-stone-100 text-stone-400'}`}><Heart size={20} fill={currentUser?.favorites.includes(recipe.id) ? 'currentColor' : 'none'} /></button>
           </div>
         </div>
 
         <div ref={detailScrollRef} className="flex-1 overflow-y-auto no-scrollbar pb-36 relative min-h-0 bg-white">
           <AnimatePresence mode="wait">
             <motion.div
-              key={selectedRecipe.id}
+              key={recipe.id}
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
@@ -1516,33 +1588,61 @@ export default function App() {
               className="absolute inset-x-0 top-0"
             >
               <div className="relative h-[40vh] w-full shrink-0">
-                <img src={selectedRecipe.image} className="w-full h-full object-cover" alt={selectedRecipe.name} />
+                <img src={recipe.image} className="w-full h-full object-cover" alt={recipe.name} />
               </div>
               <div className="p-6 -mt-8 bg-white rounded-t-[32px] relative z-10 min-h-screen shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
-                <h1 className="text-2xl font-black text-stone-900 mb-2 leading-tight">{selectedRecipe.name}</h1>
-                <p className="text-[#fb5607] font-black text-xs mb-6 uppercase tracking-wider flex items-center gap-1.5"><MapPin size={14} />{selectedRecipe.region}</p>
+                <div className="flex justify-between items-start gap-4 mb-2 relative">
+                  <h1 className="text-2xl font-black text-stone-900 leading-tight flex-1">{recipe.name}</h1>
+                  <button
+                    onClick={() => setShowStepHint(!showStepHint)}
+                    className={`shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 relative z-[210] ${showStepHint ? 'bg-terracotta text-white rotate-[360deg] shadow-lg shadow-terracotta/30' : 'bg-stone-50 text-stone-400 border border-stone-100 hover:bg-stone-100 hover:text-terracotta'}`}
+                  >
+                    <Info size={20} />
+                  </button>
+
+                  {/* Integrated Hint Popup */}
+                  <AnimatePresence>
+                    {showStepHint && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.5, x: 20, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, x: 20, y: -10 }}
+                        className="absolute right-12 top-0 z-[200] w-[80%] max-w-[240px]"
+                      >
+                        <div className="bg-terracotta shadow-xl shadow-terracotta/20 text-white p-3 rounded-2xl border border-white/20 flex items-center gap-3 relative">
+                          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                            <CheckCircle2 size={16} className="text-white" />
+                          </div>
+                          <p className="text-[10px] font-bold leading-tight flex-1 text-left">Touchez les étapes pour suivre votre progression !</p>
+                          <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-terracotta rotate-45 border-t border-r border-white/20"></div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <p className="text-[#fb5607] font-black text-xs mb-6 uppercase tracking-wider flex items-center gap-1.5"><MapPin size={14} />{recipe.region}</p>
 
                 <div className="grid grid-cols-3 gap-3 mb-8">
                   <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
                     <Clock size={18} className="text-[#fb5607] mb-2" />
                     <span className="text-[10px] uppercase font-black text-stone-400">{t.prepTime}</span>
-                    <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.prepTime}</span>
+                    <span className="text-sm font-black text-stone-800 tracking-tight">{recipe.prepTime}</span>
                   </div>
                   <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
                     <Flame size={18} className="text-[#fb5607] mb-2" />
                     <span className="text-[10px] uppercase font-black text-stone-400">{t.cookTime}</span>
-                    <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.cookTime}</span>
+                    <span className="text-sm font-black text-stone-800 tracking-tight">{recipe.cookTime}</span>
                   </div>
                   <div className="bg-stone-50/80 p-4 rounded-[24px] flex flex-col items-center border border-stone-100/50">
                     <UtensilsCrossed size={18} className="text-[#fb5607] mb-2" />
                     <span className="text-[10px] uppercase font-black text-stone-400">{t.level}</span>
-                    <span className="text-sm font-black text-stone-800 tracking-tight">{selectedRecipe.difficulty}</span>
+                    <span className="text-sm font-black text-stone-800 tracking-tight">{recipe.difficulty}</span>
                   </div>
                 </div>
 
                 <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.ingredients}</h3>
                 <ul className="space-y-2.5 mb-8">
-                  {selectedRecipe.ingredients?.map((ing, i) => (
+                  {recipe.ingredients?.map((ing, i) => (
                     <li key={i} className="flex justify-between p-4 bg-stone-50 rounded-2xl text-sm font-bold border border-stone-100/50">
                       <span className="text-stone-700">{ing.item}</span>
                       <span className="text-[#fb5607]">{ing.amount}</span>
@@ -1551,13 +1651,11 @@ export default function App() {
                 </ul>
 
                 <h3 className="text-lg font-black text-stone-900 mb-4 tracking-tight">{t.preparation}</h3>
-                <div className="space-y-6 mb-8">
-                  {selectedRecipe.steps?.map((step, i) => (
-                    <div key={i} className="flex gap-5">
-                      <span className="w-7 h-7 flex-shrink-0 bg-[#fb5607] text-white rounded-xl text-xs flex items-center justify-center font-black shadow-lg shadow-[#fb5607]/20">{i + 1}</span>
-                      <p className="text-stone-600 text-[13px] font-medium leading-relaxed">{step}</p>
-                    </div>
-                  ))}
+                <div className="space-y-4 mb-8">
+                  {recipe.steps?.map((step: string, i: number) => {
+                    const Comp = PreparationStep as any;
+                    return <Comp key={`${recipe.id}-step-${i}`} step={step} index={i} recipeId={recipe.id} />;
+                  })}
                 </div>
 
                 <hr className="mb-8 border-stone-100" />
@@ -1567,22 +1665,22 @@ export default function App() {
                   <div className="grid grid-cols-4 gap-2 text-center divide-x divide-stone-200/60">
                     <div>
                       <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.calories}</span>
-                      <span className="text-lg font-black text-[#fb5607]">{250 + (selectedRecipe.id.length * 15) % 300}</span>
+                      <span className="text-lg font-black text-[#fb5607]">{250 + (recipe.id.length * 15) % 300}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">kcal</span>
                     </div>
                     <div>
                       <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.proteins}</span>
-                      <span className="text-lg font-black text-stone-900">{10 + (selectedRecipe.id.length * 2) % 30}</span>
+                      <span className="text-lg font-black text-stone-900">{10 + (recipe.id.length * 2) % 30}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
                     </div>
                     <div>
                       <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.carbs}</span>
-                      <span className="text-lg font-black text-stone-900">{20 + (selectedRecipe.id.length * 5) % 50}</span>
+                      <span className="text-lg font-black text-stone-900">{20 + (recipe.id.length * 5) % 50}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
                     </div>
                     <div>
                       <span className="block text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1.5">{t.lipids}</span>
-                      <span className="text-lg font-black text-stone-900">{5 + (selectedRecipe.id.length * 3) % 25}</span>
+                      <span className="text-lg font-black text-stone-900">{5 + (recipe.id.length * 3) % 25}</span>
                       <span className="text-[9px] text-stone-400 font-bold block mt-0.5">g</span>
                     </div>
                   </div>
@@ -1592,7 +1690,11 @@ export default function App() {
                 <div className="mb-10 rounded-[32px] overflow-hidden bg-stone-900 h-56 relative shadow-xl group border border-stone-200">
                   <iframe
                     className="w-full h-full absolute inset-0 z-10"
-                    src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('recette ' + selectedRecipe.name)}&controls=1`}
+                    src={recipe.videoUrl
+                      ? (recipe.videoUrl.includes('youtu.be/')
+                        ? `https://www.youtube.com/embed/${recipe.videoUrl.split('youtu.be/')[1].split('?')[0]}`
+                        : `https://www.youtube.com/embed/${recipe.videoUrl.split('v=')[1]?.split('&')[0]}`)
+                      : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('recette ' + recipe.name)}&controls=1`}
                     title="Tutoriel de préparation"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1610,8 +1712,7 @@ export default function App() {
                           key={r.id}
                           onClick={() => {
                             // Scroll back to top for the new recipe
-                            const container = document.querySelector('.overflow-y-auto');
-                            if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+                            if (detailScrollRef.current) detailScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                             setSelectedRecipe(r);
                           }}
                           className="flex-shrink-0 w-36 cursor-pointer group"
@@ -1687,7 +1788,17 @@ export default function App() {
       </main>
 
       <AnimatePresence>
-        {selectedRecipe && renderDetail()}
+        {selectedRecipe && (
+          <RecipeDetail
+            recipe={selectedRecipe}
+            allRecipes={allRecipes}
+            currentUser={currentUser}
+            toggleFavorite={toggleFavorite}
+            goBack={goBack}
+            detailScrollRef={detailScrollRef}
+            t={t}
+          />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
