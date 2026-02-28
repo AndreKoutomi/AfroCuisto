@@ -844,7 +844,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "20 min",
     cookTime: "15 min",
-    image: "https://picsum.photos/seed/B07/800/600",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/degue.jpg",
     description: "Granules de mil cuites à la vapeur mélangées à du yaourt ou du lait caillé sucré.",
     ingredients: [
       { item: "Granules de mil (Dèguè)", amount: "200g" },
@@ -1011,7 +1011,7 @@ export const recipes: Recipe[] = [
     difficulty: "Facile",
     prepTime: "25 min",
     cookTime: "0 min",
-    image: "https://picsum.photos/seed/corossol/600/800",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/jus-de-corossol.png",
     description: "Une texture crèmeuse et un goût subtilement acidulé.",
     ingredients: [
       { item: "Corossol bien mûr", amount: "1 gros" },
@@ -1034,7 +1034,7 @@ export const recipes: Recipe[] = [
     difficulty: "Très Facile",
     prepTime: "15 min",
     cookTime: "0 min",
-    image: "https://picsum.photos/seed/passion/600/800",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/jus-de-passion.png",
     description: "Un parfum tropical puissant et une fraîcheur incomparable.",
     ingredients: [
       { item: "Fruits de la passion", amount: "1kg" },
@@ -1057,7 +1057,7 @@ export const recipes: Recipe[] = [
     difficulty: "Moyen",
     prepTime: "20 min",
     cookTime: "0 min",
-    image: "https://picsum.photos/seed/ginger/600/800",
+    image: "https://ewoiqbhqtcdatpzhdaef.supabase.co/storage/v1/object/public/recipe-images/jus-de-gingembre.jpg",
     description: "Le 'Gnamankou' africain, piquant, tonique et médicinal.",
     ingredients: [
       { item: "Racine de gingembre frais", amount: "500g" },

@@ -58,6 +58,9 @@ import { App as CapacitorApp } from '@capacitor/app';
 const springTransition = { type: 'spring', stiffness: 500, damping: 28, mass: 0.5 };
 const layoutTransition = { type: 'spring', stiffness: 350, damping: 25 };
 
+const normalizeString = (str: string) =>
+  str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 // --- Sub-Components & Helpers ---
 
 const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) => {
@@ -751,8 +754,11 @@ export default function App() {
   const [securitySubView, setSecuritySubView] = useState<'main' | 'password' | 'email' | 'validation'>('main');
   const [aiRecommendation, setAiRecommendation] = useState<string>("Chargement de votre suggestion personnalisée...");
   const [kidPageIndex, setKidPageIndex] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
   const juicesRef = useRef<HTMLDivElement>(null);
+  const mainScrollRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (activeTab !== 'home' || !juicesRef.current) return;
@@ -789,6 +795,13 @@ export default function App() {
     setSelectedRecipe(null);
     setProfileSubView(null);
     setSecuritySubView('main');
+    setIsScrolled(false);
+    if (mainScrollRef.current) mainScrollRef.current.scrollTo(0, 0);
+  };
+
+  const onMainScroll = (e: React.UIEvent<HTMLElement>) => {
+    setIsScrolled(e.currentTarget.scrollTop > 50);
+    if (e.currentTarget.scrollTop <= 50) setIsSearchExpanded(false);
   };
 
   const goBack = () => {
@@ -908,9 +921,10 @@ export default function App() {
   const filteredRecipes = useMemo(() => {
     let result = allRecipes;
     if (searchQuery) {
+      const normalizedQuery = normalizeString(searchQuery);
       result = result.filter(r =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.region.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeString(r.name).includes(normalizedQuery) ||
+        normalizeString(r.region).includes(normalizedQuery)
       );
     }
     if (selectedCategory) result = result.filter(r => r.category === selectedCategory);
@@ -934,97 +948,173 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sticky Top Header with Search */}
-      <header className="px-6 pt-4 pb-4 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-4">
+      <header className={`px-6 pt-4 ${isScrolled ? 'pb-7' : 'pb-4'} bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-4 transition-all duration-500`}>
         {/* Row 1: Logo & Greeting */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
-            <div className="flex flex-col">
-              <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1">
-                {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
-              </span>
-              <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em]">{t.homeSlogan}</h1>
-            </div>
-          </div>
-          {isSyncing && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-              className="text-[#fb5607]"
-            >
-              <Wifi size={16} />
-            </motion.div>
-          )}
-        </div>
-
-        {/* Row 2: Global Search Bar */}
-        <div className="relative group shadow-sm rounded-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder={t.searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
-          />
-
-          {/* Suggestions Dropdown */}
-          <AnimatePresence>
-            {searchQuery.length > 0 && (
+        <div className="flex items-center justify-between min-h-[44px]">
+          <AnimatePresence mode="wait">
+            {!isSearchExpanded ? (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-[110] max-h-80 overflow-y-auto no-scrollbar"
+                key="greeting"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="flex items-center gap-3 overflow-hidden"
               >
-                {allRecipes
-                  .filter(r =>
-                    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    r.region.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .slice(0, 6)
-                  .map((recipe, i) => (
-                    <motion.div
-                      key={recipe.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.15, delay: i * 0.03 }}
-                      onClick={() => {
-                        setSelectedRecipe(recipe);
-                        setSearchQuery('');
-                      }}
-                      className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors"
-                    >
-                      <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={recipe.name} style={{ transform: 'translateZ(0)' }} />
-                      <div className="flex flex-col">
-                        <span className="font-bold text-sm text-stone-900 leading-tight">{recipe.name}</span>
-                        <span className="text-[10px] text-stone-400 font-medium flex items-center gap-1 mt-1">
-                          <MapPin size={10} /> {recipe.region} • {recipe.difficulty}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
-
-                {allRecipes.filter(r =>
-                  r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  r.region.toLowerCase().includes(searchQuery.toLowerCase())
-                ).length === 0 && (
-                    <div className="p-8 text-center bg-stone-50/50">
-                      <Search size={32} className="mx-auto mb-2 text-stone-300" />
-                      <p className="text-xs text-stone-500 font-bold uppercase tracking-widest">Aucun résultat trouvé</p>
-                    </div>
-                  )}
-
-                <div
-                  onClick={() => { setActiveTab('search'); }}
-                  className="p-3 bg-terracotta/5 text-center border-t border-stone-100 cursor-pointer"
-                >
-                  <span className="text-[10px] font-black text-terracotta uppercase tracking-[0.2em]">Voir tous les résultats</span>
+                <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1 truncate">
+                    {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
+                  </span>
+                  <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em] truncate">{t.homeSlogan}</h1>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="compact-search"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: '100%' }}
+                exit={{ opacity: 0, width: 0 }}
+                className="flex-1 mr-3 overflow-hidden"
+              >
+                <div className="bg-stone-100 rounded-2xl flex items-center px-4 py-2 border border-stone-200/50 shadow-inner">
+                  <Search size={16} className="text-stone-400 mr-2 flex-shrink-0" />
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder={t.searchPlaceholder}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-transparent border-none focus:outline-none text-sm w-full font-medium text-stone-800"
+                  />
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          <div className="flex items-center gap-3">
+            {isSyncing && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                className="text-[#fb5607]"
+              >
+                <Wifi size={16} />
+              </motion.div>
+            )}
+
+            <AnimatePresence mode="wait">
+              {isScrolled && (
+                <motion.button
+                  key={isSearchExpanded ? 'close' : 'search-trigger'}
+                  initial={{ opacity: 0, scale: 0.5, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, x: 20 }}
+                  onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+                  className={`w-10 h-10 ${isSearchExpanded ? 'bg-stone-800 text-white' : 'bg-stone-100/80 text-stone-600'} backdrop-blur-md rounded-2xl flex items-center justify-center shadow-sm border border-stone-200/50 transition-colors duration-300`}
+                >
+                  {isSearchExpanded ? <XCircle size={18} /> : <Search size={18} />}
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
+
+        {/* Row 2: Global Search Bar (Collapses on scroll) */}
+        <motion.div
+          animate={{
+            height: isScrolled ? 0 : 'auto',
+            opacity: isScrolled ? 0 : 1,
+            pointerEvents: isScrolled ? 'none' : 'auto',
+            scale: 1,
+            marginTop: isScrolled ? -16 : 0,
+            marginBottom: isScrolled ? -16 : 0
+          }}
+          transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+          className="relative"
+        >
+          <div className="relative group shadow-sm rounded-2xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
+            />
+          </div>
+        </motion.div>
+
+        {/* Global Suggestions Dropdown (Integrated for both search modes) */}
+        <AnimatePresence>
+          {searchQuery.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -5 }}
+              className="absolute top-full left-0 right-0 mx-6 mt-2 bg-white rounded-[28px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] border border-stone-100/80 overflow-hidden z-[110] max-h-[70vh] flex flex-col backdrop-blur-xl"
+            >
+              {(() => {
+                const normalizedQuery = normalizeString(searchQuery);
+                const filtered = allRecipes.filter(r =>
+                  normalizeString(r.name).includes(normalizedQuery) ||
+                  normalizeString(r.region).includes(normalizedQuery)
+                ).slice(0, 8);
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="p-10 text-center bg-stone-50/30">
+                      <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search size={28} className="text-stone-300" />
+                      </div>
+                      <p className="text-sm text-stone-900 font-bold mb-1">Aucun résultat</p>
+                      <p className="text-xs text-stone-400 font-medium px-4">Essayez un autre ingrédient ou une autre région</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="overflow-y-auto no-scrollbar py-2">
+                    {filtered.map((recipe, i) => (
+                      <motion.div
+                        key={recipe.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: i * 0.04 }}
+                        onClick={() => {
+                          setSelectedRecipe(recipe);
+                          setSearchQuery('');
+                          setIsSearchExpanded(false);
+                        }}
+                        className="p-4 mx-2 rounded-2xl flex items-center gap-4 hover:bg-stone-50 active:bg-stone-100 transition-all cursor-pointer group"
+                      >
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+                          <img src={recipe.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={recipe.name} />
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="font-bold text-sm text-stone-900 leading-tight truncate">{recipe.name}</span>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] text-terracotta bg-terracotta/5 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{recipe.region}</span>
+                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                              <Star size={10} className="text-amber-400" /> {recipe.rating}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-stone-300 group-hover:text-terracotta transition-colors pr-2" />
+                      </motion.div>
+                    ))}
+
+                    <button
+                      onClick={() => { setActiveTab('search'); setIsSearchExpanded(false); }}
+                      className="w-[calc(100%-16px)] mx-2 mt-2 mb-2 p-4 bg-terracotta text-white rounded-2xl flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-[0.15em] hover:bg-terracotta/90 transition-all shadow-lg shadow-terracotta/10"
+                    >
+                      Voir tous les résultats <Search size={14} />
+                    </button>
+                  </div>
+                );
+              })()}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Categories Horizontal Pills */}
@@ -1071,74 +1161,76 @@ export default function App() {
       </section>
 
       {/* Coin des P'tits Chefs Section (AI Powered) */}
-      {!selectedCategory && !selectedRegion && !searchQuery && (
-        <section className="px-6 mt-2 mb-6">
-          <div className="bg-[#D0F0C0] p-6 rounded-[40px] border border-stone-200/20 relative overflow-hidden shadow-xl shadow-stone-200/5">
-            {/* AI Decorative Glow */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-[60px]" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400/10 rounded-full blur-[60px]" />
+      {
+        !selectedCategory && !selectedRegion && !searchQuery && (
+          <section className="px-6 mt-2 mb-6">
+            <div className="bg-[#D0F0C0] p-6 rounded-[40px] border border-stone-200/20 relative overflow-hidden shadow-xl shadow-stone-200/5">
+              {/* AI Decorative Glow */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-[60px]" />
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400/10 rounded-full blur-[60px]" />
 
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6">
-                  <span className="text-2xl">🧸</span>
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-xl font-black text-stone-800 tracking-tight leading-none mb-1">Coin des P'tits Chefs</h2>
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-stone-900 uppercase tracking-widest">
-                    <Sparkles size={12} className="text-stone-900" /> Propulsé par Gemini AI
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-stone-500 text-xs font-medium leading-relaxed mb-6 pr-8">
-                Besoin d'idées pour les enfants ? Notre IA sélectionne les plats les plus doux, nutritifs et amusants à manger !
-              </p>
-
-              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 relative">
-                <AnimatePresence mode="popLayout">
-                  {(() => {
-                    const kidsBase = allRecipes.filter(r => r.difficulty === 'Très Facile' || r.name.toLowerCase().includes('akassa') || r.name.toLowerCase().includes('banane') || r.name.toLowerCase().includes('beignet') || r.category === 'Boissons & Douceurs');
-                    const startIndex = (kidPageIndex * 3) % kidsBase.length;
-                    return kidsBase.slice(startIndex, startIndex + 3).map((recipe, idx) => (
-                      <motion.div
-                        key={`${recipe.id}-${kidPageIndex}`}
-                        layout
-                        initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                        animate={{ opacity: 1, scale: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, x: -20 }}
-                        transition={{ duration: 0.4, delay: idx * 0.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedRecipe(recipe)}
-                        className="flex-shrink-0 w-32 group cursor-pointer"
-                      >
-                        <div className="h-40 rounded-3xl overflow-hidden mb-2 relative shadow-md border border-white">
-                          <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={recipe.name} />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-[10px] font-black text-white leading-tight truncate">{recipe.name}</p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ));
-                  })()}
-                </AnimatePresence>
-
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setKidPageIndex(prev => prev + 1)}
-                  className="flex-shrink-0 w-32 h-40 rounded-3xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center gap-2 bg-white/50 cursor-pointer hover:bg-stone-50 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-600">
-                    <Plus size={16} />
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6">
+                    <span className="text-2xl">🧸</span>
                   </div>
-                  <span className="text-[9px] font-black text-stone-900 uppercase">Plus d'idées AI</span>
-                </motion.div>
+                  <div className="flex flex-col">
+                    <h2 className="text-xl font-black text-stone-800 tracking-tight leading-none mb-1">Coin des P'tits Chefs</h2>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-stone-900 uppercase tracking-widest">
+                      <Sparkles size={12} className="text-stone-900" /> Propulsé par Gemini AI
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-stone-500 text-xs font-medium leading-relaxed mb-6 pr-8">
+                  Besoin d'idées pour les enfants ? Notre IA sélectionne les plats les plus doux, nutritifs et amusants à manger !
+                </p>
+
+                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 relative">
+                  <AnimatePresence mode="popLayout">
+                    {(() => {
+                      const kidsBase = allRecipes.filter(r => r.difficulty === 'Très Facile' || r.name.toLowerCase().includes('akassa') || r.name.toLowerCase().includes('banane') || r.name.toLowerCase().includes('beignet') || r.category === 'Boissons & Douceurs');
+                      const startIndex = (kidPageIndex * 3) % kidsBase.length;
+                      return kidsBase.slice(startIndex, startIndex + 3).map((recipe, idx) => (
+                        <motion.div
+                          key={`${recipe.id}-${kidPageIndex}`}
+                          layout
+                          initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                          animate={{ opacity: 1, scale: 1, x: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, x: -20 }}
+                          transition={{ duration: 0.4, delay: idx * 0.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedRecipe(recipe)}
+                          className="flex-shrink-0 w-32 group cursor-pointer"
+                        >
+                          <div className="h-40 rounded-3xl overflow-hidden mb-2 relative shadow-md border border-white">
+                            <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={recipe.name} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <div className="absolute bottom-2 left-2 right-2">
+                              <p className="text-[10px] font-black text-white leading-tight truncate">{recipe.name}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ));
+                    })()}
+                  </AnimatePresence>
+
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setKidPageIndex(prev => prev + 1)}
+                    className="flex-shrink-0 w-32 h-40 rounded-3xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center gap-2 bg-white/50 cursor-pointer hover:bg-stone-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-600">
+                      <Plus size={16} />
+                    </div>
+                    <span className="text-[9px] font-black text-stone-900 uppercase">Plus d'idées AI</span>
+                  </motion.div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )
+      }
 
       {/* Trending Recipes List */}
       <section className="px-6 mb-10">
@@ -1183,7 +1275,7 @@ export default function App() {
         </div>
       </section>
 
-    </div>
+    </div >
   );
 
   const renderExplorer = () => (
@@ -2006,7 +2098,7 @@ export default function App() {
 
   return (
     <div className="h-screen bg-stone-50 max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-all pt-[env(safe-area-inset-top,20px)]">
-      <main className="flex-1 overflow-y-auto no-scrollbar relative min-h-0">
+      <main onScroll={onMainScroll} ref={mainScrollRef as any} className="flex-1 overflow-y-auto no-scrollbar relative min-h-0">
         <AnimatePresence mode="wait">
           {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="h-full">{renderHome()}</motion.div>}
           {activeTab === 'search' && <motion.div key="search" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={springTransition} className="h-full">{renderExplorer()}</motion.div>}
