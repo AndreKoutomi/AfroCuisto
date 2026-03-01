@@ -176,7 +176,7 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
   const next = () => goTo(Math.min(n - 1, active + 1));
 
   return (
-    <div className="relative w-full" style={{ paddingBottom: '40px' }}>
+    <div className="relative w-full" style={{ paddingBottom: '28px' }}>
 
       {/* ── Scrollable track ─────────────────────────────────────────────── */}
       <div
@@ -372,7 +372,7 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
       )}
 
       {/* ── Dot indicators ───────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', position: 'absolute', bottom: 8, left: 0, right: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', position: 'absolute', bottom: 4, left: 0, right: 0 }}>
         {recipes.map((_, i) => (
           <button
             key={i}
@@ -1653,13 +1653,12 @@ export default function App() {
 
         if (section.type === 'dynamic_carousel') {
           return (
-            <section key={section.id} className="py-8 mb-2">
-              <div className="px-6 flex justify-between items-end mb-4">
+            <section key={section.id} className="py-6 mb-2">
+              <div className="px-6 flex justify-between items-end mb-3">
                 <div className="flex flex-col">
                   <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
                   {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
                 </div>
-
               </div>
               <SnapCarousel
                 recipes={sectionRecipes}
