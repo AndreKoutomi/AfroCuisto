@@ -1,48 +1,22 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Edit2, Trash2, ArrowUp, ArrowDown, LayoutGrid, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, ArrowUp, ArrowDown, LayoutGrid, Sparkles, Settings2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface Recipe {
-    id: string;
-    image: string;
-}
 
 export function SectionsManager() {
     const [sections, setSections] = useState<any[]>([]);
-    const [recipes, setRecipes] = useState<Record<string, Recipe>>({});
     const [loading, setLoading] = useState(true);
 
     async function fetchData() {
         try {
             setLoading(true);
-
-            // Fetch sections
             const { data: sectionData, error: sectionError } = await supabase
                 .from('home_sections')
                 .select('*')
                 .order('order_index');
 
             if (sectionError && sectionError.code !== '42P01') throw sectionError;
-
-            if (sectionData) {
-                setSections(sectionData);
-
-                // Extract all unique recipe IDs to fetch their images
-                const recipeIds = Array.from(new Set(sectionData.flatMap(s => s.recipe_ids || [])));
-
-                if (recipeIds.length > 0) {
-                    const { data: recipeData, error: recipeError } = await supabase
-                        .from('recipes')
-                        .select('id, image')
-                        .in('id', recipeIds);
-
-                    if (!recipeError && recipeData) {
-                        const recipeMap = recipeData.reduce((acc, r) => ({ ...acc, [r.id]: r }), {});
-                        setRecipes(recipeMap);
-                    }
-                }
-            }
+            if (sectionData) setSections(sectionData);
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
@@ -117,7 +91,8 @@ export function SectionsManager() {
                             <thead>
                                 <tr style={{ backgroundColor: '#F4F7FE' }}>
                                     <th style={{ width: '60px', padding: '1.5rem', borderRadius: '20px 0 0 0' }}>#</th>
-                                    <th style={{ padding: '1.5rem' }}>Thématique & Aperçu</th>
+                                    <th style={{ padding: '1.5rem' }}>Thématique</th>
+                                    <th style={{ padding: '1.5rem' }}>Source</th>
                                     <th style={{ padding: '1.5rem' }}>Description</th>
                                     <th style={{ padding: '1.5rem', textAlign: 'center' }}>Ordre</th>
                                     <th style={{ width: '150px', padding: '1.5rem', borderRadius: '0 20px 0 0' }}>Actions</th>
@@ -142,30 +117,30 @@ export function SectionsManager() {
                                         <tr key={section.id}>
                                             <td className="text-muted" style={{ padding: '1.5rem', fontWeight: 700 }}>{idx + 1}</td>
                                             <td style={{ padding: '1.5rem' }}>
-                                                <div className="flex flex-col gap-3">
+                                                <div className="flex flex-col gap-2">
                                                     <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-main)' }}>{section.title}</span>
-                                                    <div className="flex -space-x-2">
-                                                        {(section.recipe_ids || []).slice(0, 4).map((rid: string) => (
-                                                            <div key={rid} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-stone-100 shadow-sm">
-                                                                {recipes[rid] ? (
-                                                                    <img src={recipes[rid].image} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-stone-300">
-                                                                        <ImageIcon size={12} />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                        {section.recipe_ids?.length > 4 && (
-                                                            <div className="w-8 h-8 rounded-full border-2 border-white bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600 shadow-sm">
-                                                                +{section.recipe_ids.length - 4}
-                                                            </div>
-                                                        )}
-                                                        {(!section.recipe_ids || section.recipe_ids.length === 0) && (
-                                                            <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">Aucun plat selectionné</span>
-                                                        )}
-                                                    </div>
                                                 </div>
+                                            </td>
+                                            <td style={{ padding: '1.5rem' }}>
+                                                {section.type === 'query' ? (
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="badge" style={{ backgroundColor: 'rgba(67, 24, 255, 0.1)', color: 'var(--primary)', border: 'none', padding: '4px 8px', fontSize: '10px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', fontWeight: 'bold' }}>
+                                                            <Sparkles size={10} className="mr-1" /> Automatique
+                                                        </span>
+                                                        <span className="text-[10px] text-muted font-bold uppercase ml-1">
+                                                            {section.config?.category || section.config?.region || 'Tous les plats'}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="badge" style={{ backgroundColor: 'rgba(112, 126, 174, 0.1)', color: '#707EAE', border: 'none', padding: '4px 8px', fontSize: '10px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', fontWeight: 'bold' }}>
+                                                            <Settings2 size={10} className="mr-1" /> Manuel
+                                                        </span>
+                                                        <span className="text-[10px] text-muted font-bold uppercase ml-1">
+                                                            {section.recipe_ids?.length || 0} plats curatés
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="text-muted" style={{ padding: '1.5rem', maxWidth: '300px' }}>
                                                 <p className="text-sm font-medium line-clamp-2">{section.subtitle || 'Aucune description'}</p>
@@ -205,7 +180,7 @@ export function SectionsManager() {
                 </div>
                 <div>
                     <h4 className="font-bold text-stone-800">Note sur la synchronisation</h4>
-                    <p className="text-sm text-stone-500 font-medium">Les sections gérées ici apparaissent sur l'application mobile en temps réel pour tous les utilisateurs connectés.</p>
+                    <p className="text-sm text-stone-500 font-medium">Les sections gérées ici apparaissent sur l'application mobile en temps réel.</p>
                 </div>
             </div>
         </div>

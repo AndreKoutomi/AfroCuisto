@@ -1224,7 +1224,20 @@ export default function App() {
 
       {/* Dynamic Sections from Admin CMS */}
       {dynamicSections.map((section, sidx) => {
-        const sectionRecipes = allRecipes.filter(r => section.recipe_ids.includes(r.id));
+        let sectionRecipes: Recipe[] = [];
+
+        if (section.type === 'query') {
+          sectionRecipes = allRecipes.filter(r => {
+            const { category, region } = section.config || {};
+            if (category && r.category !== category) return false;
+            // Case-insensitive region check
+            if (region && !r.region?.toLowerCase().includes(region.toLowerCase())) return false;
+            return true;
+          }).slice(0, section.config?.limit || 10);
+        } else {
+          sectionRecipes = allRecipes.filter(r => section.recipe_ids?.includes(r.id));
+        }
+
         if (sectionRecipes.length === 0) return null;
 
         return (
