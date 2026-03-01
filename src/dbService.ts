@@ -59,7 +59,11 @@ export const dbService = {
 
         // Fallback to local storage if offline/error
         const cached = localStorage.getItem(REMOTE_RECIPES_KEY);
-        return cached ? JSON.parse(cached) : [];
+        if (cached) {
+            return JSON.parse(cached);
+        }
+
+        throw new Error('Internet connection required for initial data load.');
     },
     // User Management
     getUsers: (): User[] => {

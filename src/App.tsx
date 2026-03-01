@@ -697,20 +697,45 @@ export default function App() {
   const [authFormData, setAuthFormData] = useState({ name: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Cloud Sync
-  const [allRecipes, setAllRecipes] = useState<Recipe[]>(recipes);
-  const [isSyncing, setIsSyncing] = useState(false);
+  // Cloud Sync & Internet Dependency
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
+  const [isSyncing, setIsSyncing] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [syncError, setSyncError] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const syncRecipes = async () => {
       setIsSyncing(true);
-      const remote = await dbService.getRemoteRecipes();
-      if (remote && remote.length > 0) {
-        setAllRecipes(remote);
+      setSyncError(false);
+      try {
+        const remote = await dbService.getRemoteRecipes();
+        if (remote && remote.length > 0) {
+          setAllRecipes(remote);
+        } else {
+          // Force the app to wait for cloud data if absolutely empty
+          setSyncError(true);
+        }
+      } catch (err) {
+        setSyncError(true);
+      } finally {
+        setIsSyncing(false);
       }
-      setIsSyncing(false);
     };
 
+    // Always attempt sync; dbService handles offline fallback to cache
     syncRecipes();
 
     // 1. Realtime Sync Subscription
@@ -2093,6 +2118,30 @@ export default function App() {
   );
 
   // --- Return JSX ---
+
+  if (isSyncing && allRecipes.length === 0) {
+    return (
+      <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col items-center justify-center p-8">
+        <img src="/images/chef_icon.png" className="w-24 h-24 mb-6 animate-pulse" alt="Logo" />
+        <h2 className="text-xl font-black text-stone-800 tracking-tight text-center">Connexion au Cloud...</h2>
+        <p className="text-sm text-stone-500 mt-2 text-center text-balance">Synchronisation des recettes en temps réel avec la base de données.</p>
+        <div className="mt-8 border-4 border-stone-200 border-t-terracotta rounded-full w-10 h-10 animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (syncError && allRecipes.length === 0) {
+    return (
+      <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col items-center justify-center p-8">
+        <Wifi size={64} className="text-stone-300 mb-6" />
+        <h2 className="text-xl font-black text-stone-800 tracking-tight text-center">Réseau Indisponible</h2>
+        <p className="text-sm text-stone-500 mt-2 text-center text-balance">Cette application requiert une connexion internet pour garantir un catalogue à jour avec notre Cloud Supabase.</p>
+        <button onClick={() => window.location.reload()} className="mt-8 bg-terracotta text-white font-bold py-3 px-8 rounded-full shadow-lg active:scale-95 transition-transform">
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   if (!currentUser) return <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,20px)]">{renderAuth()}</div>;
 
