@@ -11,15 +11,17 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   const getPageTitle = () => {
-    if (location.pathname === '/sections') return 'Configuration des Sections';
-    if (location.pathname === '/ai-generator') return 'Générateur Intelligence Artificielle';
-    if (location.pathname === '/dashboard') return 'Tableau de bord';
+    if (location.pathname.startsWith('/sections')) return 'Configuration des Sections';
+    if (location.pathname.startsWith('/ai-generator')) return 'Générateur Intelligence Artificielle';
+    if (location.pathname.startsWith('/recipes')) return 'Gestion des Recettes';
+    if (location.pathname.startsWith('/dashboard')) return 'Tableau de bord';
     return 'Bienvenue sur AfriHub';
   };
 
   const getBreadcrumb = () => {
-    if (location.pathname === '/sections') return 'Pages / Sections';
-    if (location.pathname === '/ai-generator') return 'Pages / IA';
+    if (location.pathname.startsWith('/sections')) return 'Pages / Sections';
+    if (location.pathname.startsWith('/ai-generator')) return 'Pages / IA';
+    if (location.pathname.startsWith('/recipes')) return 'Pages / Recettes';
     return 'Pages / Tableau de bord';
   };
 
