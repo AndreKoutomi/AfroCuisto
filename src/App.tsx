@@ -219,6 +219,8 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
                 overflow: 'hidden',
                 position: 'relative',
                 aspectRatio: '3/4',
+                // Fond chaud derrière l'image — les zones blanches de l'image se fondent
+                background: 'linear-gradient(145deg, #c97040 0%, #7a2e10 100%)',
                 boxShadow: isActive
                   ? '0 10px 28px rgba(0,0,0,0.14), 0 3px 8px rgba(0,0,0,0.08)'
                   : '0 3px 10px rgba(0,0,0,0.08)',
@@ -228,13 +230,17 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
               <img
                 src={recipe.image}
                 alt={recipe.name}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  mixBlendMode: 'multiply',
+                }}
               />
 
               {/* Multi-layer gradient overlay */}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(180deg, rgba(0,0,0,0) 25%, rgba(180,60,20,0.35) 65%, rgba(100,20,5,0.92) 100%)',
+                background: 'linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(150,50,10,0.25) 55%, rgba(80,15,5,0.96) 100%)',
               }} />
 
               {/* Top row: category badge + heart */}
