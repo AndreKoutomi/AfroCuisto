@@ -110,6 +110,8 @@ const PreparationStep = ({ step, index, recipeId }: { step: string; index: numbe
   );
 };
 
+const AUTOPLAY_DURATION = 4500;
+
 const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite, t }: {
   recipes: Recipe[],
   setSelectedRecipe: (r: Recipe) => void,
@@ -117,228 +119,268 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
   toggleFavorite: (id: string) => void,
   t: any
 }) => {
-  // We add a clone of the last item at the start and a clone of the first item at the end
-  const extendedRecipes = recipes.length > 1 ? [recipes[recipes.length - 1], ...recipes, recipes[0]] : recipes;
-  const [index, setIndex] = useState(1); // Start at the first "real" item
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isAutoScrolling = useRef(false);
-  const isJumping = useRef(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const progressRef = useRef<number>(0);
+  const startTimeRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-  // Initial scroll to the first real recipe
-  useEffect(() => {
-    if (recipes.length > 1 && scrollRef.current) {
-      const container = scrollRef.current;
-      setTimeout(() => {
-        const snapElements = Array.from(container.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-        const firstReal = snapElements[1];
-        if (firstReal) {
-          const targetScrollLeft = firstReal.offsetLeft - (container.offsetWidth - firstReal.offsetWidth) / 2;
-          container.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
-        }
-      }, 50);
-    }
-  }, [recipes.length]);
-
-  useEffect(() => {
-    if (recipes.length <= 1) return;
-    const interval = setInterval(() => {
-      if (scrollRef.current) {
-        const rect = scrollRef.current.getBoundingClientRect();
-        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-        if (!isVisible) return;
-      }
-
-      if (scrollRef.current && !isAutoScrolling.current && !isJumping.current) {
-        const nextIndex = index + 1;
-        const container = scrollRef.current;
-        const snapElements = Array.from(container.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-        const child = snapElements[nextIndex];
-        if (child) {
-          isAutoScrolling.current = true;
-          const targetScrollLeft = child.offsetLeft - (container.offsetWidth - child.offsetWidth) / 2;
-          container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
-          setIndex(nextIndex);
-          setTimeout(() => { isAutoScrolling.current = false; }, 800);
-        }
-      }
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [recipes.length, index]);
-
-  const [targetIndex, setTargetIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (targetIndex !== null && scrollRef.current) {
-      const container = scrollRef.current;
-      const snapElements = Array.from(container.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-      const child = snapElements[targetIndex];
-      if (child) {
-        isAutoScrolling.current = true;
-        const targetScrollLeft = child.offsetLeft - (container.offsetWidth - child.offsetWidth) / 2;
-        container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
-        setIndex(targetIndex);
-        setTimeout(() => { isAutoScrolling.current = false; }, 800);
-      }
-      setTargetIndex(null);
-    }
-  }, [targetIndex]);
-
-  // Jump logic for infinite loop
-  const handleInfiniteJump = (target: HTMLDivElement) => {
-    if (isAutoScrolling.current || recipes.length <= 1) return;
-
-    const snapElements = Array.from(target.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-
-    // If we are at the very first clone (last item clone)
-    if (index === 0) {
-      isJumping.current = true;
-      const realIndex = recipes.length;
-      const realItem = snapElements[realIndex];
-      if (realItem) {
-        const targetLeft = realItem.offsetLeft - (target.offsetWidth - realItem.offsetWidth) / 2;
-        target.scrollTo({ left: targetLeft, behavior: 'auto' });
-        setIndex(realIndex);
-      }
-      setTimeout(() => { isJumping.current = false; }, 50);
-    }
-    // If we are at the very last clone (first item clone)
-    else if (index === extendedRecipes.length - 1) {
-      isJumping.current = true;
-      const realIndex = 1;
-      const realItem = snapElements[realIndex];
-      if (realItem) {
-        const targetLeft = realItem.offsetLeft - (target.offsetWidth - realItem.offsetWidth) / 2;
-        target.scrollTo({ left: targetLeft, behavior: 'auto' });
-        setIndex(realIndex);
-      }
-      setTimeout(() => { isJumping.current = false; }, 50);
-    }
+  const goTo = (idx: number, dir: 'left' | 'right' = 'right') => {
+    setPrevIndex(activeIndex);
+    setDirection(dir);
+    setActiveIndex(idx);
+    setProgress(0);
+    progressRef.current = 0;
+    startTimeRef.current = null;
   };
 
+  const goNext = () => goTo((activeIndex + 1) % recipes.length, 'right');
+  const goPrev = () => goTo((activeIndex - 1 + recipes.length) % recipes.length, 'left');
+
+  useEffect(() => {
+    if (recipes.length <= 1 || isPaused) return;
+    const animate = (now: number) => {
+      if (!startTimeRef.current) startTimeRef.current = now;
+      const elapsed = now - startTimeRef.current;
+      const p = Math.min(elapsed / AUTOPLAY_DURATION, 1);
+      setProgress(p);
+      progressRef.current = p;
+      if (p >= 1) {
+        setPrevIndex(activeIndex);
+        setDirection('right');
+        setActiveIndex(prev => (prev + 1) % recipes.length);
+        startTimeRef.current = null;
+        setProgress(0);
+      } else {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [activeIndex, recipes.length, isPaused]);
+
+  if (!recipes.length) return null;
+  const recipe = recipes[activeIndex];
+  const isFav = currentUser?.favorites.includes(recipe.id);
+
   return (
-    <div className="relative w-full overflow-hidden pb-6 pt-2">
-      <div
-        ref={scrollRef}
-        className="relative flex gap-[4vw] overflow-x-auto no-scrollbar snap-x snap-mandatory px-[15vw]"
-        style={{ scrollBehavior: 'smooth' }}
-        onScroll={(e) => {
-          if (isAutoScrolling.current || isJumping.current) return;
-          const target = e.currentTarget;
-          const snapElements = Array.from(target.children).filter(c => (c as HTMLElement).classList.contains('snap-center')) as HTMLElement[];
-          if (!snapElements.length) return;
-
-          const containerCenter = target.scrollLeft + (target.offsetWidth / 2);
-
-          let closestIndex = 0;
-          let minDistance = Infinity;
-
-          snapElements.forEach((child, i) => {
-            const childCenter = child.offsetLeft + (child.offsetWidth / 2);
-            const distance = Math.abs(containerCenter - childCenter);
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestIndex = i;
-            }
-          });
-
-          if (closestIndex !== index) {
-            setIndex(closestIndex);
-          }
-        }}
-        onScrollEnd={(e) => handleInfiniteJump(e.currentTarget as HTMLDivElement)}
-        // Fallback for browsers that don't support onScrollEnd
-        onTouchEnd={() => {
-          setTimeout(() => {
-            if (scrollRef.current) handleInfiniteJump(scrollRef.current);
-          }, 350);
-        }}
-      >
-        {extendedRecipes.map((recipe, i) => {
-          // The visual active index for dots is adjusted because of the prepended clone
-          const isActive = i === index;
-          return (
-            <motion.div
-              key={`${recipe.id}-${i}`}
-              initial={false}
-              animate={{
-                scale: isActive ? 1 : 0.85,
-                opacity: isActive ? 1 : 0.5,
-              }}
-              transition={{ type: 'spring', damping: 18, stiffness: 100, mass: 1.2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                if (!isActive) {
-                  setTargetIndex(i);
-                } else {
-                  setSelectedRecipe(recipe);
-                }
-              }}
-              className="relative h-[420px] w-[70vw] flex-shrink-0 rounded-[40px] overflow-hidden shadow-2xl shadow-stone-300/30 cursor-pointer group snap-center"
-            >
-              {/* Full background Image */}
-              <img
-                src={recipe.image}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                alt={recipe.name}
-              />
-
-              {/* Premium Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/40 to-transparent opacity-90" />
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-              {/* Top Icons Layer */}
-              <div className="absolute top-5 left-5 right-5 flex justify-between items-start z-10">
-                <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-2xl flex items-center gap-1.5 text-white shadow-lg">
-                  <Star size={13} className="text-amber-400 fill-amber-400" />
-                  <span className="text-xs font-black tracking-wide">4.9</span>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
-                  className={`p-3 backdrop-blur-xl border rounded-full transition-all duration-300 ${currentUser?.favorites.includes(recipe.id) ? 'bg-white text-[#fb5607] border-white shadow-lg scale-110' : 'bg-black/20 text-white border-white/20 hover:bg-black/40'}`}
-                >
-                  <Heart size={20} fill={currentUser?.favorites.includes(recipe.id) ? 'currentColor' : 'none'} />
-                </button>
-              </div>
-
-              {/* Bottom Content Area */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col z-10 transform transition-transform duration-500">
-                <span className="inline-flex items-center w-max px-2.5 py-1 rounded-lg bg-[#fb5607]/20 border border-[#fb5607]/30 text-[10px] font-black text-[#fb5607] uppercase tracking-widest mb-3 backdrop-blur-md">
-                  Notre Recommandation
-                </span>
-
-                <h3 className="text-white font-black text-[26px] leading-[1.1] mb-4 drop-shadow-md pr-2">
-                  {recipe.name}
-                </h3>
-
-                <div className="flex items-center justify-between w-full border-t border-white/10 pt-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-stone-200">
-                    <MapPin size={14} className="text-stone-300/80 shrink-0" />
-                    <span className="truncate max-w-[120px]">{recipe.region}</span>
-                  </div>
-                  <span className="bg-white/10 backdrop-blur-md border border-white/10 text-white text-[11px] px-3 py-1.5 rounded-xl font-black shrink-0 flex items-center gap-1.5">
-                    <Clock size={12} className="text-stone-300" />{recipe.cookTime}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-        {/* Right padding specific spacing element to avoid iOS scroll cut off */}
-        <div className="w-[1vw] flex-shrink-0" />
-      </div>
-
-      {/* Modern Dots Indicator */}
-      <div className="flex justify-center gap-2 mt-6">
-        {recipes.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setTargetIndex(i + 1)}
-            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${(index - 1 + recipes.length) % recipes.length === i ? 'w-8 bg-[#fb5607]' : 'w-2 bg-stone-300 hover:bg-stone-400'}`}
-            aria-label={`Aller à la diapositive ${i + 1}`}
+    <div
+      className="relative w-full overflow-hidden"
+      style={{ height: '78vw', maxHeight: '360px', touchAction: 'pan-y', borderRadius: '0 0 32px 32px', marginBottom: 2 }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* — Background layers (cross-fade between slides) — */}
+      <AnimatePresence initial={false} custom={direction}>
+        <motion.div
+          key={recipe.id}
+          custom={direction}
+          variants={{
+            enter: (d: string) => ({ x: d === 'right' ? '100%' : '-100%', scale: 1.1 }),
+            center: { x: 0, scale: 1 },
+            exit: (d: string) => ({ x: d === 'right' ? '-30%' : '30%', scale: 0.95, opacity: 0 }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.65, ease: [0.32, 0, 0.18, 1] }}
+          className="absolute inset-0"
+        >
+          <img
+            src={recipe.image}
+            className="w-full h-full object-cover"
+            alt={recipe.name}
           />
-        ))}
+          {/* Deep cinematic gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+          {/* Color tint for depth */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, rgba(251,86,7,0.08), transparent)' }} />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* — Shimmer / ambient glow pulse — */}
+      <motion.div
+        key={`glow-${recipe.id}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.18, 0] }}
+        transition={{ duration: 2.5, ease: 'easeInOut', repeat: Infinity, repeatDelay: 1.5 }}
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 80%, rgba(251,86,7,0.25), transparent)' }}
+      />
+
+      {/* — Top bar — */}
+      <div className="absolute top-4 left-5 right-5 flex items-center justify-between z-20">
+        {/* Dot indicators */}
+        <div className="flex items-center gap-1.5">
+          {recipes.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i, i > activeIndex ? 'right' : 'left')}
+              className="relative overflow-hidden rounded-full transition-all duration-500"
+              style={{ width: i === activeIndex ? 24 : 6, height: 6 }}
+            >
+              <div className="absolute inset-0 bg-white/30 rounded-full" />
+              {i === activeIndex && (
+                <motion.div
+                  className="absolute inset-y-0 left-0 bg-white rounded-full"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Favorite button */}
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
+          className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center shadow-lg transition-all duration-300 ${isFav ? 'bg-white text-[#fb5607] border-white shadow-[#fb5607]/20' : 'bg-black/25 text-white border-white/20'
+            }`}
+        >
+          <Heart size={18} fill={isFav ? 'currentColor' : 'none'} strokeWidth={2.5} />
+        </motion.button>
       </div>
+
+      {/* — Bottom content — */}
+      <div className="absolute bottom-0 inset-x-0 p-5 z-20">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={recipe.id}
+            custom={direction}
+            variants={{
+              enter: (d: string) => ({ x: d === 'right' ? 40 : -40, opacity: 0 }),
+              center: { x: 0, opacity: 1 },
+              exit: (d: string) => ({ x: d === 'right' ? -20 : 20, opacity: 0 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="inline-flex items-center gap-1.5 mb-2.5"
+            >
+              <span className="px-2.5 py-1 rounded-xl bg-[#fb5607]/25 border border-[#fb5607]/40 text-[10px] font-black text-[#fb5607] uppercase tracking-widest backdrop-blur-md">
+                ✦ Sélection du Chef
+              </span>
+              <span className="px-2.5 py-1 rounded-xl bg-white/10 border border-white/15 text-[10px] font-black text-white/90 backdrop-blur-md flex items-center gap-1">
+                <Star size={9} className="fill-amber-400 text-amber-400" /> 4.9
+              </span>
+            </motion.div>
+
+            {/* Title */}
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.22 }}
+              className="text-white font-black leading-[1.1] mb-3 drop-shadow-lg"
+              style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}
+            >
+              {recipe.name}
+            </motion.h2>
+
+            {/* Meta row */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.30 }}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-white/80 text-xs font-bold">
+                  <MapPin size={12} className="text-[#fb5607]" />
+                  {recipe.region}
+                </span>
+                <span className="w-px h-3 bg-white/20" />
+                <span className="flex items-center gap-1 text-white/80 text-xs font-bold">
+                  <Clock size={12} className="text-white/50" />
+                  {recipe.cookTime}
+                </span>
+              </div>
+
+              {/* CTA */}
+              <motion.button
+                whileTap={{ scale: 0.93 }}
+                onClick={() => setSelectedRecipe(recipe)}
+                className="flex items-center gap-1.5 bg-[#fb5607] text-white text-[11px] font-black px-4 py-2.5 rounded-2xl shadow-lg shadow-[#fb5607]/30"
+              >
+                Voir la recette <ChevronRight size={13} strokeWidth={3} />
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* — Touch / swipe nav zones (invisible) — */}
+      <button
+        className="absolute left-0 inset-y-0 w-1/4 z-10"
+        onClick={goPrev}
+        style={{ background: 'transparent' }}
+        aria-label="Précédent"
+      />
+      <button
+        className="absolute right-0 inset-y-0 w-1/4 z-10"
+        onClick={goNext}
+        style={{ background: 'transparent' }}
+        aria-label="Suivant"
+      />
     </div>
+  );
+};
+
+// --- NavButton ---
+
+type NavButtonProps = {
+  icon: React.ElementType;
+  isActive: boolean;
+  onClick: () => void;
+};
+
+const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileTap={{ scale: 0.84 }}
+      transition={{ type: 'spring', stiffness: 600, damping: 28 }}
+      className="relative flex items-center justify-center"
+      style={{ width: 56, height: 52, flexShrink: 0 }}
+    >
+      {/* Sliding white bubble (shared layoutId = smooth morphing) */}
+      {isActive && (
+        <motion.div
+          layoutId="nav-white-bubble"
+          transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+          className="absolute inset-0 rounded-[20px]"
+          style={{
+            background: 'rgba(255,255,255,0.96)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,1)',
+          }}
+        />
+      )}
+
+      {/* Icon */}
+      <motion.div
+        animate={{
+          scale: isActive ? 1.1 : 1,
+          y: isActive ? -1 : 0,
+        }}
+        transition={{ type: 'spring', stiffness: 480, damping: 26 }}
+        className="relative z-10"
+      >
+        <Icon
+          size={21}
+          strokeWidth={isActive ? 2.4 : 1.8}
+          color={isActive ? '#F94D00' : 'rgba(255,255,255,0.58)'}
+        />
+      </motion.div>
+    </motion.button>
   );
 };
 
@@ -1095,11 +1137,9 @@ export default function App() {
             height: isScrolled ? 0 : 'auto',
             opacity: isScrolled ? 0 : 1,
             pointerEvents: isScrolled ? 'none' : 'auto',
-            scale: 1,
-            marginTop: isScrolled ? -16 : 0,
-            marginBottom: isScrolled ? -16 : 0
+            overflow: 'hidden',
           }}
-          transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="relative"
         >
           <div className="relative group shadow-sm rounded-2xl">
@@ -1187,8 +1227,39 @@ export default function App() {
         </AnimatePresence>
       </header>
 
+      {/* ── Hero Carousel ── */}
+      {(() => {
+        // 1) Check if admin defined a 'hero_carousel' section
+        const heroSection = dynamicSections.find(
+          (s: any) => s.type === 'hero_carousel' && (!s.config?.page || s.config.page === 'home')
+        );
+        let heroRecipes: Recipe[];
+        if (heroSection) {
+          // Use the manually-selected recipe IDs from the admin panel
+          const ids: string[] = heroSection.recipe_ids || [];
+          heroRecipes = ids.length > 0
+            ? ids.map((id: string) => allRecipes.find(r => r.id === id)).filter(Boolean) as Recipe[]
+            : allRecipes.slice(0, 5);
+        } else {
+          // Fallback: use the first 5 featured recipes
+          heroRecipes = featuredRecipes.length >= 2 ? featuredRecipes : allRecipes.slice(0, 5);
+        }
+        if (!heroRecipes.length) return null;
+        return (
+          <section className="mt-4 mb-0">
+            <HeroCarousel
+              recipes={heroRecipes}
+              setSelectedRecipe={setSelectedRecipe}
+              currentUser={currentUser}
+              toggleFavorite={toggleFavorite}
+              t={t}
+            />
+          </section>
+        );
+      })()}
+
       {/* Categories Horizontal Pills */}
-      <section className="mt-6 mb-8 pl-6">
+      <section className="mt-5 mb-8 pl-6">
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pr-6">
           {[
             { name: 'Pâtes et Céréales (Wɔ̌)', short: t.catPates, icon: '🥣' },
@@ -1235,6 +1306,54 @@ export default function App() {
         sectionRecipes = sectionRecipes.slice(0, section.config?.limit || 10);
 
         if (sectionRecipes.length === 0) return null;
+
+        if (section.type === 'dynamic_carousel') {
+          return (
+            <section key={section.id} className="mb-14">
+              <div className="px-6 flex justify-between items-end mb-2">
+                <div className="flex flex-col">
+                  <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
+                  {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
+                </div>
+                <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>{t.viewAll} <ChevronRight size={14} /></span>
+              </div>
+              <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-6 pt-16">
+                {sectionRecipes.map((recipe, ridx) => {
+                  const colors = ['bg-[#e8e8e8]', 'bg-[#eeeeee]', 'bg-[#dcdcdc]'];
+                  const bgColor = colors[ridx % colors.length];
+
+                  return (
+                    <motion.div
+                      key={recipe.id}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: ridx * 0.1 }}
+                      onClick={() => setSelectedRecipe(recipe)}
+                      className="flex-shrink-0 w-[190px] cursor-pointer group"
+                    >
+                      <div className={`h-[310px] ${bgColor} rounded-[38px] p-4 flex flex-col items-center relative shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white/40`}>
+                        <div className="absolute -top-[55px] w-[145px] h-[145px] rounded-full shadow-[0_25px_40px_-10px_rgba(0,0,0,0.3)] overflow-hidden border-[5px] border-white/20 z-10 transition-transform group-hover:-translate-y-2">
+                          <img src={recipe.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={recipe.name} />
+                        </div>
+                        <div className="mt-[115px] w-full flex flex-col items-center text-center">
+                          <h3 className="text-stone-800 font-bold text-[18px] leading-[1.2] mb-1 opacity-90 line-clamp-2 w-[150px]">{recipe.name}</h3>
+                          <span className="text-stone-500 text-[12px] font-medium leading-tight mb-4">{recipe.category || 'Plat Africain'}</span>
+                          <div className="flex gap-1.5 mb-5 opacity-80">
+                            {[1, 2, 3, 4, 5].map(s => <Star key={s} size={12} className="text-stone-400 fill-stone-400 drop-shadow-sm" />)}
+                          </div>
+                          <div className="w-[36px] h-[36px] bg-[#d5d5d5] rounded-full flex items-center justify-center mt-auto shadow-md cursor-pointer hover:bg-stone-300 transition-colors border border-white/30">
+                            <Plus size={18} className="text-white stroke-[2.5]" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        }
 
         return (
           <section key={section.id} className="mb-10">
@@ -1346,6 +1465,57 @@ export default function App() {
             sectionRecipes = sectionRecipes.slice(0, section.config?.limit || 10);
 
             if (sectionRecipes.length === 0) return null;
+
+            if (section.type === 'dynamic_carousel') {
+              return (
+                <section key={section.id} className="mb-14">
+                  <div className="px-6 flex justify-between items-end mb-2">
+                    <div className="flex flex-col">
+                      <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
+                      {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
+                    </div>
+                    <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>{t.viewAll} <ChevronRight size={14} /></span>
+                  </div>
+                  <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-6 pt-16">
+                    {sectionRecipes.map((recipe, ridx) => {
+                      const colors = ['bg-[#e8e8e8]', 'bg-[#eeeeee]', 'bg-[#dcdcdc]'];
+                      const bgColor = colors[ridx % colors.length];
+
+                      return (
+                        <motion.div
+                          key={recipe.id}
+                          whileTap={{ scale: 0.95 }}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: ridx * 0.1 }}
+                          onClick={() => setSelectedRecipe(recipe)}
+                          className="flex-shrink-0 w-[190px] cursor-pointer group"
+                        >
+                          <div className={`h-[310px] ${bgColor} rounded-[38px] p-4 flex flex-col items-center relative shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white/40`}>
+                            <div className="absolute -top-[55px] w-[145px] h-[145px] rounded-full shadow-[0_25px_40px_-10px_rgba(0,0,0,0.3)] overflow-hidden border-[5px] border-white/20 z-10 transition-transform group-hover:-translate-y-2">
+                              <img src={recipe.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={recipe.name} />
+                            </div>
+                            <div className="mt-[115px] w-full flex flex-col items-center text-center">
+                              <span className="text-stone-500 font-bold mb-1.5 text-sm">
+                                {recipe.difficulty === 'Très Facile' || recipe.difficulty === 'Facile' ? '2.50$' : (recipe.difficulty === 'Extrême' ? '9.00$' : '4.50$')}
+                              </span>
+                              <h3 className="text-stone-800 font-bold text-[18px] leading-[1.2] mb-1 opacity-90 line-clamp-2 w-[150px]">{recipe.name}</h3>
+                              <span className="text-stone-500 text-[12px] font-medium leading-tight mb-4">{recipe.category || 'Tasty & Delicious'}</span>
+                              <div className="flex gap-1.5 mb-5 opacity-80">
+                                {[1, 2, 3, 4, 5].map(s => <Star key={s} size={12} className="text-stone-400 fill-stone-400 drop-shadow-sm" />)}
+                              </div>
+                              <div className="w-[36px] h-[36px] bg-[#d5d5d5] rounded-full flex items-center justify-center mt-auto shadow-md cursor-pointer hover:bg-stone-300 transition-colors border border-white/30">
+                                <Plus size={18} className="text-white stroke-[2.5]" />
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            }
 
             return (
               <section key={section.id} className="mb-10">
@@ -1934,48 +2104,56 @@ export default function App() {
       <AnimatePresence>
         {!selectedRecipe && (
           <motion.nav
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 500 }}
-            className="absolute bottom-6 left-6 right-6 bg-[#fb5607]/60 backdrop-blur-[25px] border border-white/25 px-6 py-3 rounded-[36px] flex justify-between items-center z-[110] shadow-[0_20px_45px_rgba(251,86,7,0.2),inset_0_1px_1px_rgba(255,255,255,0.3)]"
+            initial={{ y: 100, opacity: 0, scale: 0.92 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 100, opacity: 0, scale: 0.92 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 360, mass: 0.85 }}
+            className="absolute bottom-6 left-5 right-5 z-[110]"
           >
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigateTo(item.id)}
-                  className="relative flex flex-col items-center justify-center w-14 h-14"
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-pill"
-                      className="absolute inset-0 bg-white border border-white rounded-[22px] shadow-lg shadow-black/10"
-                      transition={{ type: 'spring', bounce: 0.25, duration: 0.6 }}
+            {/* Ambient drop shadow */}
+            <div
+              className="absolute inset-0 rounded-[28px]"
+              style={{
+                borderRadius: 28,
+                boxShadow: '0 16px 48px rgba(249,77,0,0.38), 0 4px 12px rgba(0,0,0,0.18)',
+              }}
+            />
+
+            {/* Main pill */}
+            <div
+              className="relative flex items-center justify-around px-3 rounded-[28px] overflow-hidden"
+              style={{
+                height: 76,
+                background: 'linear-gradient(160deg, #ff6120 0%, #F94D00 55%, #d93d00 100%)',
+              }}
+            >
+              {/* Inner highlight at top */}
+              <div
+                className="absolute top-0 inset-x-6 h-px"
+                style={{
+                  background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.45), transparent)',
+                }}
+              />
+              {/* Subtle inner top arc light */}
+              <div
+                className="absolute -top-8 left-1/2 -translate-x-1/2 w-3/4 h-12 rounded-full pointer-events-none"
+                style={{ background: 'rgba(255,255,255,0.06)', filter: 'blur(12px)' }}
+              />
+
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <React.Fragment key={item.id}>
+                    <NavButton
+                      icon={Icon}
+                      isActive={isActive}
+                      onClick={() => navigateTo(item.id)}
                     />
-                  )}
-                  <motion.div
-                    animate={{
-                      y: isActive ? -4 : 0,
-                      scale: isActive ? 1.1 : 1
-                    }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className={`relative z-10 flex flex-col items-center ${isActive ? 'text-[#fb5607]' : 'text-white/70'}`}
-                  >
-                    <Icon size={24} fill={isActive ? 'currentColor' : 'none'} strokeWidth={isActive ? 2.8 : 2} />
-                    {isActive && (
-                      <motion.div
-                        layoutId="active-dot"
-                        className="w-1.5 h-1.5 bg-[#fb5607] rounded-full mt-1.5 shadow-[0_0_8px_rgba(251,86,7,0.3)]"
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                  </motion.div>
-                </button>
-              );
-            })}
+                  </React.Fragment>
+                );
+              })}
+            </div>
           </motion.nav>
         )}
       </AnimatePresence>

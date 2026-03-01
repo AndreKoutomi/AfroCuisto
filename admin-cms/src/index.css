@@ -342,6 +342,12 @@ button {
   box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
 }
 
+select.form-control {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: normal;
+}
+
 textarea.form-control {
   min-height: 120px;
   resize: vertical;

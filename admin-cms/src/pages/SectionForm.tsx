@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Plus, Search, Utensils, Info, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Search, Utensils, Info, Sparkles, Star, LayoutGrid, List, AlignJustify, GalleryHorizontal, CheckCircle2 } from 'lucide-react';
 
 interface Recipe {
     id: string;
@@ -17,15 +17,26 @@ const INITIAL_STATE = {
     subtitle: '',
     recipe_ids: [] as string[],
     order_index: 0,
-    type: 'manual' as 'manual' | 'category' | 'region' | 'quick' | 'all',
+    type: 'dynamic_carousel',
     config: {
-        category: '',
-        region: '',
-        max_prep_time: '30',
-        limit: 10,
-        page: 'home'
-    }
+        page: 'home',
+        icon: '',
+        design_style: 'design_1'
+    } as Record<string, any>
 };
+
+const SECTION_TYPES = [
+    { value: 'hero_carousel', label: 'Hero Carrousel', sublabel: 'Bannière principale · Accueil', icon: Sparkles },
+    { value: 'dynamic_carousel', label: 'Carrousel', sublabel: 'Défilement dynamique', icon: GalleryHorizontal },
+    { value: 'horizontal_list', label: 'Horizontal', sublabel: 'Liste défilante', icon: AlignJustify },
+    { value: 'vertical_list_1', label: 'Liste simple', sublabel: '1 colonne', icon: List },
+    { value: 'vertical_list_2', label: 'Grille', sublabel: '2 colonnes', icon: LayoutGrid },
+];
+
+const PAGES = [
+    { value: 'home', label: 'Page d\'accueil' },
+    { value: 'explorer', label: 'Page Explorer' },
+];
 
 export function SectionForm() {
     const { id } = useParams();
@@ -83,6 +94,20 @@ export function SectionForm() {
         }
     };
 
+    const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({
+                    ...prev,
+                    config: { ...prev.config, icon: reader.result as string }
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleToggleRecipe = (recipeId: string) => {
         setFormData(prev => {
             const ids = prev.recipe_ids.includes(recipeId)
@@ -102,7 +127,7 @@ export function SectionForm() {
                 subtitle: formData.subtitle,
                 type: formData.type,
                 config: formData.config,
-                recipe_ids: formData.type === 'manual' ? formData.recipe_ids : [],
+                recipe_ids: formData.recipe_ids,
                 order_index: formData.order_index
             };
 
@@ -133,274 +158,380 @@ export function SectionForm() {
         r.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Preview for Automated Sections
-    const smartPreview = recipes.filter(r => {
-        if (formData.type === 'manual') return false;
-        if (formData.type === 'all') return true;
-
-        const { category, region, max_prep_time } = formData.config;
-
-        if (formData.type === 'category' && category && r.category !== category) return false;
-        if (formData.type === 'region' && region && !r.region?.toLowerCase().includes(region.toLowerCase())) return false;
-        if (formData.type === 'quick') {
-            const time = parseInt(r.prep_time) || 60;
-            if (time > (parseInt(max_prep_time) || 30)) return false;
-        }
-        return true;
-    }).slice(0, 6);
-
     if (initialLoading) {
         return <div className="center-content"><div className="loader"></div></div>;
     }
 
+    const inputStyle: React.CSSProperties = {
+        height: '48px',
+        borderRadius: '12px',
+        border: '1.5px solid #e5e7eb',
+        fontSize: '14px',
+        fontWeight: 600,
+        color: '#111827',
+        backgroundColor: '#ffffff',
+        padding: '0 16px',
+        width: '100%',
+        outline: 'none',
+        transition: 'border-color 0.2s',
+    };
+
+    const labelStyle: React.CSSProperties = {
+        fontSize: '11px',
+        fontWeight: 800,
+        color: '#6b7280',
+        textTransform: 'uppercase',
+        letterSpacing: '0.6px',
+        marginBottom: '8px',
+        display: 'block',
+    };
+
+    const cardStyle: React.CSSProperties = {
+        background: '#ffffff',
+        borderRadius: '20px',
+        border: '1px solid #f0f0f0',
+        boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
+    };
+
     return (
-        <div>
-            <div className="flex items-center gap-4 mb-6">
-                <Link to="/sections" className="btn btn-secondary">
-                    <ArrowLeft size={18} /> Retour
-                </Link>
-                <h2 className="font-bold text-2xl">
-                    {id ? 'Modifier la Section' : 'Ajouter une Section'}
-                </h2>
+        <div style={{ maxWidth: '1400px' }}>
+            {/* Page Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <Link to="/sections" style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: '40px', height: '40px', borderRadius: '12px',
+                        background: '#f3f4f6', border: 'none', cursor: 'pointer',
+                        color: '#374151', transition: 'background 0.15s',
+                        textDecoration: 'none',
+                    }}>
+                        <ArrowLeft size={18} />
+                    </Link>
+                    <div>
+                        <p style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+                            Sections
+                        </p>
+                        <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: 0, lineHeight: 1.2 }}>
+                            {id ? 'Modifier la Section' : 'Nouvelle Section'}
+                        </h1>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleSubmit as any}
+                    disabled={loading}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '8px',
+                        background: '#4318ff', color: '#fff',
+                        border: 'none', borderRadius: '14px',
+                        padding: '12px 24px', fontSize: '14px', fontWeight: 700,
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        opacity: loading ? 0.7 : 1,
+                        boxShadow: '0 4px 16px rgba(67,24,255,0.25)',
+                        transition: 'all 0.2s',
+                    }}
+                >
+                    {loading
+                        ? <div className="loader" style={{ width: 18, height: 18, borderLeftColor: '#fff' }}></div>
+                        : <><Save size={17} /> Enregistrer</>
+                    }
+                </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-3 grid-gap-4 items-start">
-                {/* Left: Section Details */}
-                <div className="card" style={{ gridColumn: 'span 2' }}>
-                    <div className="card-header border-b">
-                        <h3 className="card-title">Configuration & Algorithme</h3>
-                    </div>
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="form-group">
-                                <label className="form-label">Titre de la Section</label>
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', alignItems: 'start' }}>
+                {/* LEFT COLUMN */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                    {/* Panel 1: Identité de la section */}
+                    <div style={cardStyle}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Sparkles size={16} color="#7c3aed" />
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>Identité</h3>
+                                <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Titre, description et page cible</p>
+                            </div>
+                        </div>
+                        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div>
+                                    <label style={labelStyle}>Titre de la section</label>
+                                    <input
+                                        required
+                                        name="title"
+                                        value={formData.title}
+                                        onChange={handleChange}
+                                        placeholder="Ex: Spécialités du Sud"
+                                        style={inputStyle}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Page de destination</label>
+                                    <select
+                                        name="config.page"
+                                        value={formData.config?.page || 'home'}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, page: e.target.value } }))}
+                                        style={{ ...inputStyle, cursor: 'pointer' }}
+                                    >
+                                        {PAGES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Description / Sous-titre</label>
                                 <input
-                                    required
-                                    name="title"
-                                    value={formData.title}
+                                    name="subtitle"
+                                    value={formData.subtitle}
                                     onChange={handleChange}
-                                    className="form-control"
-                                    placeholder="Ex: Spécialités du Sud"
-                                    style={{ fontSize: '1.25rem', fontWeight: 800 }}
+                                    placeholder="Une courte description de la section..."
+                                    style={inputStyle}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Type de Contenu / Source</label>
-                                <select
-                                    name="type"
-                                    value={formData.type}
-                                    onChange={handleChange}
-                                    className="form-control"
-                                    style={{ height: '48px', fontWeight: 700, border: '2px solid var(--border)' }}
-                                >
-                                    <option value="manual">💎 Sélection Manuelle (Curation)</option>
-                                    <option value="category">📂 Filtrage par Catégorie</option>
-                                    <option value="region">🌍 Filtrage par Région</option>
-                                    <option value="quick">⚡ Vite fait, bien fait (Temps)</option>
-                                    <option value="all">📚 Collection Complète</option>
-                                </select>
-                            </div>
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label className="form-label">Affichage / Page de destination</label>
-                                <select
-                                    name="config.page"
-                                    value={formData.config?.page || 'home'}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, page: e.target.value } }))}
-                                    className="form-control"
-                                    style={{ height: '48px', fontWeight: 700, border: '2px solid var(--border)' }}
-                                >
-                                    <option value="home">🏠 Page d'Accueil</option>
-                                    <option value="explorer">🔍 Page Explorer</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Sous-titre / Description</label>
-                            <textarea
-                                name="subtitle"
-                                value={formData.subtitle}
-                                onChange={handleChange}
-                                className="form-control"
-                                rows={2}
-                                placeholder="Décrivez l'univers de cette thématique..."
-                            />
-                        </div>
-
-                        {formData.type !== 'manual' ? (
-                            <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 space-y-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Sparkles size={18} className="text-primary" />
-                                    <h4 className="font-bold text-stone-800">Paramètres de l'algorithme</h4>
+                            <div>
+                                <label style={labelStyle}>Icône de la section</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <label style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '8px',
+                                        background: '#f9fafb', border: '1.5px dashed #d1d5db',
+                                        borderRadius: '12px', padding: '10px 18px',
+                                        fontSize: '13px', fontWeight: 600, color: '#6b7280',
+                                        cursor: 'pointer',
+                                    }}>
+                                        📎 Choisir un fichier
+                                        <input type="file" accept="image/*" onChange={handleIconChange} style={{ display: 'none' }} />
+                                    </label>
+                                    {formData.config?.icon && (
+                                        <img src={formData.config.icon} alt="icon" style={{ height: '44px', width: '44px', objectFit: 'cover', borderRadius: '10px', border: '2px solid #e5e7eb' }} />
+                                    )}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {formData.type === 'category' && (
-                                        <div className="form-group mb-0 col-span-2">
-                                            <label className="form-label text-xs">Catégorie cible</label>
-                                            <select
-                                                name="config.category"
-                                                value={formData.config.category}
-                                                onChange={handleChange}
-                                                className="form-control bg-white"
-                                            >
-                                                <option value="">Toutes les catégories</option>
-                                                <option value="Pâtes et Céréales (Wɔ̌)">Pâtes et Céréales</option>
-                                                <option value="Sauces (Nùsúnnú)">Sauces</option>
-                                                <option value="Plats de Résistance & Ragoûts">Plats de Résistance</option>
-                                                <option value="Protéines & Grillades">Protéines & Grillades</option>
-                                                <option value="Street Food & Snacks (Amuse-bouche)">Street Food</option>
-                                                <option value="Boissons & Douceurs">Boissons</option>
-                                                <option value="Condiments & Accompagnements">Condiments</option>
-                                            </select>
-                                        </div>
-                                    )}
+                            </div>
+                        </div>
+                    </div>
 
-                                    {formData.type === 'region' && (
-                                        <div className="form-group mb-0 col-span-2">
-                                            <label className="form-label text-xs">Région géographique</label>
-                                            <select
-                                                name="config.region"
-                                                value={formData.config.region}
-                                                onChange={handleChange}
-                                                className="form-control bg-white"
-                                            >
-                                                <option value="">Toutes les régions</option>
-                                                <option value="Sud">Sud Bénin</option>
-                                                <option value="Nord">Nord Bénin</option>
-                                                <option value="Centre">Centre Bénin</option>
-                                            </select>
-                                        </div>
-                                    )}
+                    {/* Panel 2: Type de la section */}
+                    <div style={cardStyle}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #fef3c7, #fde68a)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <LayoutGrid size={16} color="#d97706" />
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>Type d'affichage</h3>
+                                <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Choisissez le format de rendu</p>
+                            </div>
+                        </div>
+                        <div style={{ padding: '24px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                                {SECTION_TYPES.map(({ value, label, sublabel, icon: Icon }) => {
+                                    const isActive = formData.type === value;
+                                    return (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, type: value }))}
+                                            style={{
+                                                border: isActive ? '2px solid #4318ff' : '2px solid #f0f0f0',
+                                                background: isActive ? 'linear-gradient(135deg, #eef2ff, #ede9fe)' : '#fafafa',
+                                                borderRadius: '16px',
+                                                padding: '16px 12px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                transition: 'all 0.2s',
+                                                position: 'relative',
+                                            }}
+                                        >
+                                            {isActive && (
+                                                <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#4318ff' }}>
+                                                    <CheckCircle2 size={14} />
+                                                </div>
+                                            )}
+                                            <div style={{
+                                                width: '40px', height: '40px', borderRadius: '12px',
+                                                background: isActive ? '#4318ff' : '#e5e7eb',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                transition: 'all 0.2s',
+                                            }}>
+                                                <Icon size={20} color={isActive ? '#fff' : '#6b7280'} />
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: isActive ? '#4318ff' : '#374151' }}>{label}</p>
+                                                <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af', marginTop: '2px' }}>{sublabel}</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
 
-                                    {formData.type === 'quick' && (
-                                        <div className="form-group mb-0 col-span-2">
-                                            <label className="form-label text-xs">Temps maximum de préparation (minutes)</label>
-                                            <div className="flex items-center gap-4">
+                            {/* Options conditionnelles */}
+                            {formData.type === 'dynamic_carousel' && (
+                                <div style={{ marginTop: '20px', background: '#fafafa', borderRadius: '14px', padding: '16px', border: '1px solid #f0f0f0' }}>
+                                    <p style={{ ...labelStyle, marginBottom: '12px' }}>Options du carrousel</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        {[
+                                            { id: 'autoplay', key: 'autoplay', label: 'Défilement automatique' },
+                                            { id: 'show_dots', key: 'show_dots', label: 'Points de pagination' },
+                                        ].map(opt => (
+                                            <label key={opt.id} htmlFor={opt.id} style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                background: '#fff', borderRadius: '12px', padding: '12px 14px',
+                                                border: '1px solid #e5e7eb', cursor: 'pointer',
+                                            }}>
+                                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>{opt.label}</span>
                                                 <input
-                                                    type="range"
-                                                    name="config.max_prep_time"
-                                                    min="5"
-                                                    max="120"
-                                                    step="5"
-                                                    value={formData.config.max_prep_time}
-                                                    onChange={handleChange}
-                                                    className="flex-1"
+                                                    type="checkbox"
+                                                    id={opt.id}
+                                                    checked={formData.config?.[opt.key] === 'true' || formData.config?.[opt.key] === true}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [opt.key]: e.target.checked } }))}
+                                                    style={{ width: '18px', height: '18px', accentColor: '#4318ff', cursor: 'pointer' }}
                                                 />
-                                                <span className="font-bold text-primary w-20 text-right">{formData.config.max_prep_time} min</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="bg-white/60 p-4 rounded-2xl border border-white">
-                                    <p className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-3">Aperçu dynamique (max 6)</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {smartPreview.map(r => (
-                                            <div key={r.id} className="badge badge-secondary flex items-center gap-2 py-1.5 px-3">
-                                                <img src={r.image} className="w-5 h-5 rounded-full object-cover shadow-sm" />
-                                                <span className="text-[11px] font-bold">{r.name}</span>
-                                            </div>
+                                            </label>
                                         ))}
-                                        {smartPreview.length === 0 && <p className="text-xs italic text-stone-400">Aucun plat ne correspond à vos réglages.</p>}
                                     </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                        Recettes épinglées à la main ({formData.recipe_ids.length})
-                                    </h4>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Panel 3: Plats sélectionnés */}
+                    <div style={cardStyle}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #fef2f2, #fecaca)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Utensils size={16} color="#ef4444" />
                                 </div>
-                                <div className="flex flex-wrap gap-2">
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>Plats sélectionnés</h3>
+                                    <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>
+                                        {formData.recipe_ids.length === 0 ? 'Aucun plat — sélectionnez dans le catalogue' : `${formData.recipe_ids.length} plat${formData.recipe_ids.length > 1 ? 's' : ''} épinglé${formData.recipe_ids.length > 1 ? 's' : ''}`}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ padding: '24px' }}>
+                            {formData.recipe_ids.length === 0 ? (
+                                <div style={{
+                                    background: '#fafafa', border: '2px dashed #e5e7eb',
+                                    borderRadius: '16px', padding: '40px 24px', textAlign: 'center',
+                                }}>
+                                    <div style={{ width: '52px', height: '52px', background: '#f3f4f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                                        <Utensils size={24} color="#9ca3af" />
+                                    </div>
+                                    <p style={{ margin: 0, fontWeight: 700, fontSize: '14px', color: '#374151' }}>Aucun plat sélectionné</p>
+                                    <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#9ca3af' }}>Cliquez sur les plats dans le catalogue →</p>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
                                     {formData.recipe_ids.map(rid => {
                                         const r = recipes.find(rec => rec.id === rid);
                                         return r ? (
-                                            <div key={rid} className="badge badge-primary flex items-center gap-2" style={{ padding: '10px 14px', borderRadius: '12px' }}>
-                                                <img src={r.image} className="dish-thumbnail" style={{ width: '22px', height: '22px' }} />
-                                                <span style={{ fontSize: '12px', fontWeight: 700 }}>{r.name}</span>
-                                                <button type="button" onClick={() => handleToggleRecipe(rid)} className="text-danger ml-1 hover:rotate-90 transition-transform">
-                                                    <Trash2 size={13} />
+                                            <div key={rid} className="group" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleRecipe(rid)}
+                                                    style={{
+                                                        position: 'absolute', top: '8px', right: '8px',
+                                                        width: '26px', height: '26px', borderRadius: '50%',
+                                                        background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+                                                        border: 'none', cursor: 'pointer', color: '#fff',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        opacity: 0, transition: 'opacity 0.15s',
+                                                        zIndex: 2,
+                                                    }}
+                                                    className="group-hover:opacity-100"
+                                                    onMouseEnter={e => (e.currentTarget.style.background = '#ef4444')}
+                                                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.45)')}
+                                                >
+                                                    <Trash2 size={12} strokeWidth={2.5} />
                                                 </button>
+                                                <div style={{ height: '100px', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                                                    <img src={r.image} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }} />
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#111827', lineHeight: 1.3 }} className="line-clamp-1">{r.name}</p>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '4px' }}>
+                                                        {[1, 2, 3, 4].map(s => <Star key={s} size={10} color="#f59e0b" fill="#f59e0b" />)}
+                                                        <span style={{ fontSize: '9px', color: '#9ca3af', fontWeight: 700, marginLeft: '3px' }}>4.5</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ) : null;
                                     })}
-                                    {formData.recipe_ids.length === 0 && (
-                                        <div className="w-full p-8 border-2 border-dashed border-stone-200 rounded-2xl text-center">
-                                            <Utensils size={32} className="text-stone-300 mx-auto mb-2" />
-                                            <p className="text-stone-400 text-sm font-medium">Glissez/Cliquez sur des plats à droite pour les épingler.</p>
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Right: Recipe Selector (Visible only for manual) */}
-                <div className="flex flex-col gap-4">
-                    <div className={`card transition-opacity duration-300 ${formData.type !== 'manual' ? 'opacity-30 pointer-events-none' : ''}`}>
-                        <div className="card-header border-b">
-                            <h3 className="card-title">Catalogue des Plats</h3>
-                        </div>
-                        <div className="p-4 flex flex-col gap-4">
-                            <div className="relative">
+                {/* RIGHT COLUMN — Catalogue */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '24px' }}>
+                    <div style={cardStyle}>
+                        <div style={{ padding: '20px 20px 0' }}>
+                            <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800, color: '#111827' }}>Catalogue des Plats</h3>
+                            <p style={{ margin: '0 0 16px', fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>
+                                {filteredRecipes.length} plat{filteredRecipes.length !== 1 ? 's' : ''} disponible{filteredRecipes.length !== 1 ? 's' : ''}
+                            </p>
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                                <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: '14px' }} />
                                 <input
                                     type="text"
-                                    className="form-control"
                                     placeholder="Rechercher..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{ paddingRight: '40px' }}
+                                    style={{ ...inputStyle, paddingLeft: '40px', background: '#f9fafb', border: '1.5px solid #f0f0f0' }}
                                 />
-                                <Search size={16} className="absolute text-muted" style={{ right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                             </div>
+                        </div>
 
-                            <div className="overflow-y-auto" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {filteredRecipes.map(recipe => (
-                                    <button
+                        <div style={{ maxHeight: 'calc(100vh - 340px)', overflowY: 'auto', padding: '8px 12px 12px' }}>
+                            {filteredRecipes.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                                    <Utensils size={28} color="#d1d5db" style={{ marginBottom: '8px' }} />
+                                    <p style={{ color: '#9ca3af', fontSize: '13px', fontWeight: 600, margin: 0 }}>Aucun résultat</p>
+                                </div>
+                            ) : filteredRecipes.map(recipe => {
+                                const selected = formData.recipe_ids.includes(recipe.id);
+                                return (
+                                    <div
                                         key={recipe.id}
-                                        type="button"
                                         onClick={() => handleToggleRecipe(recipe.id)}
-                                        className="flex items-center justify-between w-full p-2 rounded-xl transition-all hover:bg-gray-100"
                                         style={{
-                                            border: '1px solid',
-                                            borderColor: formData.recipe_ids.includes(recipe.id) ? 'var(--primary)' : 'transparent',
-                                            backgroundColor: formData.recipe_ids.includes(recipe.id) ? 'rgba(67, 24, 255, 0.05)' : 'transparent',
-                                            padding: '12px'
+                                            display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 8px',
+                                            borderRadius: '12px', cursor: 'pointer',
+                                            background: selected ? 'rgba(67,24,255,0.04)' : 'transparent',
+                                            border: selected ? '1px solid rgba(67,24,255,0.1)' : '1px solid transparent',
+                                            marginBottom: '4px', transition: 'all 0.15s',
                                         }}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <img src={recipe.image} className="dish-thumbnail" style={{ width: '32px', height: '32px' }} />
-                                            <div className="text-left">
-                                                <p style={{ fontSize: '12px', fontWeight: 800 }}>{recipe.name}</p>
-                                                <p style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>{recipe.category}</p>
-                                            </div>
+                                        <img src={recipe.image} style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0, border: selected ? '2px solid #4318ff' : '2px solid transparent', transition: 'border 0.15s' }} />
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: selected ? '#4318ff' : '#111827', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {recipe.name}
+                                            </p>
+                                            <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>{recipe.category}</p>
                                         </div>
                                         <div style={{
-                                            width: '24px',
-                                            height: '24px',
-                                            borderRadius: '50%',
-                                            backgroundColor: formData.recipe_ids.includes(recipe.id) ? 'var(--primary)' : 'var(--bg-color)',
-                                            color: formData.recipe_ids.includes(recipe.id) ? '#fff' : 'var(--text-muted)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
+                                            width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+                                            background: selected ? '#4318ff' : '#f3f4f6',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            transition: 'all 0.2s',
                                         }}>
-                                            <Plus size={14} style={{ transform: formData.recipe_ids.includes(recipe.id) ? 'rotate(45deg)' : 'none' }} />
+                                            <CheckCircle2 size={15} color={selected ? '#fff' : '#d1d5db'} fill="none" />
                                         </div>
-                                    </button>
-                                ))}
-                            </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div className="card p-6">
-                        <button type="submit" disabled={loading} className="btn btn-primary w-full" style={{ padding: '1rem' }}>
-                            {loading ? <div className="loader" style={{ width: 16, height: 16, borderLeftColor: '#fff' }}></div> : <><Save size={18} /> Enregistrer la Section</>}
-                        </button>
-                        <p className="text-muted mt-4 text-center" style={{ fontSize: '11px', fontWeight: 600, lineHeight: '1.4' }}>
-                            <Info size={12} className="inline mr-1" />
-                            Les types "Automatiques" utilisent des algorithmes pour garder la section à jour sans intervention.
+                    {/* Info */}
+                    <div style={{ background: '#f9fafb', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '10px', border: '1px solid #f0f0f0' }}>
+                        <Info size={15} color="#9ca3af" style={{ flexShrink: 0, marginTop: '1px' }} />
+                        <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500, lineHeight: 1.5 }}>
+                            L'ordre d'affichage des sections se gère depuis la liste des sections.
                         </p>
                     </div>
                 </div>

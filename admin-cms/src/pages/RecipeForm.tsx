@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, ImagePlus, X, Clock, Flame, Globe, Tag, BookOpen, Sparkles, ChefHat, Utensils, Leaf } from 'lucide-react';
 
 const INITIAL_STATE = {
     name: '',
@@ -22,6 +22,18 @@ const INITIAL_STATE = {
     origine_humaine: ''
 };
 
+const CATEGORIES = [
+    { value: "Pâtes et Céréales (Wɔ̌)", label: "Pâtes et Céréales" },
+    { value: "Sauces (Nùsúnnú)", label: "Sauces" },
+    { value: "Plats de Résistance & Ragoûts", label: "Plats de Résistance" },
+    { value: "Protéines & Grillades", label: "Protéines & Grillades" },
+    { value: "Street Food & Snacks (Amuse-bouche)", label: "Street Food & Snacks" },
+    { value: "Boissons & Douceurs", label: "Boissons & Douceurs" },
+    { value: "Condiments & Accompagnements", label: "Condiments & Accompagnements" },
+];
+
+const DIFFICULTIES = ['Très Facile', 'Facile', 'Intermédiaire', 'Moyen', 'Difficile', 'Très Difficile', 'Extrême'];
+
 export function RecipeForm() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -32,17 +44,10 @@ export function RecipeForm() {
 
     useEffect(() => {
         if (id) {
-            async function fetchRecipe() {
-                const { data, error } = await supabase.from('recipes').select('*').eq('id', id).single();
-                if (data && !error) {
-                    setFormData({
-                        ...INITIAL_STATE,
-                        ...data
-                    });
-                }
+            supabase.from('recipes').select('*').eq('id', id).single().then(({ data, error }) => {
+                if (data && !error) setFormData({ ...INITIAL_STATE, ...data });
                 setInitialLoading(false);
-            }
-            fetchRecipe();
+            });
         }
     }, [id]);
 
@@ -51,33 +56,18 @@ export function RecipeForm() {
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length) return;
+        const file = e.target.files[0];
+        const filePath = `${Math.random()}.${file.name.split('.').pop()}`;
+        setUploading(true);
         try {
-            if (!e.target.files || e.target.files.length === 0) {
-                return;
-            }
-            const file = e.target.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            setUploading(true);
-
-            const { error: uploadError } = await supabase.storage
-                .from('recipe-images')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            const { data } = supabase.storage
-                .from('recipe-images')
-                .getPublicUrl(filePath);
-
+            const { error: uploadError } = await supabase.storage.from('recipe-images').upload(filePath, file);
+            if (uploadError) throw uploadError;
+            const { data } = supabase.storage.from('recipe-images').getPublicUrl(filePath);
             setFormData(prev => ({ ...prev, image: data.publicUrl }));
-        } catch (error) {
-            console.error('Error uploading image: ', error);
-            alert('Erreur lors du téléchargement de l\'image.');
+        } catch (err) {
+            console.error('Upload error:', err);
+            alert("Erreur lors du téléchargement de l'image.");
         } finally {
             setUploading(false);
         }
@@ -86,12 +76,8 @@ export function RecipeForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-
         const cleanData = { ...formData };
-        if ('origine_humaine' in cleanData) {
-            delete (cleanData as any).origine_humaine;
-        }
-
+        delete (cleanData as any).origine_humaine;
         try {
             if (id) {
                 const { error } = await supabase.from('recipes').update(cleanData).eq('id', id);
@@ -110,184 +96,308 @@ export function RecipeForm() {
         }
     };
 
-    if (initialLoading) {
-        return <div className="center-content"><div className="loader"></div></div>;
-    }
+    if (initialLoading) return <div className="center-content"><div className="loader"></div></div>;
+
+    /* ── reusable style tokens ── */
+    const inputStyle: React.CSSProperties = {
+        height: '46px', width: '100%',
+        borderRadius: '12px', border: '1.5px solid #e5e7eb',
+        fontSize: '14px', fontWeight: 600, color: '#111827',
+        backgroundColor: '#fff', padding: '0 14px', outline: 'none',
+        transition: 'border-color 0.2s', boxSizing: 'border-box',
+    };
+    const textareaStyle: React.CSSProperties = {
+        ...inputStyle, height: 'auto', padding: '12px 14px', resize: 'vertical', lineHeight: 1.6,
+    };
+    const labelStyle: React.CSSProperties = {
+        display: 'block', fontSize: '11px', fontWeight: 800,
+        color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '8px',
+    };
+    const sectionHeader = (icon: React.ReactNode, title: string, subtitle: string, iconBg: string, iconColor: string) => (
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '11px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {icon}
+            </div>
+            <div>
+                <p style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>{title}</p>
+                <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>{subtitle}</p>
+            </div>
+        </div>
+    );
+
+    const cardStyle: React.CSSProperties = {
+        background: '#fff', borderRadius: '20px',
+        border: '1px solid #f0f0f0', boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
+    };
+
+    const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={labelStyle}>{label}</label>
+            {children}
+        </div>
+    );
 
     return (
-        <div>
-            <div className="flex items-center gap-4 mb-6">
-                <Link to="/recipes" className="btn btn-secondary">
-                    <ArrowLeft size={18} /> Retour
-                </Link>
-                <h2 className="font-bold text-2xl">
-                    {id ? 'Modifier la Recette' : 'Ajouter une Recette'}
-                </h2>
+        <div style={{ maxWidth: '1200px' }}>
+
+            {/* ── Header ── */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <Link to="/recipes" style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: '40px', height: '40px', borderRadius: '12px',
+                        background: '#f3f4f6', border: 'none', color: '#374151',
+                        textDecoration: 'none', transition: 'background 0.15s',
+                    }}>
+                        <ArrowLeft size={18} />
+                    </Link>
+                    <div>
+                        <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recettes</p>
+                        <h1 style={{ margin: '2px 0 0', fontSize: '24px', fontWeight: 800, color: '#111827' }}>
+                            {id ? 'Modifier la Recette' : 'Nouvelle Recette'}
+                        </h1>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleSubmit as any}
+                    disabled={loading}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '8px',
+                        background: '#4318ff', color: '#fff', border: 'none',
+                        borderRadius: '14px', padding: '12px 24px',
+                        fontSize: '14px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+                        opacity: loading ? 0.7 : 1,
+                        boxShadow: '0 4px 16px rgba(67,24,255,0.25)',
+                    }}
+                >
+                    {loading
+                        ? <div className="loader" style={{ width: 18, height: 18, borderLeftColor: '#fff' }} />
+                        : <><Save size={17} /> Enregistrer</>
+                    }
+                </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-3 grid-gap-4">
-                <div className="card" style={{ gridColumn: 'span 2' }}>
-                    <div className="card-header">
-                        <h3 className="card-title">Informations Générales</h3>
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '20px', alignItems: 'start' }}>
+
+                {/* ══ LEFT COLUMN ══ */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                    {/* Panel: Identity */}
+                    <div style={cardStyle}>
+                        {sectionHeader(<ChefHat size={18} color="#7c3aed" />, 'Identité du Plat', 'Nom, alias et classification', '#ede9fe', '#7c3aed')}
+                        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                            <Field label="Nom de la recette *">
+                                <input required name="name" value={formData.name} onChange={handleChange} placeholder="Ex: Amiwo, Gbegiri, Aloko..." style={inputStyle} />
+                            </Field>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                <Field label="Alias / Nom local">
+                                    <input name="alias" value={formData.alias || ''} onChange={handleChange} placeholder="Nom en langue locale" style={inputStyle} />
+                                </Field>
+                                <Field label="Catégorie">
+                                    <select name="category" value={formData.category || ''} onChange={handleChange} style={{ ...inputStyle, cursor: 'pointer' }}>
+                                        <option value="">Sélectionner...</option>
+                                        {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                    </select>
+                                </Field>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                <Field label="Type de Plat">
+                                    <input name="type" value={formData.type || ''} onChange={handleChange} placeholder="Plat principal, Dessert..." style={inputStyle} />
+                                </Field>
+                                <Field label="Style de Cuisson">
+                                    <input name="style" value={formData.style || ''} onChange={handleChange} placeholder="Braisé, Vapeur, Frit..." style={inputStyle} />
+                                </Field>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                <Field label="Ingrédient de Base">
+                                    <input name="base" value={formData.base || ''} onChange={handleChange} placeholder="Maïs, Manioc, Poulet..." style={inputStyle} />
+                                </Field>
+                                <Field label="Origine Culturelle">
+                                    <input name="origine_humaine" value={formData.origine_humaine || ''} onChange={handleChange} placeholder="Fon, Mina, Yoruba..." style={inputStyle} />
+                                </Field>
+                            </div>
+                        </div>
                     </div>
-                    <div className="p-6">
-                        <div className="form-group">
-                            <label className="form-label">Nom de la recette</label>
-                            <input required name="name" value={formData.name || ''} onChange={handleChange} className="form-control" />
-                        </div>
 
-                        <div className="grid grid-cols-2 grid-gap-4">
-                            <div className="form-group">
-                                <label className="form-label">Alias (Optionnel)</label>
-                                <input name="alias" value={formData.alias || ''} onChange={handleChange} className="form-control" />
+                    {/* Panel: Description */}
+                    <div style={cardStyle}>
+                        {sectionHeader(<BookOpen size={18} color="#0891b2" />, 'Description & Patrimoine', 'Texte de présentation et technique culinaire', '#e0f2fe', '#0891b2')}
+                        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                            <Field label="Description / Introduction">
+                                <textarea
+                                    name="description"
+                                    value={formData.description || ''}
+                                    onChange={handleChange}
+                                    rows={4}
+                                    placeholder="Décrivez le plat, son histoire, son contexte culturel..."
+                                    style={textareaStyle}
+                                />
+                            </Field>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                <Field label="Technique — Titre">
+                                    <input name="technique_title" value={formData.technique_title || ''} onChange={handleChange} placeholder="Ex: La cuisson à l'étouffée" style={inputStyle} />
+                                </Field>
+                                <Field label="Bienfaits Nutritionnels">
+                                    <input name="benefits" value={formData.benefits || ''} onChange={handleChange} placeholder="Ex: Riche en fibres, protéines..." style={inputStyle} />
+                                </Field>
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Catégorie</label>
-                                <select name="category" value={formData.category || ''} onChange={handleChange} className="form-control">
-                                    <option value="">Sélectionner...</option>
-                                    <option value="Pâtes et Céréales (Wɔ̌)">Pâtes et Céréales</option>
-                                    <option value="Sauces (Nùsúnnú)">Sauces</option>
-                                    <option value="Plats de Résistance & Ragoûts">Plats de Résistance</option>
-                                    <option value="Protéines & Grillades">Protéines & Grillades</option>
-                                    <option value="Street Food & Snacks (Amuse-bouche)">Street Food</option>
-                                    <option value="Boissons & Douceurs">Boissons</option>
-                                    <option value="Condiments & Accompagnements">Condiments</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 grid-gap-4">
-                            <div className="form-group">
-                                <label className="form-label">Type de Plat</label>
-                                <input name="type" value={formData.type || ''} onChange={handleChange} className="form-control" placeholder="ex: Plat Principal, Dessert..." />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Style de Cuisine</label>
-                                <input name="style" value={formData.style || ''} onChange={handleChange} className="form-control" placeholder="ex: Braisé, Vapeur..." />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 grid-gap-4">
-                            <div className="form-group">
-                                <label className="form-label">Base Principale</label>
-                                <input name="base" value={formData.base || ''} onChange={handleChange} className="form-control" placeholder="ex: Maïs, Manioc, Poulet..." />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Origine (Peuple/Humaine)</label>
-                                <input name="origine_humaine" value={formData.origine_humaine || ''} onChange={handleChange} className="form-control" placeholder="ex: Fon, Mina, Yoruba..." />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Description Courte / Introduction</label>
-                            <textarea name="description" value={formData.description || ''} onChange={handleChange} className="form-control" rows={4} />
-                        </div>
-
-                        <div className="grid grid-cols-2 grid-gap-4">
-                            <div className="form-group">
-                                <label className="form-label">Technique - Titre</label>
-                                <input name="technique_title" value={formData.technique_title || ''} onChange={handleChange} className="form-control" />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Bienfaits de la recette</label>
-                                <input name="benefits" value={formData.benefits || ''} onChange={handleChange} className="form-control" />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Technique - Description</label>
-                            <textarea name="technique_description" value={formData.technique_description || ''} onChange={handleChange} className="form-control" rows={3} />
+                            <Field label="Technique — Description">
+                                <textarea
+                                    name="technique_description"
+                                    value={formData.technique_description || ''}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    placeholder="Détaillez la technique de préparation..."
+                                    style={textareaStyle}
+                                />
+                            </Field>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex" style={{ flexDirection: 'column', gap: '1rem' }}>
-                    <div className="card">
-                        <div className="card-header">
-                            <h3 className="card-title">Détails & Publication</h3>
+                {/* ══ RIGHT COLUMN ══ */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '24px' }}>
+
+                    {/* Panel: Image */}
+                    <div style={cardStyle}>
+                        {sectionHeader(<ImagePlus size={18} color="#059669" />, 'Photo du Plat', 'Image principale affichée dans l\'app', '#d1fae5', '#059669')}
+                        <div style={{ padding: '20px' }}>
+                            {formData.image ? (
+                                <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', aspectRatio: '4/3', background: '#f3f4f6' }}>
+                                    <img
+                                        src={formData.image}
+                                        alt="Aperçu"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                        onError={e => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                                        style={{
+                                            position: 'absolute', top: '10px', right: '10px',
+                                            width: '30px', height: '30px', borderRadius: '50%',
+                                            background: 'rgba(0,0,0,0.4)', border: 'none',
+                                            cursor: 'pointer', color: '#fff',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            backdropFilter: 'blur(4px)',
+                                        }}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label style={{
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    gap: '10px', padding: '32px 20px',
+                                    background: '#fafafa', border: '2px dashed #e5e7eb',
+                                    borderRadius: '14px', cursor: 'pointer', transition: 'border-color 0.2s',
+                                }}>
+                                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                                    {uploading ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280' }}>
+                                            <div className="loader" style={{ width: 16, height: 16 }} />
+                                            <span style={{ fontSize: '13px', fontWeight: 600 }}>Téléchargement...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <ImagePlus size={22} color="#9ca3af" />
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#374151' }}>Cliquer pour uploader</p>
+                                                <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#9ca3af' }}>JPG, PNG, GIF — max 5 MB</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </label>
+                            )}
+
+                            <div style={{ marginTop: '12px' }}>
+                                <label style={labelStyle}>Ou coller une URL</label>
+                                <input
+                                    name="image"
+                                    value={formData.image || ''}
+                                    onChange={handleChange}
+                                    placeholder="https://..."
+                                    style={{ ...inputStyle, fontSize: '12px', color: '#6b7280' }}
+                                />
+                            </div>
                         </div>
-                        <div className="p-6">
-                            <div className="form-group">
-                                <label className="form-label">Image du plat</label>
-                                {formData.image ? (
-                                    <div style={{ position: 'relative', minHeight: '200px', backgroundColor: '#f1f5f9', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
-                                        <img
-                                            src={formData.image}
-                                            alt="Aperçu"
-                                            className="dish-thumbnail-lg"
-                                            style={{ margin: 0, border: 'none', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
-                                        <span className="text-muted text-sm" style={{ zIndex: 0 }}>Image en cours de chargement / Introuvable</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
-                                            className="btn btn-secondary text-sm"
-                                            style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, backgroundColor: 'white' }}>
-                                            Changer
-                                        </button>
+                    </div>
+
+                    {/* Panel: Details */}
+                    <div style={cardStyle}>
+                        {sectionHeader(<Sparkles size={18} color="#d97706" />, 'Détails de Préparation', 'Niveau de difficulté et temps', '#fef3c7', '#d97706')}
+                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <Field label="Région / Origine">
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                    <Globe size={15} color="#9ca3af" style={{ position: 'absolute', left: '13px' }} />
+                                    <input name="region" value={formData.region || ''} onChange={handleChange} placeholder="Ex: Bénin Sud, Côte d'Ivoire..." style={{ ...inputStyle, paddingLeft: '36px' }} />
+                                </div>
+                            </Field>
+
+                            <Field label="Niveau de difficulté">
+                                <select name="difficulty" value={formData.difficulty || ''} onChange={handleChange} style={{ ...inputStyle, cursor: 'pointer' }}>
+                                    {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </Field>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <Field label="Temps de Prépa.">
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <Clock size={14} color="#9ca3af" style={{ position: 'absolute', left: '12px' }} />
+                                        <input name="prep_time" value={formData.prep_time || ''} onChange={handleChange} placeholder="15 min" style={{ ...inputStyle, paddingLeft: '34px' }} />
                                     </div>
-                                ) : (
-                                    <label className="upload-area flex flex-col items-center justify-center">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageUpload}
-                                            style={{ display: 'none' }}
-                                        />
-                                        {uploading ? (
-                                            <div className="flex items-center gap-2 text-muted">
-                                                <div className="loader" style={{ width: 16, height: 16 }}></div>
-                                                Téléchargement...
-                                            </div>
-                                        ) : (
-                                            <div className="text-muted">
-                                                <p className="font-medium text-main mb-1">Cliquez pour ajouter une image</p>
-                                                <p className="text-sm">JPG, PNG, GIF jusqu'à 5MB</p>
-                                            </div>
-                                        )}
-                                    </label>
-                                )}
-                                <div className="mt-2">
-                                    <label className="form-label text-sm text-muted">Ou coller une URL d'image :</label>
-                                    <input name="image" value={formData.image || ''} onChange={handleChange} className="form-control text-sm" placeholder="https://" />
-                                </div>
-                            </div>
-                            <div className="form-group mt-4">
-                                <label className="form-label">Région / Origine</label>
-                                <input name="region" value={formData.region || ''} onChange={handleChange} className="form-control" />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Difficulté</label>
-                                <select name="difficulty" value={formData.difficulty || ''} onChange={handleChange} className="form-control">
-                                    <option value="Très Facile">Très Facile</option>
-                                    <option value="Facile">Facile</option>
-                                    <option value="Intermédiaire">Intermédiaire</option>
-                                    <option value="Moyen">Moyen</option>
-                                    <option value="Difficile">Difficile</option>
-                                    <option value="Très Difficile">Très Difficile</option>
-                                    <option value="Extrême">Extrême</option>
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 grid-gap-4 mt-4">
-                                <div className="form-group">
-                                    <label className="form-label">Temps Prép.</label>
-                                    <input name="prep_time" value={formData.prep_time || ''} onChange={handleChange} className="form-control" placeholder="ex: 15 min" />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Temps Cuisson</label>
-                                    <input name="cook_time" value={formData.cook_time || ''} onChange={handleChange} className="form-control" placeholder="ex: 45 min" />
-                                </div>
-                            </div>
-
-                            <div className="form-group mt-4">
-                                <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-                                    {loading ? <div className="loader" style={{ width: 16, height: 16 }}></div> : <><Save size={18} /> Enregistrer</>}
-                                </button>
+                                </Field>
+                                <Field label="Temps de Cuisson">
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <Flame size={14} color="#9ca3af" style={{ position: 'absolute', left: '12px' }} />
+                                        <input name="cook_time" value={formData.cook_time || ''} onChange={handleChange} placeholder="45 min" style={{ ...inputStyle, paddingLeft: '34px' }} />
+                                    </div>
+                                </Field>
                             </div>
                         </div>
                     </div>
+
+                    {/* Complétude rapide */}
+                    <div style={{ background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)', borderRadius: '16px', padding: '16px 18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                            <Tag size={14} color="#7c3aed" />
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#5b21b6', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Complétion du profil</span>
+                        </div>
+                        {[
+                            { label: 'Nom', done: !!formData.name, icon: <ChefHat size={12} /> },
+                            { label: 'Photo', done: !!formData.image, icon: <ImagePlus size={12} /> },
+                            { label: 'Catégorie', done: !!formData.category, icon: <Tag size={12} /> },
+                            { label: 'Description', done: !!formData.description, icon: <BookOpen size={12} /> },
+                            { label: 'Région', done: !!formData.region, icon: <Globe size={12} /> },
+                            { label: 'Bienfaits', done: !!formData.benefits, icon: <Leaf size={12} /> },
+                        ].map(f => (
+                            <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 0' }}>
+                                <div style={{
+                                    width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
+                                    background: f.done ? '#7c3aed' : 'rgba(124,58,237,0.15)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: f.done ? '#fff' : '#a78bfa',
+                                }}>
+                                    {f.icon}
+                                </div>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: f.done ? '#5b21b6' : '#a78bfa', textDecoration: f.done ? 'none' : 'none' }}>{f.label}</span>
+                                {f.done && <span style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 800, color: '#7c3aed' }}>✓</span>}
+                            </div>
+                        ))}
+                        <div style={{ marginTop: '12px', height: '6px', borderRadius: '99px', background: 'rgba(124,58,237,0.15)', overflow: 'hidden' }}>
+                            <div style={{
+                                height: '100%', borderRadius: '99px', background: '#7c3aed',
+                                width: `${([formData.name, formData.image, formData.category, formData.description, formData.region, formData.benefits].filter(Boolean).length / 6) * 100}%`,
+                                transition: 'width 0.3s ease',
+                            }} />
+                        </div>
+                    </div>
                 </div>
+
             </form>
         </div>
     );
