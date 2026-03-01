@@ -31,7 +31,7 @@ export function Sidebar() {
                     className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 >
                     <LayoutGrid size={20} style={{ marginRight: '8px' }} />
-                    <span>Sections Accueil</span>
+                    <span>Sections</span>
                 </NavLink>
                 <NavLink
                     to="/ai-generator"
