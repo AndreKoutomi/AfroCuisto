@@ -186,13 +186,12 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
           display: 'flex',
           gap: '14px',
           overflowX: 'auto',
-          overflowY: 'visible',
           scrollSnapType: 'x mandatory',
           scrollBehavior: 'smooth',
           paddingLeft: '9vw',
           paddingRight: '9vw',
-          paddingTop: '16px',
-          paddingBottom: '20px',
+          paddingTop: '20px',
+          paddingBottom: '24px',
           msOverflowStyle: 'none',
           scrollbarWidth: 'none',
         }}
@@ -204,7 +203,13 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
           return (
             <motion.div
               key={recipe.id}
-              animate={{ scale: isActive ? 1 : 0.93, opacity: isActive ? 1 : 0.7 }}
+              animate={{
+                scale: isActive ? 1 : 0.93,
+                opacity: isActive ? 1 : 0.7,
+                filter: isActive
+                  ? 'drop-shadow(0 22px 40px rgba(0,0,0,0.28)) drop-shadow(0 6px 12px rgba(0,0,0,0.14))'
+                  : 'drop-shadow(0 4px 12px rgba(0,0,0,0.10))',
+              }}
               transition={{ type: 'spring', stiffness: 340, damping: 30 }}
               onClick={() => { if (isActive) setSelectedRecipe(recipe); else goTo(i); }}
               style={{
@@ -216,9 +221,6 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
                 borderRadius: '28px',
                 overflow: 'hidden',
                 position: 'relative',
-                boxShadow: isActive
-                  ? '0 20px 50px rgba(0,0,0,0.22), 0 6px 16px rgba(0,0,0,0.10)'
-                  : '0 4px 16px rgba(0,0,0,0.08)',
                 aspectRatio: '3/4',
               }}
             >
