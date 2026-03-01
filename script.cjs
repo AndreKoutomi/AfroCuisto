@@ -1,0 +1,13 @@
+﻿const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient('https://ewoiqbhqtcdatpzhdaef.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3b2lxYmhxdGNkYXRwemhkYWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMTc5OTEsImV4cCI6MjA4Nzc5Mzk5MX0.VN3pnUz2pO5nQ4DUZ8_Ml1OAwg_jIUh3mwn-pvrtyh8');
+
+async function run() {
+    const { data } = await supabase.from('home_sections').select('*');
+    for (let section of data) {
+        let page = ['Sélection du Chef', 'Tendances actuelles', 'Coin des P\'tits Chefs'].includes(section.title) ? 'home' : 'explorer';
+        let newConfig = { ...(section.config || {}), page };
+        await supabase.from('home_sections').update({ config: newConfig }).eq('id', section.id);
+        console.log('Updated ' + section.title + ' to ' + page);
+    }
+}
+run();

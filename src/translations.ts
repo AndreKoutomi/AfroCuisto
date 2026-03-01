@@ -111,6 +111,13 @@ export const translations = {
         southDesc: "Sublime mariage de produits marins, d'huile rouge et de maïs.",
         centerDesc: "Terre de tubercules, de sauces gluantes et de viandes fumées.",
         northDesc: "Saveurs robustes, céréales anciennes et grillades épicées.",
+        // Reviews
+        reviewsTitle: "Votre avis",
+        ratingLabel: "Notez ce plat",
+        commentPlaceholder: "Laissez un commentaire sur votre expérience...",
+        submitReview: "Envoyer mon avis",
+        reviewSuccess: "Merci pour votre retour !",
+        reviewError: "Erreur lors de l'envoi. Réessayez.",
     },
     en: {
         settings: "Settings",

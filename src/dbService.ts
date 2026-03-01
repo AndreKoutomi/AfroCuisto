@@ -184,5 +184,20 @@ export const dbService = {
             dbService.setCurrentUser(user);
         }
         return user;
+    },
+
+    // Review & Feedback
+    async submitReview(review: { recipe_id: string; recipe_name: string; user_id: string; user_name: string; rating: number; comment: string }): Promise<boolean> {
+        try {
+            if (!supabase) return false;
+            const { error } = await supabase
+                .from('reviews')
+                .insert([review]);
+            if (error) throw error;
+            return true;
+        } catch (err) {
+            console.error('Submit review error:', err);
+            return false;
+        }
     }
 };

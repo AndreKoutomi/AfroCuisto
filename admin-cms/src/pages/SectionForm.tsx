@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Search, Utensils, Info, Sparkles, Star, LayoutGrid, List, AlignJustify, GalleryHorizontal, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Search, Utensils, Info, Sparkles, Star, LayoutGrid, CheckCircle2 } from 'lucide-react';
 
 interface Recipe {
     id: string;
@@ -25,13 +25,7 @@ const INITIAL_STATE = {
     } as Record<string, any>
 };
 
-const SECTION_TYPES = [
-    { value: 'hero_carousel', label: 'Hero Carrousel', sublabel: 'Bannière principale · Accueil', icon: Sparkles },
-    { value: 'dynamic_carousel', label: 'Carrousel', sublabel: 'Défilement dynamique', icon: GalleryHorizontal },
-    { value: 'horizontal_list', label: 'Horizontal', sublabel: 'Liste défilante', icon: AlignJustify },
-    { value: 'vertical_list_1', label: 'Liste simple', sublabel: '1 colonne', icon: List },
-    { value: 'vertical_list_2', label: 'Grille', sublabel: '2 colonnes', icon: LayoutGrid },
-];
+
 
 const PAGES = [
     { value: 'home', label: 'Page d\'accueil' },
@@ -110,10 +104,16 @@ export function SectionForm() {
 
     const handleToggleRecipe = (recipeId: string) => {
         setFormData(prev => {
-            const ids = prev.recipe_ids.includes(recipeId)
-                ? prev.recipe_ids.filter(rid => rid !== recipeId)
-                : [...prev.recipe_ids, recipeId];
-            return { ...prev, recipe_ids: ids };
+            const isFeatured = prev.type === 'featured';
+            if (prev.recipe_ids.includes(recipeId)) {
+                // Désélection toujours autorisée
+                return { ...prev, recipe_ids: prev.recipe_ids.filter(rid => rid !== recipeId) };
+            }
+            // Mise en avant : 1 plat max
+            if (isFeatured) {
+                return { ...prev, recipe_ids: [recipeId] };
+            }
+            return { ...prev, recipe_ids: [...prev.recipe_ids, recipeId] };
         });
     };
 
@@ -318,81 +318,381 @@ export function SectionForm() {
                             </div>
                             <div>
                                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>Type d'affichage</h3>
-                                <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Choisissez le format de rendu</p>
+                                <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Choisissez le format de rendu sur l'app mobile</p>
                             </div>
                         </div>
                         <div style={{ padding: '24px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-                                {SECTION_TYPES.map(({ value, label, sublabel, icon: Icon }) => {
-                                    const isActive = formData.type === value;
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '14px' }}>
+
+                                {/* ── HERO CAROUSEL ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'hero_carousel';
                                     return (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, type: value }))}
-                                            style={{
-                                                border: isActive ? '2px solid #4318ff' : '2px solid #f0f0f0',
-                                                background: isActive ? 'linear-gradient(135deg, #eef2ff, #ede9fe)' : '#fafafa',
-                                                borderRadius: '16px',
-                                                padding: '16px 12px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                transition: 'all 0.2s',
-                                                position: 'relative',
-                                            }}
-                                        >
-                                            {isActive && (
-                                                <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#4318ff' }}>
-                                                    <CheckCircle2 size={14} />
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'hero_carousel' }))}
+                                            style={{ border: isActive ? '2.5px solid #F94D00' : '2px solid #f0f0f0', background: isActive ? '#fff8f5' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#F94D00' }}><CheckCircle2 size={14} /></div>}
+                                            {/* Mockup */}
+                                            <div style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', background: '#1a1a2e', aspectRatio: '9/7', position: 'relative', boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}>
+                                                {/* Image placeholder */}
+                                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)', opacity: 0.85 }} />
+                                                {/* Gradient overlay */}
+                                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%)' }} />
+                                                {/* Dots top */}
+                                                <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '3px' }}>
+                                                    <div style={{ width: '14px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.9)' }} />
+                                                    <div style={{ width: '4px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.4)' }} />
+                                                    <div style={{ width: '4px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.4)' }} />
                                                 </div>
-                                            )}
-                                            <div style={{
-                                                width: '40px', height: '40px', borderRadius: '12px',
-                                                background: isActive ? '#4318ff' : '#e5e7eb',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                transition: 'all 0.2s',
-                                            }}>
-                                                <Icon size={20} color={isActive ? '#fff' : '#6b7280'} />
+                                                {/* Heart top right */}
+                                                <div style={{ position: 'absolute', top: '6px', right: '8px', width: '16px', height: '16px', borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <div style={{ width: '8px', height: '7px', background: '#F94D00', borderRadius: '2px', clipPath: 'polygon(50% 100%, 0% 35%, 15% 15%, 50% 30%, 85% 15%, 100% 35%)' }} />
+                                                </div>
+                                                {/* Bottom content */}
+                                                <div style={{ position: 'absolute', bottom: '8px', left: '8px', right: '8px' }}>
+                                                    <div style={{ width: '40%', height: '4px', background: 'rgba(249,77,0,0.7)', borderRadius: '2px', marginBottom: '4px' }} />
+                                                    <div style={{ width: '80%', height: '6px', background: 'rgba(255,255,255,0.9)', borderRadius: '3px', marginBottom: '5px' }} />
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                        <div style={{ width: '45%', height: '3px', background: 'rgba(255,255,255,0.5)', borderRadius: '2px' }} />
+                                                        <div style={{ width: '28%', height: '14px', background: '#F94D00', borderRadius: '6px' }} />
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div style={{ textAlign: 'center' }}>
-                                                <p style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: isActive ? '#4318ff' : '#374151' }}>{label}</p>
-                                                <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af', marginTop: '2px' }}>{sublabel}</p>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#F94D00' : '#374151' }}>Hero</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>Bannière accueil</p>
                                             </div>
                                         </button>
                                     );
-                                })}
+                                })()}
+
+                                {/* ── DYNAMIC CAROUSEL ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'dynamic_carousel';
+                                    return (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'dynamic_carousel' }))}
+                                            style={{ border: isActive ? '2.5px solid #4318ff' : '2px solid #f0f0f0', background: isActive ? '#f5f3ff' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#4318ff' }}><CheckCircle2 size={14} /></div>}
+                                            {/* Mockup */}
+                                            <div style={{ width: '100%', aspectRatio: '9/7', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '-8px' }}>
+                                                {/* Side card left */}
+                                                <div style={{ width: '34%', aspectRatio: '2/3', borderRadius: '12px', background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)', position: 'absolute', left: '2px', top: '8px', opacity: 0.55, transform: 'rotate(-4deg) scale(0.88)', boxShadow: '0 3px 10px rgba(0,0,0,0.10)' }} />
+                                                {/* Center main card */}
+                                                <div style={{ width: '54%', aspectRatio: '2/3', borderRadius: '14px', background: 'linear-gradient(135deg, #667eea, #764ba2)', zIndex: 2, position: 'relative', boxShadow: '0 8px 20px rgba(102,126,234,0.35)' }}>
+                                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%)', borderRadius: '14px' }} />
+                                                    <div style={{ position: 'absolute', bottom: '8px', left: '8px', right: '8px' }}>
+                                                        <div style={{ width: '70%', height: '5px', background: 'rgba(255,255,255,0.85)', borderRadius: '2px', marginBottom: '3px' }} />
+                                                        <div style={{ width: '50%', height: '3px', background: 'rgba(255,255,255,0.5)', borderRadius: '2px' }} />
+                                                    </div>
+                                                </div>
+                                                {/* Side card right */}
+                                                <div style={{ width: '34%', aspectRatio: '2/3', borderRadius: '12px', background: 'linear-gradient(135deg, #fff3e0, #ffe0b2)', position: 'absolute', right: '2px', top: '8px', opacity: 0.55, transform: 'rotate(4deg) scale(0.88)', boxShadow: '0 3px 10px rgba(0,0,0,0.10)' }} />
+                                                {/* Dots */}
+                                                <div style={{ position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '3px' }}>
+                                                    <div style={{ width: '10px', height: '3px', borderRadius: '2px', background: '#4318ff' }} />
+                                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d1d5db' }} />
+                                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d1d5db' }} />
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#4318ff' : '#374151' }}>Carrousel</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>Défilement</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })()}
+
+                                {/* ── HORIZONTAL LIST ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'horizontal_list';
+                                    return (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'horizontal_list' }))}
+                                            style={{ border: isActive ? '2.5px solid #0ea5e9' : '2px solid #f0f0f0', background: isActive ? '#f0f9ff' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#0ea5e9' }}><CheckCircle2 size={14} /></div>}
+                                            {/* Mockup — food delivery card style */}
+                                            <div style={{ width: '100%', aspectRatio: '9/7', display: 'flex', justifyContent: 'center', gap: '5px', overflow: 'hidden', padding: '4px 0' }}>
+                                                {[
+                                                    'linear-gradient(135deg, #f64f59, #c0392b)',
+                                                    'linear-gradient(135deg, #667eea, #764ba2)',
+                                                ].map((bg, i) => (
+                                                    <div key={i} style={{
+                                                        flexShrink: 0, width: '46%', borderRadius: '10px',
+                                                        background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                                                        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                                                        border: '1px solid #f0f0f0',
+                                                    }}>
+                                                        {/* Image area */}
+                                                        <div style={{ height: '52%', background: bg, position: 'relative' }}>
+                                                            {/* Price badge */}
+                                                            <div style={{ position: 'absolute', top: '3px', left: '3px', background: 'rgba(0,0,0,0.5)', borderRadius: '4px', padding: '1px 4px' }}>
+                                                                <div style={{ width: '12px', height: '3px', background: '#fff', borderRadius: '1px' }} />
+                                                            </div>
+                                                            {/* Heart */}
+                                                            <div style={{ position: 'absolute', top: '3px', right: '3px', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                                                            {/* Rating badge */}
+                                                            <div style={{ position: 'absolute', bottom: '3px', left: '3px', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px' }}>
+                                                                <div style={{ width: '10px', height: '2px', background: '#f59e0b', borderRadius: '1px' }} />
+                                                            </div>
+                                                        </div>
+                                                        {/* Text content */}
+                                                        <div style={{ padding: '4px 4px 5px', flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                            <div style={{ width: '80%', height: '3px', background: '#1a1a1a', borderRadius: '1px' }} />
+                                                            <div style={{ width: '55%', height: '2px', background: '#d1d5db', borderRadius: '1px' }} />
+                                                            <div style={{ width: '70%', height: '2px', background: '#e5e7eb', borderRadius: '1px' }} />
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                                                                <div style={{ width: '35%', height: '3px', background: '#111827', borderRadius: '1px' }} />
+                                                                <div style={{ display: 'flex', gap: '1px' }}>
+                                                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ef4444' }} />
+                                                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#fecaca' }} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#0ea5e9' : '#374151' }}>Horizontal</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>Scroll latéral</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })()}
+
+                                {/* ── VERTICAL LIST 1 (1 col) ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'vertical_list_1';
+                                    return (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'vertical_list_1' }))}
+                                            style={{ border: isActive ? '2.5px solid #10b981' : '2px solid #f0f0f0', background: isActive ? '#f0fdf4' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#10b981' }}><CheckCircle2 size={14} /></div>}
+                                            {/* Mockup — food delivery vertical list */}
+                                            <div style={{ width: '100%', aspectRatio: '9/7', display: 'flex', flexDirection: 'column', gap: '5px', justifyContent: 'center' }}>
+                                                {[
+                                                    'linear-gradient(135deg, #f64f59, #c0392b)',
+                                                    'linear-gradient(135deg, #667eea, #764ba2)',
+                                                    'linear-gradient(135deg, #11998e, #38ef7d)',
+                                                ].map((bg, i) => (
+                                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#fff', borderRadius: '8px', padding: '4px 5px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f3f4f6' }}>
+                                                        {/* Image */}
+                                                        <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: bg, flexShrink: 0 }} />
+                                                        {/* Infos */}
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ width: '65%', height: '2.5px', background: '#111827', borderRadius: '1px', marginBottom: '2px' }} />
+                                                            <div style={{ width: '45%', height: '2px', background: '#9ca3af', borderRadius: '1px', marginBottom: '2px' }} />
+                                                            <div style={{ width: '55%', height: '2px', background: '#d1d5db', borderRadius: '1px' }} />
+                                                        </div>
+                                                        {/* Right: chevron */}
+                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#d1d5db', flexShrink: 0 }} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#10b981' : '#374151' }}>Liste</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>1 colonne</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })()}
+
+                                {/* ── VERTICAL LIST 2 (grid 2 col) ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'vertical_list_2';
+                                    return (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'vertical_list_2' }))}
+                                            style={{ border: isActive ? '2.5px solid #f59e0b' : '2px solid #f0f0f0', background: isActive ? '#fffbeb' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#f59e0b' }}><CheckCircle2 size={14} /></div>}
+                                            {/* Mockup — grille 2 colonnes style card */}
+                                            <div style={{ width: '100%', aspectRatio: '9/7', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', alignContent: 'center' }}>
+                                                {[
+                                                    'linear-gradient(135deg, #f64f59, #c0392b)',
+                                                    'linear-gradient(135deg, #667eea, #764ba2)',
+                                                    'linear-gradient(135deg, #11998e, #38ef7d)',
+                                                    'linear-gradient(135deg, #f7971e, #ffd200)',
+                                                ].map((bg, i) => (
+                                                    <div key={i} style={{
+                                                        borderRadius: '8px', background: '#fff',
+                                                        boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+                                                        overflow: 'hidden', border: '1px solid #f0f0f0',
+                                                        display: 'flex', flexDirection: 'column',
+                                                    }}>
+                                                        {/* Image area */}
+                                                        <div style={{ aspectRatio: '4/3', background: bg, position: 'relative' }}>
+                                                            {/* Heart */}
+                                                            <div style={{ position: 'absolute', top: '2px', right: '2px', width: '7px', height: '7px', borderRadius: '50%', background: 'rgba(255,255,255,0.85)' }} />
+                                                            {/* Rating */}
+                                                            <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px' }}>
+                                                                <div style={{ width: '10px', height: '2px', background: '#f59e0b', borderRadius: '1px' }} />
+                                                            </div>
+                                                        </div>
+                                                        {/* Text content */}
+                                                        <div style={{ padding: '3px 4px 4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                            <div style={{ width: '80%', height: '2.5px', background: '#111827', borderRadius: '1px' }} />
+                                                            <div style={{ width: '55%', height: '2px', background: '#d1d5db', borderRadius: '1px' }} />
+                                                            <div style={{ width: '70%', height: '2px', background: '#e5e7eb', borderRadius: '1px' }} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#f59e0b' : '#374151' }}>Grille</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>2 colonnes</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })()}
+
+                                {/* ── FEATURED (Mise en avant) ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'featured';
+                                    return (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'featured', recipe_ids: prev.recipe_ids.slice(0, 1) }))}
+                                            style={{ border: isActive ? '2.5px solid #16a34a' : '2px solid #f0f0f0', background: isActive ? '#f0fdf4' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#16a34a' }}><CheckCircle2 size={14} /></div>}
+                                            <div style={{ width: '100%', aspectRatio: '9/7', borderRadius: '10px', overflow: 'hidden', background: 'linear-gradient(135deg, #16a34a, #22c55e)', position: 'relative', display: 'flex', alignItems: 'center', padding: '6px 8px', boxShadow: '0 3px 12px rgba(22,163,74,0.25)' }}>
+                                                <div style={{ flex: 1, zIndex: 1 }}>
+                                                    <div style={{ width: '55%', height: '3px', background: 'rgba(255,255,255,0.6)', borderRadius: '2px', marginBottom: '4px' }} />
+                                                    <div style={{ width: '75%', height: '5px', background: '#fff', borderRadius: '2px', marginBottom: '3px' }} />
+                                                    <div style={{ width: '65%', height: '5px', background: '#fff', borderRadius: '2px', marginBottom: '8px' }} />
+                                                    <div style={{ width: '40px', height: '9px', background: '#fff', borderRadius: '6px' }} />
+                                                </div>
+                                                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(255,255,255,0.25)', flexShrink: 0, border: '2px solid rgba(255,255,255,0.5)' }} />
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#16a34a' : '#374151' }}>Mise en avant</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>1 plat à la une</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })()}
+
+                            </div>
+
+                            {/* Description contextuelle du type sélectionné */}
+                            <div style={{ marginTop: '16px', background: '#f9fafb', borderRadius: '14px', padding: '14px 16px', border: '1px solid #f0f0f0', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                <Info size={15} color="#9ca3af" style={{ flexShrink: 0, marginTop: '1px' }} />
+                                <p style={{ margin: 0, fontSize: '11px', color: '#6b7280', fontWeight: 500, lineHeight: 1.6 }}>
+                                    {formData.type === 'hero_carousel' && "Bannière plein-écran en haut de la page d'accueil. Défile automatiquement avec des animations cinématiques. Recommandé pour les coups de cœur et les plats phares."}
+                                    {formData.type === 'dynamic_carousel' && "Carrousel de cards circulaires avec image flottante, défilement horizontal. Idéal pour les sections vedettes avec un style premium."}
+                                    {formData.type === 'horizontal_list' && "Rangée de cards défilantes en scroll horizontal. Format compact adapté aux sections secondaires avec beaucoup de plats."}
+                                    {formData.type === 'vertical_list_1' && "Liste verticale avec une seule colonne. Format épuré avec image, nom et infos complémentaires sur chaque ligne."}
+                                    {formData.type === 'vertical_list_2' && "Grille à 2 colonnes pour une vue compacte et visuelle. Parfait pour les pages de découverte avec de nombreuses recettes."}
+                                    {formData.type === 'featured' && "Bannière pleine largeur mettant UN seul plat en avant. Le nom de la recette s'affiche en grand avec un visuel percutant et un bouton \"Découvrir\". Parfait pour les plats phares."}
+                                </p>
                             </div>
 
                             {/* Options conditionnelles */}
-                            {formData.type === 'dynamic_carousel' && (
-                                <div style={{ marginTop: '20px', background: '#fafafa', borderRadius: '14px', padding: '16px', border: '1px solid #f0f0f0' }}>
-                                    <p style={{ ...labelStyle, marginBottom: '12px' }}>Options du carrousel</p>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                        {[
-                                            { id: 'autoplay', key: 'autoplay', label: 'Défilement automatique' },
-                                            { id: 'show_dots', key: 'show_dots', label: 'Points de pagination' },
-                                        ].map(opt => (
-                                            <label key={opt.id} htmlFor={opt.id} style={{
+                            {formData.type === 'dynamic_carousel' && (() => {
+                                const isAutoplay = formData.config?.autoplay === true || formData.config?.autoplay === 'true';
+                                const intervalMs = parseInt(formData.config?.autoplay_interval) || 3000;
+                                const intervalSec = intervalMs / 1000;
+
+                                const TIMING_OPTIONS = [
+                                    { value: 2000, label: '2s', desc: 'Rapide' },
+                                    { value: 3000, label: '3s', desc: 'Normal' },
+                                    { value: 4000, label: '4s', desc: 'Lent' },
+                                    { value: 5000, label: '5s', desc: 'Très lent' },
+                                    { value: 7000, label: '7s', desc: 'Pause' },
+                                    { value: 10000, label: '10s', desc: 'Manuel' },
+                                ];
+
+                                return (
+                                    <div style={{ marginTop: '16px', background: '#fafafa', borderRadius: '16px', padding: '18px', border: '1px solid #f0f0f0' }}>
+                                        {/* Header row */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                            <p style={{ ...labelStyle, margin: 0 }}>Options du Coverflow</p>
+                                            {isAutoplay && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#eef2ff', borderRadius: '20px', padding: '4px 10px' }}>
+                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4318ff', animation: 'pulse 1.5s infinite' }} />
+                                                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#4318ff' }}>AUTO · {intervalSec}s</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Row 1: toggles */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                                            {/* Autoplay toggle */}
+                                            <label htmlFor="autoplay" style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                background: isAutoplay ? 'rgba(67,24,255,0.04)' : '#fff',
+                                                borderRadius: '12px', padding: '12px 14px',
+                                                border: isAutoplay ? '1.5px solid rgba(67,24,255,0.18)' : '1px solid #e5e7eb',
+                                                cursor: 'pointer', transition: 'all 0.2s',
+                                            }}>
+                                                <div>
+                                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: isAutoplay ? '#4318ff' : '#374151' }}>Défilement auto</p>
+                                                    <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af' }}>Avance seul</p>
+                                                </div>
+                                                <input
+                                                    type="checkbox" id="autoplay"
+                                                    checked={isAutoplay}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, autoplay: e.target.checked } }))}
+                                                    style={{ width: '18px', height: '18px', accentColor: '#4318ff', cursor: 'pointer' }}
+                                                />
+                                            </label>
+                                            {/* Show dots toggle */}
+                                            <label htmlFor="show_dots" style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                                 background: '#fff', borderRadius: '12px', padding: '12px 14px',
                                                 border: '1px solid #e5e7eb', cursor: 'pointer',
                                             }}>
-                                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>{opt.label}</span>
+                                                <div>
+                                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#374151' }}>Points de nav</p>
+                                                    <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af' }}>Indicateurs</p>
+                                                </div>
                                                 <input
-                                                    type="checkbox"
-                                                    id={opt.id}
-                                                    checked={formData.config?.[opt.key] === 'true' || formData.config?.[opt.key] === true}
-                                                    onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [opt.key]: e.target.checked } }))}
+                                                    type="checkbox" id="show_dots"
+                                                    checked={formData.config?.show_dots === true || formData.config?.show_dots === 'true'}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, show_dots: e.target.checked } }))}
                                                     style={{ width: '18px', height: '18px', accentColor: '#4318ff', cursor: 'pointer' }}
                                                 />
                                             </label>
-                                        ))}
+                                        </div>
+
+                                        {/* Row 2: Timing pills — visible only when autoplay ON */}
+                                        {isAutoplay && (
+                                            <div>
+                                                <p style={{ ...labelStyle, marginBottom: '10px', color: '#4318ff' }}>⏱ Intervalle de défilement</p>
+                                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                    {TIMING_OPTIONS.map(opt => {
+                                                        const active = intervalMs === opt.value;
+                                                        return (
+                                                            <button
+                                                                key={opt.value}
+                                                                type="button"
+                                                                onClick={() => setFormData(prev => ({ ...prev, config: { ...prev.config, autoplay_interval: opt.value } }))}
+                                                                style={{
+                                                                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                                                    padding: '8px 14px', borderRadius: '12px', cursor: 'pointer',
+                                                                    border: active ? '2px solid #4318ff' : '1.5px solid #e5e7eb',
+                                                                    background: active ? 'linear-gradient(135deg, #eef2ff, #ede9fe)' : '#fff',
+                                                                    transition: 'all 0.15s', minWidth: '52px',
+                                                                }}
+                                                            >
+                                                                <span style={{ fontSize: '14px', fontWeight: 800, color: active ? '#4318ff' : '#374151' }}>{opt.label}</span>
+                                                                <span style={{ fontSize: '9px', color: active ? '#7c3aed' : '#9ca3af', marginTop: '2px', fontWeight: 600 }}>{opt.desc}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {/* Progress bar preview */}
+                                                <div style={{ marginTop: '14px', background: '#e5e7eb', borderRadius: '4px', height: '4px', overflow: 'hidden' }}>
+                                                    <div
+                                                        style={{
+                                                            height: '100%', borderRadius: '4px',
+                                                            background: 'linear-gradient(90deg, #4318ff, #7c3aed)',
+                                                            width: `${Math.round((intervalMs / 10000) * 100)}%`,
+                                                            transition: 'width 0.3s ease',
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p style={{ margin: '6px 0 0', fontSize: '10px', color: '#9ca3af', fontWeight: 500 }}>
+                                                    La card suivante s'affiche après <strong style={{ color: '#4318ff' }}>{intervalSec} secondes</strong>
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
+
                         </div>
                     </div>
 
@@ -474,6 +774,14 @@ export function SectionForm() {
                             <p style={{ margin: '0 0 16px', fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>
                                 {filteredRecipes.length} plat{filteredRecipes.length !== 1 ? 's' : ''} disponible{filteredRecipes.length !== 1 ? 's' : ''}
                             </p>
+                            {formData.type === 'featured' && (
+                                <div style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1.5px solid #86efac', borderRadius: '10px', padding: '8px 12px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '14px' }}>⭐</span>
+                                    <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: '#16a34a', lineHeight: 1.4 }}>
+                                        Mode <strong>Mise en avant</strong> — 1 seul plat autorisé.
+                                    </p>
+                                </div>
+                            )}
                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
                                 <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: '14px' }} />
                                 <input
@@ -500,22 +808,25 @@ export function SectionForm() {
                                         onClick={() => handleToggleRecipe(recipe.id)}
                                         style={{
                                             display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 8px',
-                                            borderRadius: '12px', cursor: 'pointer',
-                                            background: selected ? 'rgba(67,24,255,0.04)' : 'transparent',
-                                            border: selected ? '1px solid rgba(67,24,255,0.1)' : '1px solid transparent',
+                                            borderRadius: '12px',
+                                            // Griser les plats non sélectionnables en mode featured
+                                            cursor: (formData.type === 'featured' && !selected && formData.recipe_ids.length >= 1) ? 'not-allowed' : 'pointer',
+                                            opacity: (formData.type === 'featured' && !selected && formData.recipe_ids.length >= 1) ? 0.4 : 1,
+                                            background: selected ? 'rgba(22,163,74,0.06)' : 'transparent',
+                                            border: selected ? '1px solid rgba(22,163,74,0.2)' : '1px solid transparent',
                                             marginBottom: '4px', transition: 'all 0.15s',
                                         }}
                                     >
-                                        <img src={recipe.image} style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0, border: selected ? '2px solid #4318ff' : '2px solid transparent', transition: 'border 0.15s' }} />
+                                        <img src={recipe.image} style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0, border: selected ? '2px solid #16a34a' : '2px solid transparent', transition: 'border 0.15s' }} />
                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: selected ? '#4318ff' : '#111827', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: selected ? '#16a34a' : '#111827', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                 {recipe.name}
                                             </p>
                                             <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>{recipe.category}</p>
                                         </div>
                                         <div style={{
                                             width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-                                            background: selected ? '#4318ff' : '#f3f4f6',
+                                            background: selected ? '#16a34a' : '#f3f4f6',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             transition: 'all 0.2s',
                                         }}>
@@ -535,7 +846,7 @@ export function SectionForm() {
                         </p>
                     </div>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 }

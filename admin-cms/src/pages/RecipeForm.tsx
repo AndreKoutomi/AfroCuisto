@@ -42,12 +42,25 @@ export function RecipeForm() {
     const [uploading, setUploading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(!!id);
 
+    const [aiPrefilled, setAiPrefilled] = useState(false);
+
     useEffect(() => {
         if (id) {
             supabase.from('recipes').select('*').eq('id', id).single().then(({ data, error }) => {
                 if (data && !error) setFormData({ ...INITIAL_STATE, ...data });
                 setInitialLoading(false);
             });
+        } else {
+            // Vérifier s'il y a des données IA à pré-remplir
+            const aiData = sessionStorage.getItem('ai_recipe_prefill');
+            if (aiData) {
+                try {
+                    const parsed = JSON.parse(aiData);
+                    setFormData(prev => ({ ...prev, ...parsed }));
+                    setAiPrefilled(true);
+                    sessionStorage.removeItem('ai_recipe_prefill');
+                } catch (_) { }
+            }
         }
     }, [id]);
 
@@ -183,6 +196,28 @@ export function RecipeForm() {
 
                 {/* ══ LEFT COLUMN ══ */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                    {/* Bandeau pré-remplissage IA */}
+                    {aiPrefilled && (
+                        <div style={{
+                            borderRadius: '16px',
+                            background: 'linear-gradient(135deg, #eef2ff, #ede9fe)',
+                            border: '1.5px solid #c7d2fe',
+                            padding: '14px 18px',
+                            display: 'flex', alignItems: 'center', gap: '12px',
+                        }}>
+                            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'linear-gradient(135deg, #4318ff, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Sparkles size={16} color="#fff" />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#312e81' }}>Pré-rempli par l'Assistant IA ✨</p>
+                                <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#6366f1' }}>Vérifiez et complétez les champs — ajoutez notamment une photo du plat.</p>
+                            </div>
+                            <button onClick={() => setAiPrefilled(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '4px' }}>
+                                <X size={15} />
+                            </button>
+                        </div>
+                    )}
 
                     {/* Panel: Identity */}
                     <div style={cardStyle}>
