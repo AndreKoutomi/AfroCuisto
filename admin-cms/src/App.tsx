@@ -5,20 +5,23 @@ import { RecipesList } from './pages/RecipesList';
 import { RecipeForm } from './pages/RecipeForm';
 import { AIGenerator } from './pages/AIGenerator';
 import { SectionsManager } from './pages/SectionsManager';
+import { SectionForm } from './pages/SectionForm';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const getPageTitle = () => {
-    if (location.pathname === '/sections') return 'Configuration des Sections';
+    if (location.pathname === '/sections') return 'Gestion des Sections';
+    if (location.pathname === '/sections/create') return 'Nouvelle Section';
+    if (location.pathname.startsWith('/sections/edit/')) return 'Modifier la Section';
     if (location.pathname === '/ai-generator') return 'Générateur Intelligence Artificielle';
     if (location.pathname === '/dashboard') return 'Tableau de bord';
     return 'Bienvenue sur AfriHub';
   };
 
   const getBreadcrumb = () => {
-    if (location.pathname === '/sections') return 'Pages / Sections';
+    if (location.pathname.startsWith('/sections')) return 'Pages / Sections';
     if (location.pathname === '/ai-generator') return 'Pages / IA';
     return 'Pages / Tableau de bord';
   };
@@ -77,6 +80,8 @@ function App() {
           <Route path="/recipes/create" element={<RecipeForm />} />
           <Route path="/recipes/edit/:id" element={<RecipeForm />} />
           <Route path="/sections" element={<SectionsManager />} />
+          <Route path="/sections/create" element={<SectionForm />} />
+          <Route path="/sections/edit/:id" element={<SectionForm />} />
           <Route path="/ai-generator" element={<AIGenerator />} />
         </Routes>
       </AppLayout>
