@@ -501,7 +501,7 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
   }
 };
 
-const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack, updateSettings, handleLogout, settings, handleSaveSettings }: any) => {
+const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack, updateSettings, handleLogout, settings, handleSaveSettings, isSyncing, hasLoadedAtLeastOnce }: any) => {
   const views: Record<string, () => React.JSX.Element> = {
     'personalInfo': () => {
       const fileInputRef = useRef<HTMLInputElement>(null);
@@ -639,6 +639,19 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
           <CheckCircle2 size={18} />
           {t.save} {t.settings.toLowerCase()}
         </button>
+
+        {/* Sync Status Indicator moved here */}
+        {(isSyncing || !hasLoadedAtLeastOnce) && (
+          <div className="flex justify-center mt-6">
+            <div className="bg-white px-4 py-2 rounded-2xl border border-stone-100 shadow-sm flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fb5607] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#fb5607]"></span>
+              </span>
+              <span className="text-[10px] font-black text-[#fb5607] tracking-widest uppercase">Cloud Sync en cours...</span>
+            </div>
+          </div>
+        )}
       </div>
     ),
     'security': () => (
@@ -998,12 +1011,6 @@ export default function App() {
                   </span>
                   <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em] truncate">
                     {t.homeSlogan}
-                    {(isSyncing || !hasLoadedAtLeastOnce) && (
-                      <span className="ml-2 text-[8px] text-[#fb5607] animate-pulse normal-case font-black inline-flex items-center gap-1">
-                        <span className="w-1 h-1 bg-[#fb5607] rounded-full animate-ping"></span>
-                        Cloud Sync...
-                      </span>
-                    )}
                   </h1>
                 </div>
               </motion.div>
@@ -1748,6 +1755,8 @@ export default function App() {
                   handleLogout={handleLogout}
                   settings={settings}
                   handleSaveSettings={handleSaveSettings}
+                  isSyncing={isSyncing}
+                  hasLoadedAtLeastOnce={hasLoadedAtLeastOnce}
                 />
               )}
             </div>
