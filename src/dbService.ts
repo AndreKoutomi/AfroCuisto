@@ -73,6 +73,32 @@ export const dbService = {
 
         throw new Error('Internet connection required for initial data load.');
     },
+    async getRemoteSections(): Promise<any[]> {
+        const REMOTE_SECTIONS_KEY = 'afrocuisto_remote_sections';
+        try {
+            if (!supabase) return [];
+            const { data, error } = await supabase
+                .from('home_sections')
+                .select('*')
+                .order('order_index');
+
+            if (error) {
+                if (error.code === '42P01') {
+                    // Table doesn't exist, return empty
+                    return [];
+                }
+                throw error;
+            }
+            if (data) {
+                localStorage.setItem(REMOTE_SECTIONS_KEY, JSON.stringify(data));
+                return data;
+            }
+        } catch (err) {
+            console.error('Sections sync error:', err);
+        }
+        const cached = localStorage.getItem(REMOTE_SECTIONS_KEY);
+        return cached ? JSON.parse(cached) : [];
+    },
     // User Management
     getUsers: (): User[] => {
         const data = localStorage.getItem(USERS_KEY);

@@ -716,6 +716,7 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncError, setSyncError] = useState(false);
   const [hasLoadedAtLeastOnce, setHasLoadedAtLeastOnce] = useState(false);
+  const [dynamicSections, setDynamicSections] = useState<any[]>([]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -743,6 +744,9 @@ export default function App() {
           // Only set syncError if we have absolutely no data (neither remote nor initial static)
           setSyncError(true);
         }
+
+        const sections = await dbService.getRemoteSections();
+        setDynamicSections(sections || []);
       } catch (err) {
         console.error('Initial sync failed:', err);
         if (allRecipes.length === 0) {
@@ -767,6 +771,18 @@ export default function App() {
           { event: '*', schema: 'public', table: 'recipes' },
           () => {
             console.log('Change detected in Supabase, re-syncing...');
+            syncRecipes();
+          }
+        )
+        .subscribe();
+
+      const sectionsChannel = dbService.supabase
+        .channel('sections-db-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'home_sections' },
+          () => {
+            console.log('Home sections changed, re-syncing...');
             syncRecipes();
           }
         )
@@ -1205,6 +1221,45 @@ export default function App() {
           />
         )}
       </section>
+
+      {/* Dynamic Sections from Admin CMS */}
+      {dynamicSections.map((section, sidx) => {
+        const sectionRecipes = allRecipes.filter(r => section.recipe_ids.includes(r.id));
+        if (sectionRecipes.length === 0) return null;
+
+        return (
+          <section key={section.id} className="mb-10">
+            <div className="px-6 flex justify-between items-end mb-4">
+              <div className="flex flex-col">
+                <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
+                {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
+              </div>
+              <span className="text-terracotta text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform" onClick={() => setActiveTab('search')}>{t.viewAll} <ChevronRight size={14} /></span>
+            </div>
+            <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-4">
+              {sectionRecipes.map((recipe, ridx) => (
+                <motion.div
+                  key={recipe.id}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: ridx * 0.1 }}
+                  onClick={() => setSelectedRecipe(recipe)}
+                  className="flex-shrink-0 w-44 cursor-pointer group"
+                >
+                  <div className="h-44 rounded-[28px] overflow-hidden mb-3 relative shadow-lg border border-stone-100">
+                    <img src={recipe.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={recipe.name} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <p className="text-[11px] font-black text-white leading-tight truncate">{recipe.name}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
 
       {/* Coin des P'tits Chefs Section (AI Powered) */}
       {
