@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Plus, Search, Utensils } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Search, Utensils, Info } from 'lucide-react';
 
 interface Recipe {
     id: string;
