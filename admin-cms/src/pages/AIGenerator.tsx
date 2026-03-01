@@ -55,8 +55,9 @@ export function AIGenerator() {
     }, []);
 
     const saveApiKey = () => {
-        localStorage.setItem('gemini_api_key', apiKeyInput);
-        setApiKey(apiKeyInput);
+        const trimmed = apiKeyInput.trim();
+        localStorage.setItem('gemini_api_key', trimmed);
+        setApiKey(trimmed);
         setShowSettings(false);
     };
 
@@ -88,7 +89,7 @@ Les clés doivent correspondre EXACTEMENT à ce format :
 
         try {
             const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -103,8 +104,12 @@ Les clés doivent correspondre EXACTEMENT à ce format :
             );
 
             if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || 'Erreur API Google Gemini');
+                const errorData = await response.json().catch(() => ({}));
+                const msg = errorData.error?.message || `Erreur API Google Gemini: ${response.status}`;
+                if (response.status === 429) {
+                    throw new Error("Limite de requêtes atteinte (API 429). Attendez 60 secondes ou utilisez une clé 'Pay-as-you-go' sans limite.");
+                }
+                throw new Error(msg);
             }
 
             const data = await response.json();

@@ -160,7 +160,7 @@ Renvoie UNIQUEMENT un JSON valide, sans markdown, avec cette structure exacte :
 
         try {
             const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -174,7 +174,14 @@ Renvoie UNIQUEMENT un JSON valide, sans markdown, avec cette structure exacte :
                     })
                 }
             );
-            if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const msg = errorData.error?.message || `Erreur API: ${response.status}`;
+                if (response.status === 429) {
+                    throw new Error("Limite de requêtes atteinte (API 429). Attendez 60 secondes ou utilisez une clé 'Pay-as-you-go' sans limite.");
+                }
+                throw new Error(msg);
+            }
             const data = await response.json();
             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
@@ -525,8 +532,8 @@ Renvoie UNIQUEMENT un JSON valide, sans markdown, avec cette structure exacte :
                                     style={{ flex: 1, height: '38px', borderRadius: '10px', border: '1.5px solid #ddd6fe', padding: '0 12px', fontSize: '13px', outline: 'none' }}
                                 />
                                 <button onClick={() => {
-                                    localStorage.setItem('gemini_api_key', apiKeyInput);
-                                    setApiKey(apiKeyInput);
+                                    localStorage.setItem('gemini_api_key', apiKeyInput.trim());
+                                    setApiKey(apiKeyInput.trim());
                                     setShowApiKeyInput(false);
                                 }} style={{ height: '38px', padding: '0 16px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
                                     Sauvegarder
