@@ -45,7 +45,8 @@ import {
   XCircle,
   SearchIcon,
   Sparkles,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { recipes } from './data';
 import { Recipe, Difficulty, User, UserSettings, ShoppingItem } from './types';
@@ -555,7 +556,7 @@ const benineseJuices = [
 
 // --- Deep Views ---
 
-const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack }: any) => {
+const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack, showAlert }: any) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({ current: '', new: '', confirm: '', email: currentUser?.email || '' });
   const [showPass, setShowPass] = useState({ current: false, new: false, confirm: false });
@@ -565,11 +566,11 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
 
     if (securitySubView === 'password') {
       if (!formData.new || formData.new !== formData.confirm) {
-        alert("Les mots de passe ne correspondent pas");
+        showAlert("Les mots de passe ne correspondent pas", "error");
         return;
       }
       if (formData.current !== currentUser.password) {
-        alert("Mot de passe actuel incorrect");
+        showAlert("Mot de passe actuel incorrect", "error");
         return;
       }
       const updatedUser = { ...currentUser, password: formData.new };
@@ -577,7 +578,7 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
       dbService.setCurrentUser(updatedUser);
     } else if (securitySubView === 'email') {
       if (!formData.email || !formData.email.includes('@')) {
-        alert("Email invalide");
+        showAlert("Email invalide", "error");
         return;
       }
       const updatedUser = { ...currentUser, email: formData.email };
@@ -699,7 +700,7 @@ const AccountSecurityView = ({ currentUser, setCurrentUser, t, securitySubView, 
   }
 };
 
-const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack, updateSettings, handleLogout, settings, handleSaveSettings, isSyncing, hasLoadedAtLeastOnce }: any) => {
+const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser, setCurrentUser, t, securitySubView, setSecuritySubView, goBack, updateSettings, handleLogout, settings, handleSaveSettings, isSyncing, hasLoadedAtLeastOnce, showAlert }: any) => {
   const views: Record<string, () => React.JSX.Element> = {
     'personalInfo': () => {
       const fileInputRef = useRef<HTMLInputElement>(null);
@@ -763,7 +764,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
             </div>
           </div>
           <button
-            onClick={() => alert("Fonctionnalité d'édition bientôt disponible")}
+            onClick={() => showAlert("Fonctionnalité d'édition bientôt disponible", "info")}
             className="w-full bg-terracotta text-white py-4 rounded-2xl font-bold font-sm shadow-lg shadow-terracotta/20 active:scale-95 transition-transform"
           >
             {t.edit} {t.personalInfo.toLowerCase()}
@@ -860,6 +861,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         securitySubView={securitySubView}
         setSecuritySubView={setSecuritySubView}
         goBack={goBack}
+        showAlert={showAlert}
       />
     ),
     'privacy': () => (
@@ -911,6 +913,93 @@ export default function App() {
   // Cloud Sync & Internet Dependency
   const [allRecipes, setAllRecipes] = useState<Recipe[]>(recipes); // Use static data as first fallback
   const [isSyncing, setIsSyncing] = useState(true);
+  const [alertConfig, setAlertConfig] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error' | 'info';
+    onConfirm?: () => void;
+  }>({ show: false, message: '', type: 'info' });
+
+  const showAlert = (message: string, type?: 'success' | 'error' | 'info', onConfirm?: () => void) => {
+    let finalType = type || 'info';
+    if (!type) {
+      const lower = message.toLowerCase();
+      if (lower.includes('succès') || lower.includes('ajouté') || lower.includes('enregistré') || lower.includes('merci') || lower.includes('bienvenue') || lower.includes('parti')) finalType = 'success';
+      else if (lower.includes('erreur') || lower.includes('incorrect') || lower.includes('invalide') || lower.includes('échec') || lower.includes('correspondent pas')) finalType = 'error';
+    }
+    setAlertConfig({ show: true, message, type: finalType, onConfirm });
+  };
+
+  const ModernAlert = () => (
+    <AnimatePresence>
+      {alertConfig.show && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-md"
+          onClick={() => setAlertConfig({ ...alertConfig, show: false })}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 30 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+            className="w-full max-w-[320px] bg-white rounded-[40px] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.3)] border border-white/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`h-32 flex items-center justify-center relative overflow-hidden ${alertConfig.type === 'success' ? 'bg-emerald-50 text-emerald-500' :
+              alertConfig.type === 'error' ? 'bg-rose-50 text-rose-500' :
+                'bg-[#fb5607]/5 text-[#fb5607]'
+              }`}>
+              {/* Background Glow */}
+              <div className={`absolute inset-0 opacity-20 blur-3xl ${alertConfig.type === 'success' ? 'bg-emerald-400' :
+                alertConfig.type === 'error' ? 'bg-rose-400' :
+                  'bg-[#fb5607]'
+                }`} />
+
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1.2, opacity: 1 }}
+                className="relative z-10"
+              >
+                {alertConfig.type === 'success' && <CheckCircle2 size={42} strokeWidth={2.5} />}
+                {alertConfig.type === 'error' && <AlertCircle size={42} strokeWidth={2.5} />}
+                {alertConfig.type === 'info' && <Info size={42} strokeWidth={2.5} />}
+              </motion.div>
+            </div>
+
+            <div className="p-8 pb-10 text-center">
+              <p className="text-sm font-black text-stone-900 leading-relaxed mb-8 px-2">{alertConfig.message}</p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    if (alertConfig.onConfirm) alertConfig.onConfirm();
+                    setAlertConfig({ ...alertConfig, show: false });
+                  }}
+                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 ${alertConfig.type === 'success' ? 'bg-emerald-500 text-white shadow-emerald-500/20' :
+                      alertConfig.type === 'error' ? 'bg-rose-500 text-white shadow-rose-500/20' :
+                        'bg-stone-900 text-white shadow-stone-900/20'
+                    }`}
+                >
+                  {alertConfig.onConfirm ? "Confirmer" : "C'est compris"}
+                </button>
+                {alertConfig.onConfirm && (
+                  <button
+                    onClick={() => setAlertConfig({ ...alertConfig, show: false })}
+                    className="w-full py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-stone-400 hover:text-stone-600 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncError, setSyncError] = useState(false);
   const [hasLoadedAtLeastOnce, setHasLoadedAtLeastOnce] = useState(false);
@@ -1125,7 +1214,7 @@ export default function App() {
   const handleSaveSettings = () => {
     if (currentUser) {
       dbService.setCurrentUser(currentUser);
-      alert("Paramètres enregistrés !");
+      showAlert("Paramètres enregistrés !", "success");
     }
   };
 
@@ -2393,9 +2482,7 @@ export default function App() {
 
                       <button
                         onClick={() => {
-                          if (confirm("Vider toute la liste de courses ?")) {
-                            updateShoppingList([]);
-                          }
+                          showAlert("Voulez-vous vraiment vider toute votre liste de courses ?", "info", () => updateShoppingList([]));
                         }}
                         className="w-full py-4 text-rose-500 font-bold text-xs uppercase tracking-widest mt-4"
                       >
@@ -2433,6 +2520,7 @@ export default function App() {
                   handleSaveSettings={handleSaveSettings}
                   isSyncing={isSyncing}
                   hasLoadedAtLeastOnce={hasLoadedAtLeastOnce}
+                  showAlert={showAlert}
                 />
               )}
             </div>
@@ -2554,7 +2642,7 @@ export default function App() {
         setComment('');
         setTimeout(() => setSubmitted(false), 3000);
       } else {
-        alert(t.reviewError);
+        showAlert(t.reviewError);
       }
     };
 
@@ -2767,7 +2855,7 @@ export default function App() {
 
                     const currentList = currentUser?.shoppingList || [];
                     updateShoppingList([...currentList, ...selectedList]);
-                    alert(`${selectedList.length} ingrédients ajoutés à votre liste de courses !`);
+                    showAlert(`${selectedList.length} ingrédients ajoutés à votre liste de courses !`);
                     setSelectedIngs([]);
                   }}
                   disabled={selectedIngs.length === 0}
@@ -2911,7 +2999,12 @@ export default function App() {
 
   // --- Return JSX ---
 
-  if (!currentUser) return <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,20px)]">{renderAuth()}</div>;
+  if (!currentUser) return (
+    <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,20px)]">
+      {renderAuth()}
+      <ModernAlert />
+    </div>
+  );
 
   return (
     <div className="h-screen bg-stone-50 max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-all pt-[env(safe-area-inset-top,20px)]">
@@ -2995,6 +3088,7 @@ export default function App() {
           </motion.nav>
         )}
       </AnimatePresence>
+      <ModernAlert />
     </div>
   );
 }
