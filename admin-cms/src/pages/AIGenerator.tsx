@@ -35,8 +35,6 @@ const PROMPT_SUGGESTIONS = [
     "Crée une fiche sur le Jollof Rice nigérian avec ses controverses culinaires.",
 ];
 
-// Session storage key pour navigation depuis IA → formulaire
-const AI_PREFILL_KEY = 'ai_recipe_prefill';
 
 export function AIGenerator() {
     const navigate = useNavigate();

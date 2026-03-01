@@ -40,6 +40,7 @@ export function SectionForm() {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [isAIPrefilled, setIsAIPrefilled] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -64,6 +65,29 @@ export function SectionForm() {
                             ...sectionData,
                             config: { ...INITIAL_STATE.config, ...sectionData.config }
                         });
+                    }
+                } else {
+                    // Check for AI prefill data
+                    const aiPrefill = sessionStorage.getItem('ai_section_prefill');
+                    if (aiPrefill) {
+                        try {
+                            const aiData = JSON.parse(aiPrefill);
+                            setFormData(prev => ({
+                                ...prev,
+                                title: aiData.title || '',
+                                subtitle: aiData.subtitle || '',
+                                type: aiData.type || 'dynamic_carousel',
+                                recipe_ids: aiData.recipe_ids || [],
+                                config: {
+                                    ...prev.config,
+                                    page: aiData.page || 'home',
+                                },
+                            }));
+                            setIsAIPrefilled(true);
+                            sessionStorage.removeItem('ai_section_prefill');
+                        } catch {
+                            // ignore invalid prefill
+                        }
                     }
                 }
             } catch (err) {
@@ -196,6 +220,25 @@ export function SectionForm() {
 
     return (
         <div style={{ maxWidth: '1400px' }}>
+            {/* AI Prefill Banner */}
+            {isAIPrefilled && (
+                <div style={{
+                    marginBottom: '24px', padding: '16px 20px',
+                    background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)',
+                    borderRadius: '16px', border: '1.5px solid #c4b5fd',
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                }}>
+                    <div style={{ width: '38px', height: '38px', background: 'linear-gradient(135deg, #7c3aed, #4318ff)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Sparkles size={18} color="#fff" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#5b21b6' }}>Section pré-remplie par l'IA ✦</p>
+                        <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#7c3aed', fontWeight: 500 }}>
+                            Vérifiez le titre, le type et les recettes sélectionnées avant de sauvegarder.
+                        </p>
+                    </div>
+                </div>
+            )}
             {/* Page Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
