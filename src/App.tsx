@@ -698,10 +698,11 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
 
   // Cloud Sync & Internet Dependency
-  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>(recipes); // Use static data as first fallback
   const [isSyncing, setIsSyncing] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncError, setSyncError] = useState(false);
+  const [hasLoadedAtLeastOnce, setHasLoadedAtLeastOnce] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -724,12 +725,17 @@ export default function App() {
         const remote = await dbService.getRemoteRecipes();
         if (remote && remote.length > 0) {
           setAllRecipes(remote);
-        } else {
-          // Force the app to wait for cloud data if absolutely empty
+          setHasLoadedAtLeastOnce(true);
+        } else if (allRecipes.length === 0) {
+          // Only set syncError if we have absolutely no data (neither remote nor initial static)
           setSyncError(true);
         }
       } catch (err) {
-        setSyncError(true);
+        console.error('Initial sync failed:', err);
+        if (allRecipes.length === 0) {
+          // Only set syncError if we have absolutely no data (neither remote nor initial static)
+          setSyncError(true);
+        }
       } finally {
         setIsSyncing(false);
       }
@@ -990,7 +996,15 @@ export default function App() {
                   <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1 truncate">
                     {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
                   </span>
-                  <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em] truncate">{t.homeSlogan}</h1>
+                  <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em] truncate">
+                    {t.homeSlogan}
+                    {(isSyncing || !hasLoadedAtLeastOnce) && (
+                      <span className="ml-2 text-[8px] text-[#fb5607] animate-pulse normal-case font-black inline-flex items-center gap-1">
+                        <span className="w-1 h-1 bg-[#fb5607] rounded-full animate-ping"></span>
+                        Cloud Sync...
+                      </span>
+                    )}
+                  </h1>
                 </div>
               </motion.div>
             ) : (
@@ -2118,30 +2132,6 @@ export default function App() {
   );
 
   // --- Return JSX ---
-
-  if (isSyncing && allRecipes.length === 0) {
-    return (
-      <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col items-center justify-center p-8">
-        <img src="/images/chef_icon.png" className="w-24 h-24 mb-6 animate-pulse" alt="Logo" />
-        <h2 className="text-xl font-black text-stone-800 tracking-tight text-center">Connexion au Cloud...</h2>
-        <p className="text-sm text-stone-500 mt-2 text-center text-balance">Synchronisation des recettes en temps réel avec la base de données.</p>
-        <div className="mt-8 border-4 border-stone-200 border-t-terracotta rounded-full w-10 h-10 animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (syncError && allRecipes.length === 0) {
-    return (
-      <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col items-center justify-center p-8">
-        <Wifi size={64} className="text-stone-300 mb-6" />
-        <h2 className="text-xl font-black text-stone-800 tracking-tight text-center">Réseau Indisponible</h2>
-        <p className="text-sm text-stone-500 mt-2 text-center text-balance">Cette application requiert une connexion internet pour garantir un catalogue à jour avec notre Cloud Supabase.</p>
-        <button onClick={() => window.location.reload()} className="mt-8 bg-terracotta text-white font-bold py-3 px-8 rounded-full shadow-lg active:scale-95 transition-transform">
-          Réessayer
-        </button>
-      </div>
-    );
-  }
 
   if (!currentUser) return <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,20px)]">{renderAuth()}</div>;
 
