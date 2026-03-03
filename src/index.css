@@ -518,3 +518,40 @@
 .carousel-dot-active { background: #c0392b; }
 .dark .carousel-dot { background: rgba(255,255,255,0.18) !important; }
 .dark .carousel-dot-active { background: #fb5607 !important; }
+
+/* -- NavButton active bubble (Light + Dark) ----------------------------- */
+.nav-bubble {
+  background: rgba(255,255,255,0.96);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,1);
+}
+.dark .nav-bubble {
+  background: rgba(30,30,33,0.95) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.06) !important;
+}
+
+/* -- Horizontal list cards (Light + Dark) -------------------------------- */
+.hlist-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+}
+.dark .hlist-card {
+  background: #1a1a1d !important;
+  border-color: rgba(255,255,255,0.06) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.04) !important;
+}
+
+.hlist-card-title { color: #1a1a1a; }
+.dark .hlist-card-title { color: #f2f2f4 !important; }
+
+.hlist-card-badge { background: #f3f4f6; }
+.dark .hlist-card-badge { background: rgba(255,255,255,0.08) !important; }
+
+.hlist-card-clock { color: #6b7280; }
+.dark .hlist-card-clock { color: #9a9a9d !important; }
+
+.hlist-card-time { color: #374151; }
+.dark .hlist-card-time { color: #c8c8ca !important; }
+
+/* -- Search overlay Light mode override --------------------------------- */
+.search-overlay-light input { color: #1a1a1a !important; background: #f5f5f4 !important; }

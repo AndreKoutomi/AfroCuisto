@@ -649,11 +649,7 @@ const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
         <motion.div
           layoutId="nav-white-bubble"
           transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: 'rgba(255,255,255,0.96)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,1)',
-          }}
+          className="absolute inset-0 rounded-full nav-bubble"
         />
       )}
 
@@ -1503,6 +1499,8 @@ export default function App() {
   const featuredRecipes = displayRecipes.slice(0, 5);
   const otherRecipes = displayRecipes.length > 5 ? displayRecipes.slice(5) : allRecipes.filter(r => !featuredRecipes.find(fr => fr.id === r.id)).slice(0, 5);
 
+  const isDark = settings.darkMode === true;
+
   const navItems = [
     { id: 'home', icon: Home, label: t.home },
     { id: 'search', icon: Search, label: t.explorer },
@@ -1556,14 +1554,14 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[200] flex flex-col"
-            style={{ background: 'rgba(10,10,12,0.96)', backdropFilter: 'blur(20px)' }}
+            className={`fixed inset-0 z-[200] flex flex-col ${isDark ? '' : 'search-overlay-light'}`}
+            style={{ background: isDark ? 'rgba(10,10,12,0.96)' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
           >
             {/* Search Header */}
             <div className="px-5 pt-[env(safe-area-inset-top,16px)] pb-4 pt-12 flex items-center gap-3">
               <button
                 onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
-                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white shrink-0 border border-white/10"
+                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${isDark ? 'bg-white/10 text-white border-white/10' : 'bg-stone-100 text-stone-600 border-stone-200/50'}`}
               >
                 <ChevronLeft size={20} />
               </button>
@@ -1580,7 +1578,7 @@ export default function App() {
                   placeholder={t.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/10 border border-white/10 rounded-full py-3.5 pl-11 pr-5 focus:outline-none focus:border-[#fb5607]/60 focus:bg-white/15 font-bold text-[15px] text-white placeholder:text-white/30 transition-all"
+                  className={`w-full rounded-full py-3.5 pl-11 pr-5 focus:outline-none font-bold text-[15px] transition-all ${isDark ? 'bg-white/10 border border-white/10 text-white placeholder:text-white/30 focus:border-[#fb5607]/60 focus:bg-white/15' : 'bg-stone-50 border border-stone-200/40 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#fb5607]/10'}`}
                 />
               </motion.div>
             </div>
@@ -1589,7 +1587,7 @@ export default function App() {
             <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-20">
               {searchQuery.length > 0 ? (
                 <div className="space-y-2.5 mt-2">
-                  <p className="text-[10px] font-black uppercase text-white/30 tracking-[0.2em] mb-4">
+                  <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
                     {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length} résultat(s)
                   </p>
                   {allRecipes
@@ -1605,8 +1603,8 @@ export default function App() {
                           setIsSearchExpanded(false);
                           setSearchQuery('');
                         }}
-                        className="bg-white/8 border border-white/8 rounded-2xl flex items-center gap-4 p-3 active:scale-[0.98] transition-all cursor-pointer overflow-hidden"
-                        style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.07)' }}
+                        className={`rounded-2xl flex items-center gap-4 p-3 active:scale-[0.98] transition-all cursor-pointer overflow-hidden ${isDark ? '' : 'bg-stone-50 border border-stone-100'}`}
+                        style={isDark ? { background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)' } : {}}
                       >
                         <img
                           src={recipe.image}
@@ -1615,21 +1613,21 @@ export default function App() {
                           onError={e => { (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><rect fill=%22%23333%22/></svg>'; }}
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-white text-sm leading-tight truncate">{recipe.name}</h4>
+                          <h4 className={`font-bold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-stone-900'}`}>{recipe.name}</h4>
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-[10px] bg-[#fb5607]/20 text-[#fb5607] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">{recipe.region}</span>
-                            <span className="text-[10px] font-bold text-white/30 flex items-center gap-1">
+                            <span className={`text-[10px] font-bold flex items-center gap-1 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
                               <Clock size={9} /> {recipe.prepTime}
                             </span>
                           </div>
                         </div>
-                        <ChevronRight size={16} className="text-white/25 shrink-0" />
+                        <ChevronRight size={16} className={`shrink-0 ${isDark ? 'text-white/25' : 'text-stone-300'}`} />
                       </motion.div>
                     ))}
                   {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length === 0 && (
                     <div className="py-20 text-center">
                       <div className="text-5xl mb-4">🔍</div>
-                      <p className="text-white/50 font-bold">Aucun résultat pour</p>
+                      <p className={`font-bold ${isDark ? 'text-white/50' : 'text-stone-400'}`}>Aucun résultat pour</p>
                       <p className="text-[#fb5607] font-black text-lg mt-1">"{searchQuery}"</p>
                     </div>
                   )}
@@ -1638,7 +1636,7 @@ export default function App() {
                 <div className="space-y-8 mt-4">
                   {/* Trending tags */}
                   <div>
-                    <h3 className="text-[11px] font-black uppercase text-white/30 tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
                       <span className="w-1.5 h-1.5 bg-[#fb5607] rounded-full"></span> Tendances
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -1646,8 +1644,8 @@ export default function App() {
                         <button
                           key={tag}
                           onClick={() => setSearchQuery(tag)}
-                          className="px-4 py-2 border border-white/10 rounded-full text-[12px] font-bold text-white/70 active:scale-95 transition-all"
-                          style={{ background: 'rgba(255,255,255,0.07)' }}
+                          className={`px-4 py-2 border rounded-full text-[12px] font-bold active:scale-95 transition-all ${isDark ? 'border-white/10 text-white/70' : 'border-stone-200 text-stone-600'}`}
+                          style={{ background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.03)' }}
                         >
                           {tag}
                         </button>
@@ -1657,7 +1655,7 @@ export default function App() {
 
                   {/* Recent / Suggested recipes */}
                   <div>
-                    <h3 className="text-[11px] font-black uppercase text-white/30 tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
                       <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span> Suggestions du chef
                     </h3>
                     <div className="space-y-2">
@@ -1668,15 +1666,15 @@ export default function App() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.06 }}
                           onClick={() => { setSelectedRecipe(recipe); setIsSearchExpanded(false); }}
-                          className="flex items-center gap-3 p-3 rounded-2xl active:scale-[0.97] transition-all cursor-pointer"
-                          style={{ background: 'rgba(255,255,255,0.05)' }}
+                          className={`flex items-center gap-3 p-3 rounded-2xl active:scale-[0.97] transition-all cursor-pointer ${isDark ? '' : 'bg-stone-50'}`}
+                          style={isDark ? { background: 'rgba(255,255,255,0.05)' } : {}}
                         >
                           <img src={recipe.image} className="w-10 h-10 rounded-xl object-cover" alt={recipe.name} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white/80 truncate">{recipe.name}</p>
-                            <p className="text-[10px] text-white/30">{recipe.region}</p>
+                            <p className={`text-sm font-bold truncate ${isDark ? 'text-white/80' : 'text-stone-800'}`}>{recipe.name}</p>
+                            <p className={`text-[10px] ${isDark ? 'text-white/30' : 'text-stone-400'}`}>{recipe.region}</p>
                           </div>
-                          <ChevronRight size={14} className="text-white/20 shrink-0" />
+                          <ChevronRight size={14} className={`shrink-0 ${isDark ? 'text-white/20' : 'text-stone-300'}`} />
                         </motion.div>
                       ))}
                     </div>
@@ -2005,12 +2003,9 @@ export default function App() {
                       style={{ width: 'min(48vw, 185px)' }}
                     >
                       {/* Card container */}
-                      <div style={{
-                        background: '#fff',
+                      <div className="hlist-card" style={{
                         borderRadius: '20px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
                         overflow: 'hidden',
-                        border: '1px solid rgba(0,0,0,0.04)',
                       }}>
                         {/* Image area */}
                         <div className="relative" style={{ aspectRatio: '4 / 3' }}>
@@ -2064,8 +2059,8 @@ export default function App() {
                         {/* Text content area */}
                         <div style={{ padding: '12px 14px 14px' }}>
                           {/* Recipe name */}
-                          <h3 style={{
-                            fontSize: '15px', fontWeight: 800, color: '#1a1a1a',
+                          <h3 className="hlist-card-title" style={{
+                            fontSize: '15px', fontWeight: 800,
                             lineHeight: 1.25, margin: '0 0 6px',
                             display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
@@ -2075,9 +2070,9 @@ export default function App() {
 
                           {/* Temps de préparation */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
-                            <div style={{ background: '#f3f4f6', borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Clock size={10} style={{ color: '#6b7280' }} />
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>
+                            <div className="hlist-card-badge" style={{ borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Clock size={10} className="hlist-card-clock" />
+                              <span className="hlist-card-time" style={{ fontSize: '11px', fontWeight: 700 }}>
                                 {recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}
                               </span>
                             </div>
@@ -3545,8 +3540,6 @@ export default function App() {
   );
 
   // --- Return JSX ---
-
-  const isDark = settings.darkMode === true;
 
   if (!currentUser) return (
     <div className={`h-screen max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,4px)] transition-colors duration-300 ${isDark ? 'dark bg-[#111113]' : 'bg-stone-50'}`}>
