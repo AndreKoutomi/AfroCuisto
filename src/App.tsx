@@ -13,6 +13,7 @@ import {
   Search,
   Heart,
   User as UserIcon,
+  ShoppingBag,
   Bell,
   Settings,
   ChevronRight,
@@ -640,7 +641,7 @@ const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
       whileTap={{ scale: 0.84 }}
       transition={{ type: 'spring', stiffness: 600, damping: 28 }}
       className="relative flex items-center justify-center"
-      style={{ width: 56, height: 52, flexShrink: 0 }}
+      style={{ width: 60, height: 60, flexShrink: 0 }}
     >
       {/* Sliding white bubble (shared layoutId = smooth morphing) */}
       {isActive && (
@@ -1483,6 +1484,7 @@ export default function App() {
     { id: 'home', icon: Home, label: t.home },
     { id: 'search', icon: Search, label: t.explorer },
     { id: 'favs', icon: Heart, label: t.favorites },
+    { id: 'cart', icon: ShoppingBag, label: t.shoppingList },
     { id: 'profile', icon: UserIcon, label: t.profile },
   ];
 
@@ -2800,7 +2802,7 @@ export default function App() {
             <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
               <span className="text-lg">🛒</span>
             </div>
-            <span className="font-black text-stone-800 text-sm tracking-tight">Ma liste de courses</span>
+            <span className="font-black text-stone-800 text-sm tracking-tight">{t.shoppingList}</span>
           </div>
           <div className="flex items-center gap-3">
             {currentUser?.shoppingList && currentUser.shoppingList.length > 0 && (
@@ -3198,6 +3200,144 @@ export default function App() {
     );
   };
 
+  const renderShoppingList = () => {
+    const list = currentUser?.shoppingList || [];
+    const purchased = list.filter(i => i.isPurchased);
+    const toBuy = list.filter(i => !i.isPurchased);
+
+    return (
+      <div className="flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header className="px-6 pt-10 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-1 transition-all duration-500">
+          <h2 className="text-[24px] font-black text-stone-900 tracking-tight leading-none">{t.myShoppingList}</h2>
+          <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">{list.length} {t.ingredients}</p>
+        </header>
+
+        <div className="p-6 space-y-8">
+          {list.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center px-10">
+              <div className="w-20 h-20 bg-stone-100 rounded-[32px] flex items-center justify-center text-stone-300 mb-6 border-4 border-white shadow-sm">
+                <ShoppingBag size={32} />
+              </div>
+              <h3 className="text-lg font-black text-stone-800 mb-2">{t.noShoppingItems}</h3>
+              <p className="text-sm font-medium text-stone-400 leading-relaxed mb-8">{t.noShoppingItemsDesc}</p>
+              <button
+                onClick={() => navigateTo('home')}
+                className="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-stone-900/20 active:scale-95 transition-all"
+              >
+                {t.discover}
+              </button>
+            </div>
+          ) : (
+            <>
+              {toBuy.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black uppercase text-[#fb5607] tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#fb5607]"></span> {t.toBuy}
+                  </h3>
+                  <div className="space-y-3">
+                    {toBuy.map((item) => (
+                      <motion.div
+                        layout
+                        key={item.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white p-4 rounded-3xl border border-stone-100 shadow-sm flex items-center gap-4 group"
+                      >
+                        <button
+                          onClick={() => {
+                            const newList = list.map(i => i.id === item.id ? { ...i, isPurchased: true } : i);
+                            updateShoppingList(newList);
+                          }}
+                          className="w-6 h-6 rounded-xl border-2 border-stone-200 flex items-center justify-center transition-all hover:border-[#fb5607] group-active:scale-90"
+                        >
+                          <div className="w-3 h-3 rounded-md bg-transparent transition-all"></div>
+                        </button>
+                        <div className="flex-1">
+                          <p className="text-[13px] font-bold text-stone-800 leading-tight">{item.item}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-[11px] font-black text-[#fb5607] uppercase tracking-tighter">{item.amount}</p>
+                            {item.recipeName && (
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-stone-200"></span>
+                                <p className="text-[10px] font-medium text-stone-400 truncate max-w-[120px]">pour {item.recipeName}</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const newList = list.filter(i => i.id !== item.id);
+                            updateShoppingList(newList);
+                          }}
+                          className="w-10 h-10 rounded-2xl bg-stone-50 text-stone-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-50 hover:text-rose-500"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {purchased.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {t.purchased}
+                  </h3>
+                  <div className="space-y-3 opacity-60">
+                    {purchased.map((item) => (
+                      <motion.div
+                        layout
+                        key={item.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="bg-emerald-50/30 p-4 rounded-3xl border border-emerald-100 flex items-center gap-4 group"
+                      >
+                        <button
+                          onClick={() => {
+                            const newList = list.map(i => i.id === item.id ? { ...i, isPurchased: false } : i);
+                            updateShoppingList(newList);
+                          }}
+                          className="w-6 h-6 rounded-xl bg-emerald-500 flex items-center justify-center transition-all shadow-sm shadow-emerald-200"
+                        >
+                          <Check size={14} className="text-white" />
+                        </button>
+                        <div className="flex-1">
+                          <p className="text-[13px] font-bold text-stone-500 leading-tight line-through">{item.item}</p>
+                          <p className="text-[11px] font-black text-emerald-600 uppercase tracking-tighter mt-1">{item.amount}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const newList = list.filter(i => i.id !== item.id);
+                            updateShoppingList(newList);
+                          }}
+                          className="w-10 h-10 rounded-2xl bg-white/50 text-stone-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  if (window.confirm(t.clearList + "?")) {
+                    updateShoppingList([]);
+                  }
+                }}
+                className="w-full py-4 rounded-3xl border-2 border-stone-100 text-stone-400 font-black text-[10px] uppercase tracking-widest hover:bg-stone-50 hover:text-stone-600 transition-all active:scale-95 mt-4"
+              >
+                {t.clearList}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderAuth = () => (
     <div className="flex-1 flex flex-col justify-center min-h-screen relative overflow-hidden bg-[#faf9f6]">
       {/* Dynamic Background */}
@@ -3344,6 +3484,7 @@ export default function App() {
           {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="h-full">{renderHome()}</motion.div>}
           {activeTab === 'search' && <motion.div key="search" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={springTransition} className="h-full">{renderExplorer()}</motion.div>}
           {activeTab === 'favs' && <motion.div key="favs" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={springTransition} className="h-full">{renderFavorites()}</motion.div>}
+          {activeTab === 'cart' && <motion.div key="cart" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={springTransition} className="h-full">{renderShoppingList()}</motion.div>}
           {activeTab === 'profile' && <motion.div key="profile" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={springTransition} className="h-full">{renderProfile()}</motion.div>}
         </AnimatePresence>
       </main>
@@ -3383,7 +3524,7 @@ export default function App() {
 
             {/* Main pill */}
             <div
-              className="relative flex items-center justify-around px-3 rounded-[28px] overflow-hidden"
+              className="relative flex items-center justify-between px-2 rounded-[28px] overflow-hidden"
               style={{
                 height: 76,
                 background: 'linear-gradient(160deg, #ff6120 0%, #F94D00 55%, #d93d00 100%)',

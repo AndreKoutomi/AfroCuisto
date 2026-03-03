@@ -61,6 +61,7 @@ export const translations = {
         home: "Accueil",
         explorer: "Explorer",
         favorites: "Favoris",
+        shoppingList: "Courses",
         profile: "Profil",
         // Explorer
         allRecipes: "Toutes les recettes",
@@ -111,6 +112,13 @@ export const translations = {
         southDesc: "Sublime mariage de produits marins, d'huile rouge et de maïs.",
         centerDesc: "Terre de tubercules, de sauces gluantes et de viandes fumées.",
         northDesc: "Saveurs robustes, céréales anciennes et grillades épicées.",
+        // Shopping List
+        myShoppingList: "Ma Liste de Courses",
+        noShoppingItems: "Votre liste est vide",
+        noShoppingItemsDesc: "Ajoutez des ingrédients depuis vos recettes préférées !",
+        clearList: "Vider la liste",
+        purchased: "Acheté",
+        toBuy: "À acheter",
         // Reviews
         reviewsTitle: "Votre avis",
         ratingLabel: "Notez ce plat",
@@ -181,6 +189,7 @@ export const translations = {
         home: "Home",
         explorer: "Explore",
         favorites: "Favorites",
+        shoppingList: "Shopping",
         profile: "Profile",
         // Explorer
         allRecipes: "All recipes",
@@ -231,6 +240,20 @@ export const translations = {
         southDesc: "Sublime marriage of seafood, red oil, and corn.",
         centerDesc: "Land of tubers, sticky sauces, and smoked meats.",
         northDesc: "Robust flavors, ancient grains, and spicy grilled meats.",
+        // Shopping List
+        myShoppingList: "My Shopping List",
+        noShoppingItems: "Your list is empty",
+        noShoppingItemsDesc: "Add ingredients from your favorite recipes!",
+        clearList: "Clear List",
+        purchased: "Purchased",
+        toBuy: "To buy",
+        // Reviews
+        reviewsTitle: "Your review",
+        ratingLabel: "Rate this dish",
+        commentPlaceholder: "Leave a comment about your experience...",
+        submitReview: "Submit my review",
+        reviewSuccess: "Thank you for your feedback!",
+        reviewError: "Error during submission. Try again.",
     },
     es: {
         settings: "Ajustes",
@@ -294,6 +317,7 @@ export const translations = {
         home: "Inicio",
         explorer: "Explorar",
         favorites: "Favoritos",
+        shoppingList: "Compras",
         profile: "Perfil",
         // Explorer
         allRecipes: "Todas las recetas",
@@ -323,7 +347,7 @@ export const translations = {
         suggestionLoading: "Cargando tu sugerencia personalizada...",
         easy: "Fácil",
         medium: "Medio",
-        hard: "Difícil",
+        hard: "Difficile",
         veryEasy: "Muy Fácil",
         searchDishRegion: "Buscar un plato, una región...",
         spicesAndFire: "Especias y Fuego",
@@ -344,6 +368,20 @@ export const translations = {
         southDesc: "Sublime combinación de productos marinos, aceite rojo y maíz.",
         centerDesc: "Tierra de tubérculos, salsas pegajosas y carnes ahumadas.",
         northDesc: "Sabores robustos, cereales ancestrales y parrillada picante.",
+        // Shopping List
+        myShoppingList: "Mi Lista de Compras",
+        noShoppingItems: "Tu lista está vacía",
+        noShoppingItemsDesc: "¡Agregue ingredientes de sus recetas favoritas!",
+        clearList: "Vaciar lista",
+        purchased: "Comprado",
+        toBuy: "Por comprar",
+        // Reviews
+        reviewsTitle: "Tu opinión",
+        ratingLabel: "Califica este plato",
+        commentPlaceholder: "Deja un comentario sobre tu experiencia...",
+        submitReview: "Enviar mi opinión",
+        reviewSuccess: "¡Gracias por tus comentarios!",
+        reviewError: "Error al enviar. Inténtalo de nuevo.",
     }
 };
 
