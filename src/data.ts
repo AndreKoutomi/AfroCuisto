@@ -409,7 +409,7 @@ export const recipes: Recipe[] = [
       { item: "Pâte d'arachide", amount: "200g" },
       { item: "Poulet ou Bœuf", amount: "500g" },
       { item: "Tomate concentrée", amount: "1 càs" },
-      { item: "Oignon et Oignon", amount: "QS" }
+      { item: "Oignon et Ail", amount: "QS" }
     ],
     steps: [
       "Cuire la viande avec les oignons et les épices.",
@@ -493,29 +493,6 @@ export const recipes: Recipe[] = [
     ]
   },
 
-  {
-    id: "S08",
-    name: "Tchiayo",
-    type: "Légumes-feuilles",
-    region: "Sud-Bénin",
-    category: "Sauces (Nùsúnnú)",
-    difficulty: "Facile",
-    prepTime: "20 min",
-    cookTime: "30 min",
-    image: "/images/tchiayo_1772194040696.png",
-    description: "Sauce à base de feuilles de basilic africain, très parfumée et digestive.",
-    ingredients: [
-      { item: "Feuilles de Tchiayo", amount: "500g" },
-      { item: "Poisson fumé", amount: "200g" },
-      { item: "Friture de tomate", amount: "QS" }
-    ],
-    steps: [
-      "Laver les feuilles et les hacher grossièrement.",
-      "Les ajouter à une friture de tomate déjà prête.",
-      "Incorporer le poisson fumé et laisser mijoter 15 minutes.",
-      "Servir avec du riz ou de la pâte (Wô)."
-    ]
-  },
   // --- Plats de Résistance & Ragoûts ---
   {
     id: "R01",

@@ -1,4 +1,4 @@
-@echo off
+echo off
 echo Starting AfroCuisto App...
-npm.cmd run dev
+npm run dev -- --host --strictPort
 pause

@@ -190,10 +190,10 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
           overflowX: 'auto',
           scrollSnapType: 'x mandatory',
           scrollBehavior: 'smooth',
-          paddingLeft: '9vw',
-          paddingRight: '9vw',
-          paddingTop: '20px',
-          paddingBottom: '20px',
+          paddingLeft: '6vw',
+          paddingRight: '6vw',
+          paddingTop: '15px',
+          paddingBottom: '15px',
           msOverflowStyle: 'none',
           scrollbarWidth: 'none',
         }}
@@ -1496,7 +1496,7 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sleek Persistent Header */}
-      <header className="px-6 pt-12 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6 transition-all duration-500">
+      <header className="px-6 pt-6 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6 transition-all duration-500">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <motion.div
@@ -1518,21 +1518,15 @@ export default function App() {
                 <Wifi size={16} />
               </motion.div>
             )}
-            <button className="w-10 h-10 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center border border-stone-200/50">
-              <Bell size={18} />
+            <button
+              onClick={() => setIsSearchExpanded(true)}
+              className="w-10 h-10 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center border border-stone-200/50"
+            >
+              <Search size={18} />
             </button>
           </div>
         </div>
 
-        <motion.div
-          onClick={() => setIsSearchExpanded(true)}
-          className="relative group cursor-pointer"
-        >
-          <div className="bg-stone-100/80 border border-stone-200/30 rounded-3xl py-4 px-5 flex items-center gap-4 shadow-inner">
-            <Search className="text-[#fb5607]" size={20} />
-            <span className="text-sm font-bold text-stone-400">{t.searchPlaceholder}</span>
-          </div>
-        </motion.div>
       </header>
 
       <AnimatePresence>
@@ -2240,7 +2234,7 @@ export default function App() {
   const renderExplorer = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Immersive Search Header */}
-      <header className="px-6 pt-6 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-40">
+      <header className="px-6 pt-4 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-40">
         <h1 className="text-3xl font-black text-stone-900 mb-6 drop-shadow-sm">{selectedCategory || 'Explorer'}</h1>
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
@@ -2585,8 +2579,8 @@ export default function App() {
     const favoriteRecipes = dbService.getFavorites(currentUser!, allRecipes);
 
     return (
-      <div className="flex-1 flex flex-col pb-44 pt-10">
-        <header className="p-6 pt-8">
+      <div className="flex-1 flex flex-col pb-44 pt-4">
+        <header className="p-6 pt-4">
           <h1 className="text-2xl font-bold text-stone-800 tracking-tight">{t.favorites}</h1>
         </header>
         <div className="px-6 space-y-4">
@@ -2616,10 +2610,10 @@ export default function App() {
   };
 
   const renderProfile = () => (
-    <div className="flex-1 flex flex-col pb-44 pt-10 relative bg-stone-50">
+    <div className="flex-1 flex flex-col pb-44 pt-4 relative bg-stone-50">
       <AnimatePresence>
         {profileSubView && (
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className="absolute inset-0 z-50 bg-white p-6 pt-12 flex flex-col">
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className="absolute inset-0 z-50 bg-white p-6 pt-6 flex flex-col">
             <header className="flex items-center gap-4 mb-8 shrink-0">
               <button onClick={() => setProfileSubView(null)} className="p-2 bg-stone-50 rounded-xl"><ChevronLeft size={20} /></button>
               <h2 className="text-xl font-black text-stone-800 tracking-tight">
@@ -2751,20 +2745,6 @@ export default function App() {
         </button>
 
         {/* New Shopping List Menu */}
-        <button onClick={() => setProfileSubView('shopping')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
-              <span className="text-lg">🛒</span>
-            </div>
-            <span className="font-black text-stone-800 text-sm tracking-tight">{t.shoppingList}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {currentUser?.shoppingList && currentUser.shoppingList.length > 0 && (
-              <span className="bg-[#fb5607] text-white text-[9px] font-black px-2 py-1 rounded-full">{currentUser.shoppingList.length}</span>
-            )}
-            <ChevronRight size={18} className="text-stone-300" />
-          </div>
-        </button>
 
         <button onClick={() => setProfileSubView('security')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
           <div className="flex items-center gap-4">
@@ -3425,14 +3405,14 @@ export default function App() {
   // --- Return JSX ---
 
   if (!currentUser) return (
-    <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,20px)]">
+    <div className="h-screen bg-stone-50 max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,4px)]">
       {renderAuth()}
       <ModernAlert />
     </div>
   );
 
   return (
-    <div className="h-screen bg-stone-50 max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-all pt-[env(safe-area-inset-top,20px)]">
+    <div className="h-screen bg-stone-50 max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-all pt-[env(safe-area-inset-top,4px)]">
       <main onScroll={onMainScroll} ref={mainScrollRef as any} className="flex-1 overflow-y-auto no-scrollbar relative min-h-0">
         <AnimatePresence mode="wait">
           {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="h-full">{renderHome()}</motion.div>}
@@ -3465,7 +3445,7 @@ export default function App() {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 100, opacity: 0, scale: 0.92 }}
             transition={{ type: 'spring', damping: 24, stiffness: 360, mass: 0.85 }}
-            className="absolute bottom-6 left-5 right-5 z-[110]"
+            className="absolute bottom-2 left-3 right-3 z-[110]"
           >
             {/* Ambient drop shadow */}
             <div

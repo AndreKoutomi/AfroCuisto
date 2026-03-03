@@ -347,7 +347,7 @@ export const translations = {
         suggestionLoading: "Cargando tu sugerencia personalizada...",
         easy: "Fácil",
         medium: "Medio",
-        hard: "Difficile",
+        hard: "Difícil",
         veryEasy: "Muy Fácil",
         searchDishRegion: "Buscar un plato, una región...",
         spicesAndFire: "Especias y Fuego",
