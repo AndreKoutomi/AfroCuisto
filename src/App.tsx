@@ -2554,7 +2554,7 @@ export default function App() {
                           onClick={() => setSelectedRecipe(recipe)}
                           className="cursor-pointer"
                         >
-                          <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.04)' }}>
+                          <div className="hlist-card" style={{ borderRadius: '20px', overflow: 'hidden' }}>
                             <div className="relative" style={{ aspectRatio: '4 / 3' }}>
                               <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
                               <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }} style={{ position: 'absolute', top: '8px', right: '8px', width: '28px', height: '28px', borderRadius: '50%', background: isFav ? '#ef4444' : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', transition: 'all 0.2s' }}>
@@ -2566,11 +2566,11 @@ export default function App() {
                               </div>
                             </div>
                             <div style={{ padding: '10px 12px 12px' }}>
-                              <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#1a1a1a', lineHeight: 1.25, margin: '0 0 5px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{recipe.name}</h3>
+                              <h3 className="hlist-card-title" style={{ fontSize: '13px', fontWeight: 800, lineHeight: 1.25, margin: '0 0 5px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{recipe.name}</h3>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
-                                <div style={{ background: '#f3f4f6', borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Clock size={10} style={{ color: '#6b7280' }} />
-                                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
+                                <div className="hlist-card-badge" style={{ borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={10} className="hlist-card-clock" />
+                                  <span className="hlist-card-time" style={{ fontSize: '11px', fontWeight: 700 }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
                                 </div>
                               </div>
                             </div>
@@ -2605,10 +2605,9 @@ export default function App() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: ridx * 0.06 }}
                         onClick={() => setSelectedRecipe(recipe)}
+                        className="hlist-card"
                         style={{
-                          background: '#fff', borderRadius: '18px',
-                          boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
-                          border: '1px solid rgba(0,0,0,0.04)',
+                          borderRadius: '18px',
                           display: 'flex', alignItems: 'center', gap: '14px',
                           padding: '12px', cursor: 'pointer', overflow: 'hidden',
                         }}
@@ -2617,7 +2616,7 @@ export default function App() {
                           <img src={recipe.image} alt={recipe.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '14px', fontWeight: 800, color: '#1a1a1a', margin: '0 0 5px', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p className="hlist-card-title" style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 5px', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {recipe.name}
                           </p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
