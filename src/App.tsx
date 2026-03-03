@@ -1387,7 +1387,9 @@ export default function App() {
     return () => { listener.then(l => l.remove()); };
   }, [selectedRecipe, profileSubView, selectedCategory, selectedRegion, searchQuery, history, securitySubView]);
 
-  const settings = currentUser?.settings || { darkMode: false, language: 'fr', unitSystem: 'metric' };
+  // Dark mode: read from localStorage if user is not logged in, otherwise from user settings
+  const savedDarkMode = typeof window !== 'undefined' ? localStorage.getItem('afrocuisto_dark_mode') === 'true' : false;
+  const settings = currentUser?.settings || { darkMode: savedDarkMode, language: 'fr', unitSystem: 'metric' };
   const t = translations[settings.language as LanguageCode] || translations.fr;
 
   const updateSettings = (newSettings: Partial<UserSettings>) => {
@@ -1398,6 +1400,10 @@ export default function App() {
       };
       setCurrentUser(updatedUser);
       dbService.setCurrentUser(updatedUser);
+      // Persist dark mode preference to localStorage for login screen
+      if ('darkMode' in newSettings) {
+        localStorage.setItem('afrocuisto_dark_mode', String(newSettings.darkMode));
+      }
     }
   };
 
@@ -1522,7 +1528,7 @@ export default function App() {
               onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
               className="cursor-pointer"
             >
-              <img src="/images/chef_icon_v2.png" className="w-14 h-14 object-contain -ml-1" alt="AfroCuisto Logo" />
+              <img src="/images/chef_icon_v2.png" className={`w-14 h-14 object-contain -ml-1 ${isDark ? 'logo-dark-mode' : ''}`} alt="AfroCuisto Logo" />
             </motion.div>
             <div className="flex flex-col">
               <h1 className="text-2xl font-black text-stone-900 tracking-tight leading-none">Afro<span className="text-[#fb5607]">Cuisto</span></h1>
@@ -2126,12 +2132,9 @@ export default function App() {
                       onClick={() => setSelectedRecipe(recipe)}
                       className="cursor-pointer"
                     >
-                      <div style={{
-                        background: '#fff',
+                      <div className="hlist-card" style={{
                         borderRadius: '20px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
                         overflow: 'hidden',
-                        border: '1px solid rgba(0,0,0,0.04)',
                       }}>
                         {/* Zone image */}
                         <div className="relative" style={{ aspectRatio: '4 / 3' }}>
@@ -2170,8 +2173,8 @@ export default function App() {
                         {/* Contenu texte */}
                         <div style={{ padding: '10px 12px 12px' }}>
                           {/* Nom */}
-                          <h3 style={{
-                            fontSize: '13px', fontWeight: 800, color: '#1a1a1a',
+                          <h3 className="hlist-card-title" style={{
+                            fontSize: '13px', fontWeight: 800,
                             lineHeight: 1.25, margin: '0 0 5px',
                             display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                           }}>
@@ -2179,9 +2182,9 @@ export default function App() {
                           </h3>
                           {/* Temps de préparation */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
-                            <div style={{ background: '#f3f4f6', borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Clock size={10} style={{ color: '#6b7280' }} />
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>
+                            <div className="hlist-card-badge" style={{ borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Clock size={10} className="hlist-card-clock" />
+                              <span className="hlist-card-time" style={{ fontSize: '11px', fontWeight: 700 }}>
                                 {recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}
                               </span>
                             </div>
