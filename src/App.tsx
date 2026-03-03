@@ -666,6 +666,7 @@ const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
           size={21}
           strokeWidth={isActive ? 2.4 : 1.8}
           color={isActive ? '#F94D00' : 'rgba(255,255,255,0.58)'}
+          fill={isActive ? 'none' : 'rgba(255,255,255,0.58)'}
         />
       </motion.div>
     </motion.button>
