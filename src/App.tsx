@@ -233,10 +233,10 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
 
-              {/* Multi-layer gradient overlay */}
+              {/* Multi-layer gradient overlay with enhanced top scrim for extreme white backgrounds */}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(180deg, rgba(0,0,0,0) 25%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.80) 100%)',
+                background: 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%)',
               }} />
 
               {/* Top row: category badge + heart */}
@@ -246,19 +246,21 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
               }}>
                 {recipe.category && (
                   <span style={{
-                    background: 'rgba(255,255,255,0.18)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255,255,255,0.25)',
+                    background: 'rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: '20px',
-                    padding: '5px 12px',
+                    padding: '6px 14px',
                     fontSize: '10px',
-                    fontWeight: 800,
+                    fontWeight: 900,
                     color: '#fff',
                     letterSpacing: '0.04em',
-                    maxWidth: '65%',
+                    maxWidth: '70%',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    textTransform: 'uppercase',
                   }}>
                     {recipe.category}
                   </span>
@@ -267,16 +269,17 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
                   <button
                     onClick={e => { e.stopPropagation(); toggleFavorite(recipe.id); }}
                     style={{
-                      width: '36px', height: '36px', borderRadius: '50%',
-                      background: isFav ? '#ef4444' : 'rgba(255,255,255,0.18)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.25)',
+                      width: '40px', height: '40px', borderRadius: '50%',
+                      background: isFav ? '#ef4444' : 'rgba(0,0,0,0.3)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(255,255,255,0.15)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', flexShrink: 0,
                       transition: 'all 0.2s',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     }}
                   >
-                    <Heart size={16} style={{ color: '#fff', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
+                    <Heart size={18} style={{ color: '#fff', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
                   </button>
                 )}
               </div>
@@ -485,10 +488,10 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
             className="w-full h-full object-cover"
             alt={recipe.name}
           />
-          {/* Deep cinematic gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
-          {/* Color tint for depth */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, rgba(251,86,7,0.08), transparent)' }} />
+          {/* Cinematic gradient with top scrim for readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/40" />
+          {/* Dual-direction scrim: dark at top for UI buttons visibility on white photos */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
         </motion.div>
       </AnimatePresence>
 
@@ -1492,175 +1495,126 @@ export default function App() {
 
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
-      {/* Sticky Top Header with Search */}
-      <header className={`px-6 pt-4 ${isScrolled ? 'pb-7' : 'pb-4'} bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-4 transition-all duration-500`}>
-        {/* Row 1: Logo & Greeting */}
-        <div className="flex items-center justify-between min-h-[44px]">
-          <AnimatePresence mode="wait">
-            {!isSearchExpanded ? (
-              <motion.div
-                key="greeting"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex items-center gap-3 overflow-hidden"
-              >
-                <img src="/images/chef_icon.png" className="w-10 h-10 object-contain" alt="AfroCuisto Logo" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-black text-[#fb5607] uppercase tracking-widest flex items-center gap-1 truncate">
-                    {t.hello}, {currentUser?.name?.split(' ')[0]} 👋
-                  </span>
-                  <h1 className="text-[11px] font-bold text-stone-400 leading-tight uppercase tracking-[0.15em] truncate">
-                    {t.homeSlogan}
-                  </h1>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="compact-search"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: '100%' }}
-                exit={{ opacity: 0, width: 0 }}
-                className="flex-1 mr-3 overflow-hidden"
-              >
-                <div className="bg-stone-100 rounded-2xl flex items-center px-4 py-2 border border-stone-200/50 shadow-inner">
-                  <Search size={16} className="text-stone-400 mr-2 flex-shrink-0" />
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder={t.searchPlaceholder}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-transparent border-none focus:outline-none text-sm w-full font-medium text-stone-800"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Sleek Persistent Header */}
+      <header className="px-6 pt-12 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6 transition-all duration-500">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="cursor-pointer"
+            >
+              <img src="/images/chef_icon_v2.png" className="w-14 h-14 object-contain -ml-1" alt="AfroCuisto Logo" />
+            </motion.div>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-black text-stone-900 tracking-tight leading-none">Afro<span className="text-[#fb5607]">Cuisto</span></h1>
+              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">{t.homeSlogan}</p>
+            </div>
+          </div>
 
           <div className="flex items-center gap-3">
             {isSyncing && (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                className="text-[#fb5607]"
-              >
+              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="text-[#fb5607]">
                 <Wifi size={16} />
               </motion.div>
             )}
-
-            <AnimatePresence mode="wait">
-              {isScrolled && (
-                <motion.button
-                  key={isSearchExpanded ? 'close' : 'search-trigger'}
-                  initial={{ opacity: 0, scale: 0.5, x: 20 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.5, x: 20 }}
-                  onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-                  className={`w-10 h-10 ${isSearchExpanded ? 'bg-stone-800 text-white' : 'bg-stone-100/80 text-stone-600'} backdrop-blur-md rounded-2xl flex items-center justify-center shadow-sm border border-stone-200/50 transition-colors duration-300`}
-                >
-                  {isSearchExpanded ? <XCircle size={18} /> : <Search size={18} />}
-                </motion.button>
-              )}
-            </AnimatePresence>
+            <button className="w-10 h-10 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center border border-stone-200/50">
+              <Bell size={18} />
+            </button>
           </div>
         </div>
 
-        {/* Row 2: Global Search Bar (Collapses on scroll) */}
         <motion.div
-          animate={{
-            height: isScrolled ? 0 : 'auto',
-            opacity: isScrolled ? 0 : 1,
-            pointerEvents: isScrolled ? 'none' : 'auto',
-            overflow: 'hidden',
-          }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="relative"
+          onClick={() => setIsSearchExpanded(true)}
+          className="relative group cursor-pointer"
         >
-          <div className="relative group shadow-sm rounded-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-stone-100/50 border border-stone-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:bg-white transition-all shadow-inner"
-            />
+          <div className="bg-stone-100/80 border border-stone-200/30 rounded-3xl py-4 px-5 flex items-center gap-4 shadow-inner">
+            <Search className="text-[#fb5607]" size={20} />
+            <span className="text-sm font-bold text-stone-400">{t.searchPlaceholder}</span>
           </div>
         </motion.div>
+      </header>
 
-        {/* Global Suggestions Dropdown (Integrated for both search modes) */}
-        <AnimatePresence>
-          {searchQuery.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -5 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -5 }}
-              className="absolute top-full left-0 right-0 mx-6 mt-2 bg-white rounded-[28px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] border border-stone-100/80 overflow-hidden z-[110] max-h-[70vh] flex flex-col backdrop-blur-xl"
-            >
-              {(() => {
-                const normalizedQuery = normalizeString(searchQuery);
-                const filtered = allRecipes.filter(r =>
-                  normalizeString(r.name).includes(normalizedQuery) ||
-                  normalizeString(r.region).includes(normalizedQuery)
-                ).slice(0, 8);
+      <AnimatePresence>
+        {isSearchExpanded && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="fixed inset-0 z-[200] bg-white flex flex-col"
+          >
+            <div className="h-[env(safe-area-inset-top,0px)] bg-white sticky top-0 z-10"></div>
+            <header className="px-4 py-3 border-b border-stone-100 flex items-center gap-3 bg-white sticky top-[env(safe-area-inset-top,0px)] z-10 shadow-sm">
+              <button
+                onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
+                className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-stone-600 shrink-0"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#fb5607]" size={18} />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200/40 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-[#fb5607]/10 font-bold text-[15px] text-stone-900 placeholder:text-stone-400 shadow-sm"
+                />
+              </div>
+            </header>
 
-                if (filtered.length === 0) {
-                  return (
-                    <div className="p-10 text-center bg-stone-50/30">
-                      <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Search size={28} className="text-stone-300" />
-                      </div>
-                      <p className="text-sm text-stone-900 font-bold mb-1">Aucun résultat</p>
-                      <p className="text-xs text-stone-400 font-medium px-4">Essayez un autre ingrédient ou une autre région</p>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="overflow-y-auto no-scrollbar py-2">
-                    {filtered.map((recipe, i) => (
+            <div className="flex-1 overflow-y-auto no-scrollbar p-5 pb-32">
+              {searchQuery.length > 0 ? (
+                <div className="space-y-4">
+                  {allRecipes
+                    .filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery)))
+                    .map((recipe, i) => (
                       <motion.div
                         key={recipe.id}
-                        initial={{ opacity: 0, y: 5 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.04 }}
+                        transition={{ delay: i * 0.05 }}
                         onClick={() => {
                           setSelectedRecipe(recipe);
-                          setSearchQuery('');
                           setIsSearchExpanded(false);
+                          setSearchQuery('');
                         }}
-                        className="p-4 mx-2 rounded-2xl flex items-center gap-4 hover:bg-stone-50 active:bg-stone-100 transition-all cursor-pointer group"
+                        className="bg-white p-4 rounded-3xl border border-stone-100 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all"
                       >
-                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
-                          <img src={recipe.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={recipe.name} />
-                        </div>
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <span className="font-bold text-sm text-stone-900 leading-tight truncate">{recipe.name}</span>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] text-terracotta bg-terracotta/5 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{recipe.region}</span>
-                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                              <Star size={10} className="text-amber-400" /> {recipe.rating}
-                            </span>
+                        <img src={recipe.image} className="w-16 h-16 rounded-2xl object-cover" alt={recipe.name} />
+                        <div className="flex-1">
+                          <h4 className="font-bold text-stone-900 text-sm leading-tight">{recipe.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] bg-[#fb5607]/5 text-[#fb5607] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">{recipe.region}</span>
+                            <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1"><Star size={10} className="text-amber-400" /> {recipe.rating}</span>
                           </div>
                         </div>
-                        <ChevronRight size={16} className="text-stone-300 group-hover:text-terracotta transition-colors pr-2" />
+                        <ChevronRight size={16} className="text-stone-300" />
                       </motion.div>
                     ))}
-
-                    <button
-                      onClick={() => { setActiveTab('search'); setIsSearchExpanded(false); }}
-                      className="w-[calc(100%-16px)] mx-2 mt-2 mb-2 p-4 bg-terracotta text-white rounded-2xl flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-[0.15em] hover:bg-terracotta/90 transition-all shadow-lg shadow-terracotta/10"
-                    >
-                      Voir tous les résultats <Search size={14} />
-                    </button>
+                  {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length === 0 && (
+                    <div className="py-20 text-center text-stone-400 font-bold">Aucun résultat</div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-[11px] font-black uppercase text-stone-400 tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-[#fb5607] rounded-full"></span> Tendances
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {['Sauces', 'Ablo', 'Pôyô', 'Aloko', 'Boissons'].map(tag => (
+                        <button key={tag} onClick={() => setSearchQuery(tag)} className="px-5 py-2.5 bg-white border border-stone-100 rounded-2xl text-[12px] font-bold text-stone-600 shadow-sm active:scale-95 transition-all">{tag}</button>
+                      ))}
+                    </div>
                   </div>
-                );
-              })()}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
 
@@ -3355,9 +3309,9 @@ export default function App() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-10"
         >
-          <div className="w-24 h-24 bg-white/60 p-4 rounded-[32px] mx-auto mb-6 shadow-[0_20px_40px_rgba(0,0,0,0.04)] backdrop-blur-xl border border-white relative">
-            <div className="absolute inset-0 rounded-[32px] border border-stone-200/40 pointer-events-none"></div>
-            <img src="/images/chef_icon.png" className="w-full h-full object-contain" alt="AfroCuisto Logo" />
+          <div className="w-32 h-32 bg-white/60 p-5 rounded-[40px] mx-auto mb-6 shadow-[0_20px_40px_rgba(0,0,0,0.04)] backdrop-blur-xl border border-white relative">
+            <div className="absolute inset-0 rounded-[40px] border border-stone-200/40 pointer-events-none"></div>
+            <img src="/images/chef_icon_v2.png" className="w-full h-full object-contain" alt="AfroCuisto Logo" />
           </div>
           <h1 className="text-[32px] font-black text-stone-900 tracking-tight leading-none mb-3">Afro<span className="text-[#fb5607]">Cuisto</span></h1>
           <p className="text-[13px] font-medium text-stone-500 border border-stone-200/50 bg-white/50 inline-block px-4 py-1.5 rounded-full shadow-sm backdrop-blur-md">Le Goût de l'Excellence</p>
