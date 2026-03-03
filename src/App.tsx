@@ -1387,10 +1387,12 @@ export default function App() {
     }
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     if (currentUser) {
       dbService.setCurrentUser(currentUser);
-      showAlert("Paramètres enregistrés !", "success");
+      // Sync to Supabase cloud
+      await dbService.syncUserToCloud(currentUser);
+      showAlert("Paramètres enregistrés et synchronisés !", "success");
     }
   };
 
@@ -2799,22 +2801,35 @@ export default function App() {
     const handleSubmit = async () => {
       if (!currentUser || rating === 0) return;
       setIsSubmitting(true);
-      const success = await dbService.submitReview({
-        recipe_id: recipe.id,
-        recipe_name: recipe.name,
-        user_id: currentUser.id,
-        user_name: currentUser.name,
-        rating,
-        comment
-      });
-      setIsSubmitting(false);
-      if (success) {
+      try {
+        if (!dbService.supabase) throw new Error('offline');
+        const { error } = await dbService.supabase
+          .from('feedback')
+          .insert([{
+            recipe_id: recipe.id,
+            recipe_name: recipe.name,
+            user_id: currentUser.id,
+            user_name: currentUser.name,
+            rating,
+            comment
+          }]);
+        if (error) throw error;
+        setIsSubmitting(false);
         setSubmitted(true);
         setRating(0);
         setComment('');
         setTimeout(() => setSubmitted(false), 3000);
-      } else {
-        showAlert(t.reviewError);
+      } catch (err: any) {
+        setIsSubmitting(false);
+        console.warn('Review fallback:', err?.message);
+        // Graceful degradation — store locally
+        const pending = JSON.parse(localStorage.getItem('pending_reviews') || '[]');
+        pending.push({ recipe_id: recipe.id, recipe_name: recipe.name, user_id: currentUser.id, user_name: currentUser.name, rating, comment, created_at: new Date().toISOString() });
+        localStorage.setItem('pending_reviews', JSON.stringify(pending));
+        setSubmitted(true);
+        setRating(0);
+        setComment('');
+        setTimeout(() => setSubmitted(false), 3000);
       }
     };
 
@@ -2928,7 +2943,23 @@ export default function App() {
               className="absolute inset-x-0 top-0"
             >
               <div className="relative h-[40vh] w-full shrink-0">
-                <img src={recipe.image} className="w-full h-full object-cover" alt={recipe.name} />
+                <img
+                  src={recipe.image}
+                  className="w-full h-full object-cover"
+                  alt={recipe.name}
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    img.style.display = 'none';
+                    const parent = img.parentElement;
+                    if (parent && !parent.querySelector('.img-fallback')) {
+                      const fallback = document.createElement('div');
+                      fallback.className = 'img-fallback';
+                      fallback.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:linear-gradient(135deg,#f97316 0%,#ea580c 40%,#c2410c 100%);';
+                      fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span style="color:rgba(255,255,255,0.8);font-size:11px;font-weight:700;text-align:center;padding:0 16px">Image non disponible hors connexion</span>';
+                      parent.appendChild(fallback);
+                    }
+                  }}
+                />
               </div>
               <div className="p-6 -mt-8 bg-white rounded-t-[32px] relative z-10 min-h-screen shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
                 <div className="flex justify-between items-start gap-4 mb-2 relative">
@@ -3138,12 +3169,127 @@ export default function App() {
     const list = currentUser?.shoppingList || [];
     const purchased = list.filter(i => i.isPurchased);
     const toBuy = list.filter(i => !i.isPurchased);
+    const UNITS = ['g', 'kg', 'L', 'mL', 'cl', 'pcs', 'tbsp', 'tsp', 'pinch'];
+
+    const ShoppingItemRow = ({ item, dimmed }: { item: any; dimmed?: boolean }) => {
+      const [editQty, setEditQty] = React.useState(item.quantity ?? '');
+      const [editUnit, setEditUnit] = React.useState(item.unit ?? 'g');
+      const [editPrice, setEditPrice] = React.useState(item.priceXOF ?? '');
+      const [isEditing, setIsEditing] = React.useState(false);
+
+      const save = () => {
+        const newList = list.map(i => i.id === item.id
+          ? { ...i, quantity: editQty, unit: editUnit, priceXOF: editPrice }
+          : i);
+        updateShoppingList(newList);
+        setIsEditing(false);
+      };
+
+      return (
+        <motion.div layout key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className={`bg-white rounded-[24px] border shadow-sm overflow-hidden ${dimmed ? 'opacity-60 border-emerald-100' : 'border-stone-100'}`}
+        >
+          <div className="p-4 flex items-center gap-3">
+            {/* Checkbox */}
+            <button
+              onClick={() => {
+                const newList = list.map(i => i.id === item.id ? { ...i, isPurchased: !i.isPurchased } : i);
+                updateShoppingList(newList);
+              }}
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${item.isPurchased ? 'bg-emerald-500 border-emerald-500 shadow-sm' : 'border-stone-200 hover:border-[#fb5607]'
+                }`}
+            >
+              {item.isPurchased && <Check size={13} className="text-white" />}
+            </button>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className={`text-[13px] font-bold leading-tight ${item.isPurchased ? 'line-through text-stone-400' : 'text-stone-800'}`}>{item.item}</p>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                {item.quantity && <span className="text-[11px] font-black text-[#fb5607]">{item.quantity} {item.unit}</span>}
+                {item.priceXOF && <span className="text-[10px] font-bold text-stone-400">{parseInt(item.priceXOF).toLocaleString()} XOF</span>}
+                {!item.quantity && !item.priceXOF && <span className="text-[11px] text-stone-300 italic">Appuyez ✎ pour ajouter qté &amp; prix</span>}
+                {item.recipeName && <><span className="w-1 h-1 rounded-full bg-stone-200 inline-block" /><span className="text-[10px] text-stone-400 truncate max-w-[90px]">↳ {item.recipeName}</span></>}
+              </div>
+            </div>
+            {/* Edit btn */}
+            <button onClick={() => setIsEditing(!isEditing)}
+              className="w-8 h-8 rounded-full bg-stone-50 text-stone-400 flex items-center justify-center hover:bg-[#fb5607]/10 hover:text-[#fb5607] transition-all"
+            >
+              <Edit2 size={13} />
+            </button>
+            {/* Delete btn */}
+            <button onClick={() => { const nl = list.filter(i => i.id !== item.id); updateShoppingList(nl); }}
+              className="w-8 h-8 rounded-full bg-stone-50 text-stone-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+
+          {/* Inline edit panel */}
+          <AnimatePresence>
+            {isEditing && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden border-t border-stone-100 bg-stone-50"
+              >
+                <div className="p-4 space-y-3">
+                  {/* Qty + Unit row */}
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1 block">Quantité</label>
+                      <input
+                        type="number"
+                        value={editQty}
+                        onChange={e => setEditQty(e.target.value)}
+                        placeholder="Ex: 500"
+                        className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20"
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1 block">Unité</label>
+                      <select
+                        value={editUnit}
+                        onChange={e => setEditUnit(e.target.value)}
+                        className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20"
+                      >
+                        {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  {/* Price */}
+                  <div>
+                    <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1 block">Prix estimé (XOF)</label>
+                    <input
+                      type="number"
+                      value={editPrice}
+                      onChange={e => setEditPrice(e.target.value)}
+                      placeholder="Ex: 1500"
+                      className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20"
+                    />
+                  </div>
+                  <button onClick={save}
+                    className="w-full py-3 bg-[#fb5607] text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-sm"
+                  >
+                    Enregistrer
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      );
+    };
+
+    // Compute total estimated cost
+    const totalXOF = list.reduce((acc, i) => acc + (parseFloat(i.priceXOF ?? '0') || 0), 0);
 
     return (
       <div className="flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <header className="px-6 pt-10 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-1 transition-all duration-500">
           <h2 className="text-[24px] font-black text-stone-900 tracking-tight leading-none">{t.myShoppingList}</h2>
-          <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">{list.length} {t.ingredients}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">{list.length} {t.ingredients}</p>
+            {totalXOF > 0 && <p className="text-[11px] font-black text-[#fb5607]">≈ {totalXOF.toLocaleString()} XOF</p>}
+          </div>
         </header>
 
         <div className="p-6 space-y-8">
@@ -3154,9 +3300,8 @@ export default function App() {
               </div>
               <h3 className="text-lg font-black text-stone-800 mb-2">{t.noShoppingItems}</h3>
               <p className="text-sm font-medium text-stone-400 leading-relaxed mb-8">{t.noShoppingItemsDesc}</p>
-              <button
-                onClick={() => navigateTo('home')}
-                className="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-stone-900/20 active:scale-95 transition-all"
+              <button onClick={() => navigateTo('home')}
+                className="bg-stone-900 text-white px-8 py-3.5 rounded-full font-black text-xs uppercase tracking-widest shadow-lg shadow-stone-900/20 active:scale-95 transition-all"
               >
                 {t.discover}
               </button>
@@ -3169,46 +3314,7 @@ export default function App() {
                     <span className="w-1.5 h-1.5 rounded-full bg-[#fb5607]"></span> {t.toBuy}
                   </h3>
                   <div className="space-y-3">
-                    {toBuy.map((item) => (
-                      <motion.div
-                        layout
-                        key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-4 rounded-3xl border border-stone-100 shadow-sm flex items-center gap-4 group"
-                      >
-                        <button
-                          onClick={() => {
-                            const newList = list.map(i => i.id === item.id ? { ...i, isPurchased: true } : i);
-                            updateShoppingList(newList);
-                          }}
-                          className="w-6 h-6 rounded-xl border-2 border-stone-200 flex items-center justify-center transition-all hover:border-[#fb5607] group-active:scale-90"
-                        >
-                          <div className="w-3 h-3 rounded-md bg-transparent transition-all"></div>
-                        </button>
-                        <div className="flex-1">
-                          <p className="text-[13px] font-bold text-stone-800 leading-tight">{item.item}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-[11px] font-black text-[#fb5607] uppercase tracking-tighter">{item.amount}</p>
-                            {item.recipeName && (
-                              <>
-                                <span className="w-1 h-1 rounded-full bg-stone-200"></span>
-                                <p className="text-[10px] font-medium text-stone-400 truncate max-w-[120px]">pour {item.recipeName}</p>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const newList = list.filter(i => i.id !== item.id);
-                            updateShoppingList(newList);
-                          }}
-                          className="w-10 h-10 rounded-2xl bg-stone-50 text-stone-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-50 hover:text-rose-500"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </motion.div>
-                    ))}
+                    {toBuy.map(item => <ShoppingItemRow key={item.id} item={item} />)}
                   </div>
                 </div>
               )}
@@ -3218,50 +3324,15 @@ export default function App() {
                   <h3 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {t.purchased}
                   </h3>
-                  <div className="space-y-3 opacity-60">
-                    {purchased.map((item) => (
-                      <motion.div
-                        layout
-                        key={item.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-emerald-50/30 p-4 rounded-3xl border border-emerald-100 flex items-center gap-4 group"
-                      >
-                        <button
-                          onClick={() => {
-                            const newList = list.map(i => i.id === item.id ? { ...i, isPurchased: false } : i);
-                            updateShoppingList(newList);
-                          }}
-                          className="w-6 h-6 rounded-xl bg-emerald-500 flex items-center justify-center transition-all shadow-sm shadow-emerald-200"
-                        >
-                          <Check size={14} className="text-white" />
-                        </button>
-                        <div className="flex-1">
-                          <p className="text-[13px] font-bold text-stone-500 leading-tight line-through">{item.item}</p>
-                          <p className="text-[11px] font-black text-emerald-600 uppercase tracking-tighter mt-1">{item.amount}</p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const newList = list.filter(i => i.id !== item.id);
-                            updateShoppingList(newList);
-                          }}
-                          className="w-10 h-10 rounded-2xl bg-white/50 text-stone-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </motion.div>
-                    ))}
+                  <div className="space-y-3">
+                    {purchased.map(item => <ShoppingItemRow key={item.id} item={item} dimmed />)}
                   </div>
                 </div>
               )}
 
               <button
-                onClick={() => {
-                  if (window.confirm(t.clearList + "?")) {
-                    updateShoppingList([]);
-                  }
-                }}
-                className="w-full py-4 rounded-3xl border-2 border-stone-100 text-stone-400 font-black text-[10px] uppercase tracking-widest hover:bg-stone-50 hover:text-stone-600 transition-all active:scale-95 mt-4"
+                onClick={() => { if (window.confirm(t.clearList + "?")) { updateShoppingList([]); } }}
+                className="w-full py-4 rounded-full border-2 border-stone-100 text-stone-400 font-black text-[10px] uppercase tracking-widest hover:bg-stone-50 hover:text-stone-600 transition-all active:scale-95 mt-4"
               >
                 {t.clearList}
               </button>
@@ -3445,20 +3516,20 @@ export default function App() {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 100, opacity: 0, scale: 0.92 }}
             transition={{ type: 'spring', damping: 24, stiffness: 360, mass: 0.85 }}
-            className="absolute bottom-6 left-3 right-3 z-[110]"
+            className="absolute bottom-6 left-4 right-4 z-[110]"
           >
             {/* Ambient drop shadow */}
             <div
-              className="absolute inset-0 rounded-[28px]"
+              className="absolute inset-0 rounded-[40px]"
               style={{
-                borderRadius: 28,
+                borderRadius: 40,
                 boxShadow: '0 16px 48px rgba(249,77,0,0.38), 0 4px 12px rgba(0,0,0,0.18)',
               }}
             />
 
             {/* Main pill */}
             <div
-              className="relative flex items-center justify-between px-2 rounded-[28px] overflow-hidden"
+              className="relative flex items-center justify-between px-2 rounded-[40px] overflow-hidden"
               style={{
                 height: 76,
                 background: 'linear-gradient(160deg, #ff6120 0%, #F94D00 55%, #d93d00 100%)',

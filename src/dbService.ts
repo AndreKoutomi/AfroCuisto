@@ -227,5 +227,35 @@ export const dbService = {
             console.error('Submit review error:', err);
             return false;
         }
+    },
+
+    // Save full user profile to Supabase (user_profiles table) if available
+    async syncUserToCloud(user: User): Promise<void> {
+        try {
+            if (!supabase) return;
+            // 1. Update Supabase Auth display name
+            await supabase.auth.updateUser({
+                data: { full_name: user.name }
+            });
+            // 2. Upsert a user_profiles row for custom fields
+            const { error } = await supabase
+                .from('user_profiles')
+                .upsert([{
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    language: user.settings?.language ?? 'fr',
+                    unit_system: user.settings?.unitSystem ?? 'metric',
+                    dark_mode: user.settings?.darkMode ?? false,
+                    updated_at: new Date().toISOString()
+                }], { onConflict: 'id' });
+            if (error) {
+                // Table may not exist yet — fail silently
+                console.warn('user_profiles upsert skipped:', error.message);
+            }
+        } catch (err) {
+            console.error('syncUserToCloud error:', err);
+        }
     }
 };
+

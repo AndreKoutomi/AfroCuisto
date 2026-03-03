@@ -49,6 +49,9 @@ export interface ShoppingItem {
   id: string;
   item: string;
   amount: string;
+  quantity?: string;
+  unit?: string;
+  priceXOF?: string;
   isPurchased: boolean;
   recipeName?: string;
   recipeId?: string;
