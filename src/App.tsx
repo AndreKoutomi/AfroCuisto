@@ -347,36 +347,34 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
       {/* ── Prev / Next arrows ─────────────────────────────────────────────── */}
       {active > 0 && (
         <button
+          className="carousel-arrow"
           onClick={prev}
           style={{
             position: 'absolute', left: 8, top: '42%', transform: 'translateY(-50%)',
             width: '38px', height: '38px', borderRadius: '50%',
-            background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(0,0,0,0.08)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.14)',
+            backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', zIndex: 20, transition: 'all 0.15s',
           }}
           aria-label="Précédent"
         >
-          <ChevronLeft size={18} style={{ color: '#374151' }} />
+          <ChevronLeft size={18} className="carousel-arrow-icon" />
         </button>
       )}
       {active < n - 1 && (
         <button
+          className="carousel-arrow"
           onClick={next}
           style={{
             position: 'absolute', right: 8, top: '42%', transform: 'translateY(-50%)',
             width: '38px', height: '38px', borderRadius: '50%',
-            background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(0,0,0,0.08)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.14)',
+            backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', zIndex: 20, transition: 'all 0.15s',
           }}
           aria-label="Suivant"
         >
-          <ChevronRight size={18} style={{ color: '#374151' }} />
+          <ChevronRight size={18} className="carousel-arrow-icon" />
         </button>
       )}
 
@@ -386,11 +384,11 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
           <button
             key={i}
             onClick={() => goTo(i)}
+            className={i === active ? 'carousel-dot-active' : 'carousel-dot'}
             style={{
               width: i === active ? 24 : 7,
               height: 7,
               borderRadius: 4,
-              background: i === active ? '#c0392b' : 'rgba(30,30,30,0.18)',
               border: 'none',
               cursor: 'pointer',
               padding: 0,
@@ -1802,10 +1800,10 @@ export default function App() {
                         transition={{ delay: fidx * 0.18 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setSelectedRecipe(fr)}
+                        className="featured-card"
                         style={{
                           flexShrink: 0,
                           width: '425px',
-                          background: '#fff',
                           borderRadius: '36px',
                           padding: '26px',
                           display: 'flex',
@@ -1813,19 +1811,16 @@ export default function App() {
                           gap: '28px',
                           position: 'relative',
                           cursor: 'pointer',
-                          boxShadow: '0 25px 65px rgba(0,0,0,0.09), 0 5px 15px rgba(0,0,0,0.04)',
-                          border: '1px solid #eeeeee',
                         }}
                       >
                         {/* Image — Gauche */}
-                        <div style={{
+                        <div className="featured-card-img" style={{
                           flexShrink: 0,
                           width: '165px',
                           height: '165px',
                           borderRadius: '30px',
                           overflow: 'hidden',
                           boxShadow: '0 15px 32px rgba(0,0,0,0.18)',
-                          background: '#f3f4f6',
                         }}>
                           <img
                             src={fr.image}
@@ -1836,25 +1831,23 @@ export default function App() {
 
                         {/* Contenu — Droite */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
+                          <div className="featured-badge" style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '8px',
-                            background: '#fef3c7',
                             borderRadius: '20px',
                             padding: '6px 16px',
                             marginBottom: '15px',
                           }}>
                             <span style={{ fontSize: '14px' }}>⭐</span>
-                            <span style={{ fontSize: '12px', fontWeight: 900, color: '#92400e', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            <span className="featured-badge-text" style={{ fontSize: '12px', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                               {fs.subtitle || 'Exclusivité'}
                             </span>
                           </div>
-                          <h2 style={{
+                          <h2 className="featured-title" style={{
                             margin: '0 0 16px',
                             fontSize: '25px',
                             fontWeight: 900,
-                            color: '#111827',
                             lineHeight: 1.15,
                             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                             letterSpacing: '-0.02em',
@@ -1862,7 +1855,7 @@ export default function App() {
                             {fr.name}
                           </h2>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '16px', fontWeight: 900, color: '#e55820' }}>Découvrir le plat →</span>
+                            <span className="featured-cta" style={{ fontSize: '16px', fontWeight: 900 }}>Découvrir le plat →</span>
                           </div>
                         </div>
 

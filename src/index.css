@@ -27,189 +27,494 @@
   }
 }
 
-/* =========================================
-   DARK MODE — CSS override strategy
-   Applied when .dark class is on root div
-   ========================================= */
+/* ==========================================================================
+   DARK MODE — Premium Obsidian Theme
+   Covers backgrounds, text, borders, cards, shadows, surfaces, inputs
+   ========================================================================== */
 
 .dark {
   color-scheme: dark;
 }
 
-/* Backgrounds */
+/* ── Root-level backgrounds ────────────────────────────────────────────── */
 .dark .bg-white {
-  background-color: #1c1c1e !important;
+  background-color: #1a1a1d !important;
 }
 
 .dark .bg-white\/90 {
-  background-color: rgba(28, 28, 30, 0.92) !important;
+  background-color: rgba(26, 26, 29, 0.94) !important;
 }
 
 .dark .bg-white\/95 {
-  background-color: rgba(28, 28, 30, 0.96) !important;
+  background-color: rgba(26, 26, 29, 0.97) !important;
 }
 
 .dark .bg-white\/70 {
-  background-color: rgba(28, 28, 30, 0.75) !important;
+  background-color: rgba(26, 26, 29, 0.78) !important;
 }
 
 .dark .bg-white\/60 {
-  background-color: rgba(28, 28, 30, 0.65) !important;
+  background-color: rgba(26, 26, 29, 0.68) !important;
 }
 
 .dark .bg-white\/50 {
-  background-color: rgba(28, 28, 30, 0.55) !important;
+  background-color: rgba(26, 26, 29, 0.55) !important;
 }
 
 .dark .bg-white\/30 {
-  background-color: rgba(28, 28, 30, 0.4) !important;
+  background-color: rgba(26, 26, 29, 0.35) !important;
 }
 
 .dark .bg-stone-50 {
-  background-color: #111113 !important;
+  background-color: #0f0f11 !important;
 }
 
 .dark .bg-stone-100 {
-  background-color: #252527 !important;
+  background-color: #1e1e21 !important;
 }
 
 .dark .bg-stone-100\/80 {
-  background-color: rgba(37, 37, 39, 0.85) !important;
+  background-color: rgba(30, 30, 33, 0.85) !important;
 }
 
 .dark .bg-stone-200 {
-  background-color: #333335 !important;
+  background-color: #2a2a2d !important;
 }
 
 .dark .bg-\[#faf9f6\] {
-  background-color: #0d0d0f !important;
+  background-color: #0b0b0d !important;
 }
 
-/* Borders */
+/* ── Borders ───────────────────────────────────────────────────────────── */
 .dark .border-white {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .dark .border-white\/80 {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .border-white\/30 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 .dark .border-stone-100 {
-  border-color: #2c2c2e !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
 }
 
 .dark .border-stone-200 {
-  border-color: #3a3a3c !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
 }
 
 .dark .border-stone-100\/50 {
-  border-color: rgba(44, 44, 46, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 .dark .border-stone-200\/30 {
-  border-color: rgba(58, 58, 60, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Text */
+.dark .border-stone-200\/40 {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+.dark .border-stone-200\/50 {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+.dark .border-stone-100\/80 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── Typography ────────────────────────────────────────────────────────── */
 .dark .text-stone-900 {
-  color: #f5f5f7 !important;
+  color: #f2f2f4 !important;
 }
 
 .dark .text-stone-800 {
-  color: #e8e8ea !important;
+  color: #e4e4e7 !important;
 }
 
 .dark .text-stone-700 {
-  color: #c8c8ca !important;
+  color: #bababd !important;
 }
 
 .dark .text-stone-600 {
-  color: #a8a8aa !important;
+  color: #9a9a9d !important;
 }
 
 .dark .text-stone-500 {
-  color: #888888 !important;
+  color: #78787b !important;
 }
 
 .dark .text-stone-400 {
-  color: #6a6a6c !important;
+  color: #5c5c5f !important;
 }
 
 .dark .text-stone-300 {
-  color: #4a4a4c !important;
+  color: #44444a !important;
 }
 
 .dark .text-\[\#000000\] {
-  color: #f5f5f7 !important;
+  color: #f2f2f4 !important;
 }
 
-/* Specific surface neutrals */
-.dark .shadow-inner {
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Auth page backdrop */
-.dark .backdrop-blur-2xl {
-  backdrop-filter: blur(40px) !important;
-}
-
-.dark .bg-white\/90.backdrop-blur-2xl {
-  background-color: rgba(20, 20, 22, 0.9) !important;
-}
-
-/* Emerald (purchased items) */
-.dark .bg-emerald-50\/30 {
-  background-color: rgba(6, 78, 59, 0.15) !important;
-}
-
-.dark .border-emerald-100 {
-  border-color: rgba(6, 78, 59, 0.3) !important;
-}
-
-/* Rose / error */
-.dark .bg-rose-50 {
-  background-color: rgba(159, 18, 57, 0.12) !important;
-}
-
-.dark .border-rose-100\/50 {
-  border-color: rgba(159, 18, 57, 0.2) !important;
-}
-
-/* Stone bg with opacity for header cards */
-.dark .bg-stone-50.rounded-3xl,
-.dark .bg-stone-50.rounded-2xl,
-.dark .bg-stone-50.rounded-xl,
-.dark .bg-stone-50.p-6,
-.dark .bg-stone-50.p-4 {
-  background-color: #1c1c1e !important;
-}
-
-/* Header & sticky elements */
+/* ── Header & sticky elements ──────────────────────────────────────────── */
 .dark header {
-  background-color: rgba(17, 17, 19, 0.96) !important;
-  border-bottom-color: #2c2c2e !important;
+  background-color: rgba(15, 15, 17, 0.97) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
 }
 
-/* Card panels */
-.dark .bg-stone-50.border {
-  background-color: #1c1c1e !important;
+/* ── Shadows — subtle glows instead of heavy black shadows ─────────────── */
+.dark .shadow-sm {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.03) !important;
 }
 
-/* Input fields */
-.dark input,
+.dark .shadow-md {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-xl {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-2xl {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+}
+
+.dark .shadow-inner {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ── Input fields ──────────────────────────────────────────────────────── */
+.dark input:not([type="range"]),
 .dark textarea,
 .dark select {
-  background-color: #252527 !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
   color: #f0f0f2 !important;
-  border-color: #3a3a3c !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: #5a5a5c !important;
+  color: rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Main app background */
-.dark.h-screen {
-  background-color: #111113 !important;
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: rgba(251, 86, 7, 0.4) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
+
+/* ── Card surfaces & panels ────────────────────────────────────────────── */
+.dark .bg-stone-50.rounded-3xl,
+.dark .bg-stone-50.rounded-2xl,
+.dark .bg-stone-50.rounded-xl,
+.dark .bg-stone-50.p-6,
+.dark .bg-stone-50.p-4,
+.dark .bg-stone-50.border {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Colored surfaces: emerald, rose, blue, amber, indigo → dark-safe ── */
+.dark .bg-emerald-50\/30 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+.dark .border-emerald-100 {
+  border-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.08) !important;
+}
+
+.dark .border-rose-100 {
+  border-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+.dark .border-rose-100\/50 {
+  border-color: rgba(244, 63, 94, 0.1) !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+}
+
+.dark .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+}
+
+.dark .bg-terracotta\/10 {
+  background-color: rgba(251, 86, 7, 0.1) !important;
+}
+
+.dark .bg-\[\#fb5607\]\/5 {
+  background-color: rgba(251, 86, 7, 0.12) !important;
+}
+
+.dark .bg-\[\#fb5607\]\/10 {
+  background-color: rgba(251, 86, 7, 0.12) !important;
+}
+
+/* ── "Active" category/filter chips ────────────────────────────────────── */
+.dark .bg-stone-50.hover\:bg-stone-50 {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Profile cards with inline white background ────────────────────────── */
+.dark [style*="background: #fff"],
+.dark [style*="background:#fff"],
+.dark [style*="background: rgb(255, 255, 255)"],
+.dark [style*="background: rgb(255,255,255)"] {
+  background: #1a1a1d !important;
+}
+
+/* ── Featured card overrides (inline styled with '#fff') ───────────────── */
+.dark [style*="background: '#fff'"] {
+  background: #1a1a1d !important;
+}
+
+/* ── Inline text color overrides for cards using style={{color:'#111'}} ── */
+.dark [style*="color: '#111827'"],
+.dark [style*="color: #111827"],
+.dark [style*="color: rgb(17, 24, 39)"] {
+  color: #f2f2f4 !important;
+}
+
+/* ── Inline borders (featured cards) ───────────────────────────────────── */
+.dark [style*="border: 1px solid #eeeeee"],
+.dark [style*="border: 1px solid #eee"] {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── Snap Carousel dot indicator (non-active: light background → dark) ── */
+.dark [style*="background: rgba(30,30,30,0.18)"] {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Featured badge backgrounds → dark-safe */
+.dark [style*="background: '#fef3c7'"],
+.dark [style*="background: #fef3c7"] {
+  background: rgba(251, 191, 36, 0.12) !important;
+}
+
+/* Featured CTA text → dark-safe */
+.dark [style*="color: '#92400e'"],
+.dark [style*="color: #92400e"] {
+  color: #fbbf24 !important;
+}
+
+/* ── Auth page / Login ─────────────────────────────────────────────────── */
+.dark .backdrop-blur-2xl {
+  backdrop-filter: blur(40px) saturate(180%) !important;
+}
+
+.dark .backdrop-blur-xl {
+  backdrop-filter: blur(24px) saturate(180%) !important;
+}
+
+/* Auth blob backgrounds — deeper, more subtle in dark */
+.dark .bg-\[\#fb5607\]\/10 {
+  background-color: rgba(251, 86, 7, 0.06) !important;
+}
+
+.dark .bg-amber-400\/10 {
+  background-color: rgba(245, 158, 11, 0.04) !important;
+}
+
+.dark .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.04) !important;
+}
+
+/* ── Recipe Detail ─────────────────────────────────────────────────────── */
+/* The white content area below the image */
+.dark .bg-white.rounded-t-\[32px\] {
+  background-color: #0f0f11 !important;
+}
+
+/* ── Tab indicators / chips on explore page ────────────────────────────── */
+.dark .bg-white.text-stone-700 {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Scrollbar / no-scrollbar ──────────────────────────────────────────── */
+.dark .no-scrollbar {
+  scrollbar-color: transparent transparent;
+}
+
+/* ── Profile page cloud status pill ────────────────────────────────────── */
+.dark .bg-white.rounded-full {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Category pills on home page ───────────────────────────────────────── */
+.dark .bg-white.text-stone-700.border-stone-100\/80 {
+  background-color: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .bg-white.text-stone-700.border-stone-100\/80:hover {
+  background-color: #242427 !important;
+}
+
+/* ── Sync status pill ──────────────────────────────────────────────────── */
+.dark .bg-white.px-4.py-2 {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Settings button borders ───────────────────────────────────────────── */
+.dark .bg-white.border.border-stone-100 {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Special surfaces with rounded-[32px] (profile menu buttons) ───────── */
+.dark .bg-white.rounded-\[32px\] {
+  background-color: #1a1a1d !important;
+}
+
+.dark .bg-white.rounded-3xl {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Shopping list item cards ──────────────────────────────────────────── */
+.dark .bg-white.rounded-\[24px\] {
+  background-color: #1a1a1d !important;
+}
+
+/* ── ModernAlert ───────────────────────────────────────────────────────── */
+.dark .bg-white.shadow-xl {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Recipe Detail — step cards ────────────────────────────────────────── */
+.dark .bg-white.p-4 {
+  background-color: #1a1a1d !important;
+}
+
+.dark .bg-white.p-5 {
+  background-color: #1a1a1d !important;
+}
+
+.dark .bg-white.p-6 {
+  background-color: #1a1a1d !important;
+}
+
+/* ── Border-dashed (sync button on profile) ────────────────────────────── */
+.dark .bg-white\/50.border-dashed {
+  background-color: rgba(26, 26, 29, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── Ingredient image thumbnail fallback ───────────────────────────────── */
+.dark [style*="background: '#f3f4f6'"],
+.dark [style*="background: #f3f4f6"] {
+  background: #1e1e21 !important;
+}
+
+/* ── Toggle button for dark mode (bg-stone-200 off state) ──────────────── */
+.dark .bg-stone-200 {
+  background-color: #333336 !important;
+}
+
+/* ── Main app container ────────────────────────────────────────────────── */
+.dark.h-screen {
+  background-color: #0f0f11 !important;
+}
+
+.dark.bg-\[\#111113\] {
+  background-color: #0f0f11 !important;
+}
+
+/* ── Subtle orange glow on key accent surfaces ─────────────────────────── */
+.dark .shadow-lg.shadow-terracotta\/20,
+.dark .shadow-terracotta\/20,
+.dark .shadow-\[\#fb5607\]\/20 {
+  box-shadow: 0 8px 24px rgba(251, 86, 7, 0.15) !important;
+}
+
+.dark .shadow-terracotta\/30,
+.dark .shadow-lg.shadow-stone-900\/20 {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Transitions for smoothness ────────────────────────────────────────── */
+.dark * {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* Opt-out of the global transition for animations/transforms */
+.dark [class*="animate-"],
+.dark [class*="motion-"],
+.dark motion\.div {
+  transition-property: none;
+}
+/* ==========================================================================
+   Featured Card styles - Light + Dark
+   ========================================================================== */
+
+.featured-card {
+  background: #fff;
+  border: 1px solid #eeeeee;
+  box-shadow: 0 25px 65px rgba(0,0,0,0.09), 0 5px 15px rgba(0,0,0,0.04);
+}
+.dark .featured-card {
+  background: #1a1a1d !important;
+  border-color: rgba(255,255,255,0.06) !important;
+  box-shadow: 0 25px 65px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.05) !important;
+}
+
+.featured-card-img { background: #f3f4f6; }
+.dark .featured-card-img { background: #252528 !important; }
+
+.featured-badge { background: #fef3c7; }
+.dark .featured-badge { background: rgba(251,191,36,0.1) !important; }
+
+.featured-badge-text { color: #92400e; }
+.dark .featured-badge-text { color: #fbbf24 !important; }
+
+.featured-title { color: #111827; }
+.dark .featured-title { color: #f2f2f4 !important; }
+
+.featured-cta { color: #e55820; }
+.dark .featured-cta { color: #fb5607 !important; }
+
+/* Extra dark polish */
+.dark main { background-color: #0f0f11 !important; }
+.dark .bg-terracotta { box-shadow: 0 0 30px rgba(251,86,7,0.15); }
+.dark .bg-terracotta.text-white { box-shadow: 0 4px 16px rgba(251,86,7,0.25); }
+
+/* -- SnapCarousel arrows + dots (Light + Dark) -------------------------- */
+.carousel-arrow {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+}
+.dark .carousel-arrow {
+  background: rgba(26,26,29,0.85) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+.carousel-arrow-icon { color: #374151; }
+.dark .carousel-arrow-icon { color: #e4e4e7 !important; }
+
+.carousel-dot { background: rgba(30,30,30,0.18); }
+.carousel-dot-active { background: #c0392b; }
+.dark .carousel-dot { background: rgba(255,255,255,0.18) !important; }
+.dark .carousel-dot-active { background: #fb5607 !important; }
