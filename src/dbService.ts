@@ -247,14 +247,47 @@ export const dbService = {
                     language: user.settings?.language ?? 'fr',
                     unit_system: user.settings?.unitSystem ?? 'metric',
                     dark_mode: user.settings?.darkMode ?? false,
-                    updated_at: new Date().toISOString()
+                    updated_at: new Date().toISOString(),
+                    joined_date: user.joinedDate,
+                    favorites: user.favorites || [],
+                    shopping_list: user.shoppingList || []
                 }], { onConflict: 'id' });
             if (error) {
-                // Table may not exist yet — fail silently
-                console.warn('user_profiles upsert skipped:', error.message);
+                console.warn('user_profiles upsert failed:', error.message);
             }
         } catch (err) {
             console.error('syncUserToCloud error:', err);
+        }
+    },
+
+    async getRemoteUserProfile(userId: string): Promise<Partial<User> | null> {
+        try {
+            if (!supabase) return null;
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (data) {
+                return {
+                    id: data.id,
+                    name: data.name,
+                    email: data.email,
+                    joinedDate: data.joined_date,
+                    favorites: data.favorites || [],
+                    shoppingList: data.shopping_list || [],
+                    settings: {
+                        darkMode: data.dark_mode ?? false,
+                        language: data.language ?? 'fr',
+                        unitSystem: data.unit_system ?? 'metric'
+                    }
+                };
+            }
+            return null;
+        } catch (err) {
+            console.error('getRemoteUserProfile error:', err);
+            return null;
         }
     }
 };

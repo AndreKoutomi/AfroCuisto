@@ -1040,13 +1040,34 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
       </div>
     ),
     'about': () => (
-      <div className="space-y-6 text-center">
-        <div className="w-16 h-16 bg-terracotta/10 rounded-2xl flex items-center justify-center text-terracotta mx-auto mb-4">
-          <ChefHat size={32} />
+      <div className="space-y-8 text-center py-6">
+        <div className="relative mx-auto w-24 h-24 mb-4">
+          <div className="absolute inset-0 bg-terracotta/5 rounded-[32px] animate-pulse" />
+          <div className="relative flex items-center justify-center h-full">
+            <img
+              src="/images/chef_icon_v2.png"
+              className="w-20 h-20 object-contain drop-shadow-xl"
+              alt="AfroCuisto Logo"
+            />
+          </div>
         </div>
-        <h2 className="text-xl font-black text-stone-800">AfroCuisto v1.0.5</h2>
-        <p className="text-stone-600 text-sm leading-relaxed italic">
-          "Un hommage vivant au patrimoine culinaire du Bénin."
+
+        <div>
+          <h2 className="text-2xl font-black text-stone-800 tracking-tight mb-2">AfroCuisto v1.0.6</h2>
+          <p className="text-stone-500 font-medium text-sm px-8 leading-relaxed">
+            L'excellence de la cuisine béninoise à portée de main. Découvrez le patrimoine culinaire du Bénin.
+          </p>
+        </div>
+
+        <div className="pt-4 pb-2">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100/50 rounded-full border border-stone-200/50">
+            <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Powered by</span>
+            <span className="text-[11px] font-bold text-terracotta">André Koutomi</span>
+          </div>
+        </div>
+
+        <p className="text-[10px] text-stone-400 italic">
+          &copy; {new Date().getFullYear()} AfroCuisto. Tous droits réservés.
         </p>
       </div>
     )
@@ -1072,19 +1093,37 @@ export default function App() {
       if (!dbService.supabase) return;
       const { data: { session } } = await dbService.supabase.auth.getSession();
 
-      const updateUserObject = (sessionUser: any) => {
-        const existingLocal = dbService.getUsers().find(u => u.email === sessionUser.email) || null;
-        const userObj: User = existingLocal || {
-          id: sessionUser.id,
-          name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0] || "User",
-          email: sessionUser.email!,
-          favorites: [],
-          shoppingList: [],
-          joinedDate: new Date(sessionUser.created_at || Date.now()).toLocaleDateString(),
-          settings: { darkMode: false, language: 'fr', unitSystem: 'metric' }
-        };
-        setCurrentUser(userObj);
-        dbService.setCurrentUser(userObj);
+      const updateUserObject = async (sessionUser: any) => {
+        setIsSyncing(true);
+        try {
+          // Fetch remote profile
+          const remoteProfile = await dbService.getRemoteUserProfile(sessionUser.id);
+          const existingLocal = dbService.getUsers().find(u => u.email === sessionUser.email) || null;
+
+          const userObj: User = {
+            id: sessionUser.id,
+            name: remoteProfile?.name || sessionUser.user_metadata?.full_name || existingLocal?.name || sessionUser.email?.split('@')[0] || "User",
+            email: sessionUser.email!,
+            favorites: remoteProfile?.favorites || existingLocal?.favorites || [],
+            shoppingList: remoteProfile?.shoppingList || existingLocal?.shoppingList || [],
+            joinedDate: existingLocal?.joinedDate || new Date(sessionUser.created_at || Date.now()).toLocaleDateString(),
+            settings: remoteProfile?.settings || existingLocal?.settings || { darkMode: false, language: 'fr', unitSystem: 'metric' },
+            avatar: existingLocal?.avatar || remoteProfile?.avatar
+          };
+
+          setCurrentUser(userObj);
+          dbService.setCurrentUser(userObj);
+          setHasLoadedAtLeastOnce(true);
+
+          // If no remote profile was found, create one now to ensure persistence
+          if (!remoteProfile) {
+            await dbService.syncUserToCloud(userObj);
+          }
+        } catch (err) {
+          console.error('Error syncing user object:', err);
+        } finally {
+          setIsSyncing(false);
+        }
       };
 
       if (session?.user) {
@@ -2903,18 +2942,17 @@ export default function App() {
       if (!currentUser || rating === 0) return;
       setIsSubmitting(true);
       try {
-        if (!dbService.supabase) throw new Error('offline');
-        const { error } = await dbService.supabase
-          .from('feedback')
-          .insert([{
-            recipe_id: recipe.id,
-            recipe_name: recipe.name,
-            user_id: currentUser.id,
-            user_name: currentUser.name,
-            rating,
-            comment
-          }]);
-        if (error) throw error;
+        const result = await dbService.submitReview({
+          recipe_id: recipe.id,
+          recipe_name: recipe.name,
+          user_id: currentUser.id,
+          user_name: currentUser.name,
+          rating,
+          comment
+        });
+
+        if (!result) throw new Error('Failed to submit review');
+
         setIsSubmitting(false);
         setSubmitted(true);
         setRating(0);
