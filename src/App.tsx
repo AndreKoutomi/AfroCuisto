@@ -1178,6 +1178,20 @@ export default function App() {
           const remoteProfile = await dbService.getRemoteUserProfile(sessionUser.id);
           const existingLocal = dbService.getUsers().find(u => u.email === sessionUser.email) || null;
 
+          // localStorage dark mode is ALWAYS the source of truth for the current session
+          // It is set explicitly every time the user toggles dark mode.
+          const localDarkMode = typeof window !== 'undefined'
+            ? localStorage.getItem('afrocuisto_dark_mode')
+            : null;
+
+          const mergedSettings = {
+            darkMode: localDarkMode !== null
+              ? localDarkMode === 'true'
+              : (existingLocal?.settings?.darkMode ?? remoteProfile?.settings?.darkMode ?? false),
+            language: existingLocal?.settings?.language || remoteProfile?.settings?.language || 'fr',
+            unitSystem: existingLocal?.settings?.unitSystem || remoteProfile?.settings?.unitSystem || 'metric',
+          };
+
           const userObj: User = {
             id: sessionUser.id,
             name: remoteProfile?.name || sessionUser.user_metadata?.full_name || existingLocal?.name || sessionUser.email?.split('@')[0] || "User",
@@ -1185,7 +1199,7 @@ export default function App() {
             favorites: remoteProfile?.favorites || existingLocal?.favorites || [],
             shoppingList: remoteProfile?.shoppingList || existingLocal?.shoppingList || [],
             joinedDate: existingLocal?.joinedDate || new Date(sessionUser.created_at || Date.now()).toLocaleDateString(),
-            settings: remoteProfile?.settings || existingLocal?.settings || { darkMode: false, language: 'fr', unitSystem: 'metric' },
+            settings: mergedSettings,
             avatar: existingLocal?.avatar || remoteProfile?.avatar
           };
 
