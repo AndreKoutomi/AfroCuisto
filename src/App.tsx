@@ -1113,7 +1113,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
       <div className="space-y-8 text-center py-6">
         <div className="relative mx-auto w-24 h-24 mb-4">
           <div className="absolute inset-0 bg-terracotta/5 dark:bg-terracotta/10 rounded-[32px] animate-pulse" />
-          <div className="relative flex items-center justify-center h-full bg-white rounded-[28px] shadow-inner-sm overflow-hidden">
+          <div className="relative flex items-center justify-center h-full rounded-[28px] shadow-inner-sm overflow-hidden" style={{ backgroundColor: 'white' }}>
             <img
               src="/images/chef_icon_v2.png"
               className="w-16 h-16 object-contain drop-shadow-md"
@@ -1130,9 +1130,10 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         </div>
 
         <div className="pt-4 pb-2">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100/50 dark:bg-white/5 rounded-full border border-stone-200/50 dark:border-white/10 transition-colors">
-            <span className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest">Powered by</span>
-            <span className="text-[11px] font-bold text-terracotta">André Koutomi</span>
+          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-stone-100/40 dark:bg-white/5 backdrop-blur-md rounded-full border border-stone-200/50 dark:border-white/10 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-default">
+            <span className="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.15em]">Powered by</span>
+            <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-stone-700" />
+            <span className="text-[12px] font-black text-terracotta tracking-tight">André Koutomi</span>
           </div>
         </div>
 
