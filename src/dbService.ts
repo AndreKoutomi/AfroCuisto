@@ -250,7 +250,8 @@ export const dbService = {
                     updated_at: new Date().toISOString(),
                     joined_date: user.joinedDate,
                     favorites: user.favorites || [],
-                    shopping_list: user.shoppingList || []
+                    shopping_list: user.shoppingList || [],
+                    avatar: user.avatar
                 }], { onConflict: 'id' });
             if (error) {
                 console.warn('user_profiles upsert failed:', error.message);
@@ -277,6 +278,7 @@ export const dbService = {
                     joinedDate: data.joined_date,
                     favorites: data.favorites || [],
                     shoppingList: data.shopping_list || [],
+                    avatar: data.avatar,
                     settings: {
                         darkMode: data.dark_mode ?? false,
                         language: data.language ?? 'fr',

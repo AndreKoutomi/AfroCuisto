@@ -844,11 +844,17 @@ const PersonalInfoView = ({ currentUser, setCurrentUser, t, showAlert }: any) =>
     const file = e.target.files?.[0];
     if (file && currentUser) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64String = reader.result as string;
         const updatedUser = dbService.updateAvatar(currentUser.id, base64String);
         if (updatedUser) {
           setCurrentUser({ ...updatedUser });
+          try {
+            await dbService.syncUserToCloud(updatedUser);
+            showAlert(t.saveSuccess || "Photo de profil mise à jour !", "success");
+          } catch (err) {
+            showAlert("Erreur lors de la synchronisation", "error");
+          }
         }
       };
       reader.readAsDataURL(file);
