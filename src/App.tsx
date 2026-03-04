@@ -2687,7 +2687,7 @@ export default function App() {
     <div className="flex-1 flex flex-col pb-44 pt-4 relative bg-stone-50">
       <AnimatePresence>
         {profileSubView && (
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className="absolute inset-0 z-50 bg-white p-6 pt-6 flex flex-col">
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className={`absolute inset-0 z-50 p-6 pt-6 flex flex-col ${isDark ? 'bg-[#111113]' : 'bg-white'}`}>
             <header className="flex items-center gap-4 mb-8 shrink-0">
               <button onClick={() => setProfileSubView(null)} className="p-2 bg-stone-50 rounded-full"><ChevronLeft size={20} /></button>
               <h2 className="text-xl font-black text-stone-800 tracking-tight">
@@ -2822,7 +2822,7 @@ export default function App() {
 
         <button onClick={() => setProfileSubView('settings')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-stone-50 flex items-center justify-center text-stone-600">
+            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
               <Settings size={20} />
             </div>
             <span className="font-black text-stone-800 text-sm tracking-tight">{t.settings}</span>
@@ -2962,7 +2962,7 @@ export default function App() {
     );
   };
 
-  const RecipeDetail = ({ recipe, allRecipes, currentUser, toggleFavorite, goBack, detailScrollRef, t, updateShoppingList }: {
+  const renderRecipeDetail = ({ recipe, allRecipes, currentUser, toggleFavorite, goBack, detailScrollRef, t, updateShoppingList }: {
     recipe: Recipe;
     allRecipes: Recipe[];
     currentUser: User | null;
@@ -3000,7 +3000,7 @@ export default function App() {
         <div className="absolute top-0 inset-x-0 z-[110] pointer-events-none p-6 pt-12">
           <div className="relative w-full flex justify-between items-start pointer-events-none">
             <button onClick={goBack} className="w-10 h-10 bg-[#fb5607]/80 backdrop-blur-md rounded-full text-white flex items-center justify-center border border-white/30 shadow-lg shadow-[#fb5607]/20 pointer-events-auto"><ChevronLeft size={24} /></button>
-            <button onClick={() => toggleFavorite(recipe.id)} className={`w-10 h-10 rounded-full flex items-center justify-center border shadow-md transition-all pointer-events-auto ${currentUser?.favorites.includes(recipe.id) ? 'bg-white border-white text-rose-500' : 'bg-white border-stone-100 text-stone-400'}`}><Heart size={20} fill={currentUser?.favorites.includes(recipe.id) ? 'currentColor' : 'none'} /></button>
+            <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }} className={`w-10 h-10 rounded-full flex items-center justify-center border shadow-md transition-all pointer-events-auto ${currentUser?.favorites.includes(recipe.id) ? 'bg-white border-white text-rose-500' : 'bg-white border-stone-100 text-stone-400'}`}><Heart size={20} fill={currentUser?.favorites.includes(recipe.id) ? 'currentColor' : 'none'} /></button>
           </div>
         </div>
 
@@ -3567,18 +3567,16 @@ export default function App() {
       </main>
 
       <AnimatePresence>
-        {selectedRecipe && (
-          <RecipeDetail
-            recipe={selectedRecipe}
-            allRecipes={allRecipes}
-            currentUser={currentUser}
-            toggleFavorite={toggleFavorite}
-            goBack={goBack}
-            detailScrollRef={detailScrollRef}
-            t={t}
-            updateShoppingList={updateShoppingList}
-          />
-        )}
+        {selectedRecipe && renderRecipeDetail({
+          recipe: selectedRecipe,
+          allRecipes,
+          currentUser,
+          toggleFavorite,
+          goBack,
+          detailScrollRef,
+          t,
+          updateShoppingList,
+        })}
       </AnimatePresence>
 
       <AnimatePresence>
