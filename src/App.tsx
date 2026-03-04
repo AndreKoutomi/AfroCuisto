@@ -2833,7 +2833,8 @@ export default function App() {
                   profileSubView === 'security' ? t.security :
                     profileSubView === 'notifications' ? t.notifications :
                       profileSubView === 'shopping' ? "Ma liste de courses" :
-                        t.settings}
+                        profileSubView === 'about' ? t.about :
+                          t.settings}
               </h2>
             </header>
 
