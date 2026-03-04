@@ -1542,10 +1542,12 @@ export default function App() {
   };
 
   const handleSaveSettings = async () => {
-    if (currentUser) {
-      dbService.setCurrentUser(currentUser);
+    // Re-read the current user from the local store to avoid stale closure
+    const latestUser = dbService.getCurrentUser();
+    if (latestUser) {
+      dbService.setCurrentUser(latestUser);
       // Sync to Supabase cloud
-      await dbService.syncUserToCloud(currentUser);
+      await dbService.syncUserToCloud(latestUser);
       showAlert("Paramètres enregistrés et synchronisés !", "success");
     }
   };
