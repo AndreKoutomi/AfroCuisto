@@ -1113,7 +1113,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
       <div className="space-y-8 text-center py-6">
         <div className="relative mx-auto w-24 h-24 mb-4">
           <div className="absolute inset-0 bg-terracotta/5 dark:bg-terracotta/10 rounded-[32px] animate-pulse" />
-          <div className="relative flex items-center justify-center h-full rounded-[28px] shadow-inner-sm overflow-hidden" style={{ backgroundColor: 'white' }}>
+          <div className="relative flex items-center justify-center h-full rounded-[28px] shadow-2xl overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.05)' }}>
             <img
               src="/images/chef_icon_v2.png"
               className="w-16 h-16 object-contain drop-shadow-md"
@@ -1123,9 +1123,9 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         </div>
 
         <div>
-          <h2 className="text-2xl font-black text-stone-800 dark:text-white tracking-tight mb-2">AfroCuisto v1.0.6</h2>
-          <p className="text-stone-500 dark:text-stone-400 font-medium text-sm px-8 leading-relaxed">
-            L'excellence de la cuisine béninoise à portée de main. Découvrez le patrimoine culinaire du Bénin.
+          <h2 className="text-2xl font-black text-stone-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-br dark:from-white dark:via-white dark:to-white/40 tracking-tight mb-2">AfroCuisto v1.0.6</h2>
+          <p className="text-stone-500 dark:text-stone-400 font-medium text-sm px-8 leading-relaxed max-w-[280px] mx-auto italic">
+            L'excellence de la cuisine béninoise à portée de main.
           </p>
         </div>
 
