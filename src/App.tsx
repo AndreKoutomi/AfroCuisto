@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Star,
   Wifi,
+  WifiOff,
   Battery,
   Signal,
   LogOut,
@@ -1222,12 +1223,26 @@ export default function App() {
   // Cloud Sync & Internet Dependency
   const [allRecipes, setAllRecipes] = useState<Recipe[]>(recipes); // Use static data as first fallback
   const [isSyncing, setIsSyncing] = useState(true);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [alertConfig, setAlertConfig] = useState<{
     show: boolean;
     message: string;
     type: 'success' | 'error' | 'info';
     onConfirm?: () => void;
   }>({ show: false, message: '', type: 'info' });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const showAlert = (message: string, type?: 'success' | 'error' | 'info', onConfirm?: () => void) => {
     let finalType = type || 'info';
@@ -1686,7 +1701,12 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            {isSyncing && (
+            {isOffline && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-rose-500">
+                <WifiOff size={18} />
+              </motion.div>
+            )}
+            {isSyncing && !isOffline && (
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="text-[#fb5607]">
                 <Wifi size={16} />
               </motion.div>
@@ -2454,172 +2474,292 @@ export default function App() {
   const renderExplorer = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Immersive Search Header */}
-      <header className="px-6 pt-4 pb-6 bg-white/90 backdrop-blur-2xl sticky top-0 z-40">
-        <h1 className="text-3xl font-black text-stone-900 mb-6 drop-shadow-sm">{selectedCategory || 'Explorer'}</h1>
+      <header className={`px-6 pt-4 pb-6 sticky top-0 z-40 transition-all ${isDark ? 'bg-[#111113]/95 border-b border-white/5 shadow-xl shadow-black/20' : 'bg-white/90 backdrop-blur-2xl'}`}>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className={`text-3xl font-black shrink-0 ${isDark ? 'text-white' : 'text-stone-900'}`}>{selectedCategory || 'Explorer'}</h1>
+          {isOffline && (
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-rose-500">
+              <WifiOff size={22} />
+            </motion.div>
+          )}
+        </div>
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-terracotta transition-colors" size={20} />
+          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-white/30 group-focus-within:text-[#fb5607]' : 'text-stone-400 group-focus-within:text-terracotta'}`} size={20} />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={t.searchDishRegion}
-            className="w-full bg-white border border-stone-100/80 rounded-full py-4 pl-12 pr-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta/30 transition-all font-medium"
+            className={`w-full rounded-full py-4 pl-12 pr-4 shadow-sm focus:outline-none focus:ring-2 transition-all font-bold text-sm ${isDark ? 'bg-white/10 border border-white/10 text-white placeholder:text-white/20 focus:ring-white/20 focus:border-white/30' : 'bg-white border border-stone-100/80 text-stone-900 focus:ring-terracotta/20 focus:border-terracotta/30'}`}
           />
         </div>
       </header>
 
       {/* Dynamic Content Area */}
-      {searchQuery || selectedCategory ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="px-6 pt-6 grid grid-cols-2 gap-4">
-          {displayRecipes.map(recipe => (
-            <motion.div
-              key={recipe.id}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedRecipe(recipe)}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-stone-200/50 flex flex-col h-full cursor-pointer hover:shadow-md transition-shadow"
-            >
-              <div className="h-32 relative flex-shrink-0">
-                <img src={recipe.image} className="w-full h-full object-cover" />
-                <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-black tracking-widest">
-                  {recipe.cookTime}
-                </div>
-              </div>
-              <div className="p-3">
-                <h4 className="font-bold text-stone-800 text-sm leading-tight line-clamp-2 mb-1">{recipe.name}</h4>
-                <p className="text-[10px] text-stone-400 mb-2 font-medium flex items-center gap-1"><MapPin size={10} /> {recipe.region}</p>
-                <div className="flex items-center justify-between mt-auto pt-2 border-t border-stone-50">
-                  <DifficultyBadge difficulty={recipe.difficulty} t={t} />
-                </div>
-              </div>
-            </motion.div>
-          ))}
-          {displayRecipes.length === 0 && (
-            <div className="col-span-2 py-20 text-center text-stone-400 font-medium">{t.noResults}</div>
-          )}
-        </motion.div>
-      ) : (
-        <div className="pt-2 space-y-12 pb-10">
-
-
-
-
-          {/* Dynamic Sections from Admin CMS (Explorer) */}
-          {dynamicSections.filter((section: any) => section.config?.page === 'explorer').map((section, sidx) => {
-            let sectionRecipes: Recipe[] = [];
-
-            if (section.type === 'category') {
-              sectionRecipes = allRecipes.filter(r => r.category === section.config?.category);
-            } else if (section.type === 'region') {
-              sectionRecipes = allRecipes.filter(r => r.region?.toLowerCase().includes(section.config?.region?.toLowerCase() || ''));
-            } else if (section.type === 'quick') {
-              const maxTime = parseInt(section.config?.max_prep_time) || 30;
-              sectionRecipes = allRecipes.filter(r => (parseInt(r.prep_time) || 60) <= maxTime);
-            } else if (section.type === 'all') {
-              sectionRecipes = [...allRecipes];
-            } else {
-              sectionRecipes = allRecipes.filter(r => section.recipe_ids?.includes(r.id));
-            }
-
-            // Apply limit only if explicitly configured — default to 200 to show all selected recipes
-            sectionRecipes = sectionRecipes.slice(0, section.config?.limit || 200);
-
-            if (sectionRecipes.length === 0) return null;
-
-            if (section.type === 'dynamic_carousel') {
-              return (
-                <section key={section.id} className="mb-8">
-                  <div className="px-6 flex justify-between items-center mb-4">
-                    <div>
-                      <h2 className="text-xl font-black text-stone-900 tracking-tight">{section.title}</h2>
-                      {section.subtitle && <p className="text-[10px] text-[#fb5607] font-bold uppercase tracking-widest mt-0.5">{section.subtitle}</p>}
-                    </div>
+      {
+        searchQuery || selectedCategory ? (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={springTransition} className="px-6 pt-6 grid grid-cols-2 gap-4">
+            {displayRecipes.map(recipe => (
+              <motion.div
+                key={recipe.id}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedRecipe(recipe)}
+                className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-stone-200/50 flex flex-col h-full cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <div className="h-32 relative flex-shrink-0">
+                  <img src={recipe.image} className="w-full h-full object-cover" />
+                  <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-black tracking-widest">
+                    {recipe.cookTime}
                   </div>
-                  <div className="flex gap-3 overflow-x-auto px-6 no-scrollbar pb-8 pt-4">
-                    {sectionRecipes.map((recipe, ridx) => {
-                      const ratingNum = (4.0 + (ridx % 5) * 0.2).toFixed(1);
-                      return (
-                        <motion.div
-                          key={recipe.id}
-                          whileTap={{ scale: 0.96 }}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: ridx * 0.08 }}
-                          onClick={() => setSelectedRecipe(recipe)}
-                          className="flex-shrink-0 cursor-pointer group"
-                          style={{ width: '190px' }}
-                        >
-                          {/* Card — no border, just shadow */}
-                          <div style={{
-                            background: 'linear-gradient(160deg, #ff6b1a 0%, #fb5607 50%, #e84d00 100%)',
-                            borderRadius: '24px',
-                            overflow: 'hidden',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.18), 0 3px 8px rgba(0,0,0,0.10)',
-                          }}>
-                            {/* Image top — 4:3 for more height */}
-                            <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
-                              <img
-                                src={recipe.image}
-                                alt={recipe.name}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
-                                className="group-hover:scale-105"
-                              />
-                            </div>
+                </div>
+                <div className="p-3">
+                  <h4 className="font-bold text-stone-800 text-sm leading-tight line-clamp-2 mb-1">{recipe.name}</h4>
+                  <p className="text-[10px] text-stone-400 mb-2 font-medium flex items-center gap-1"><MapPin size={10} /> {recipe.region}</p>
+                  <div className="flex items-center justify-between mt-auto pt-2 border-t border-stone-50">
+                    <DifficultyBadge difficulty={recipe.difficulty} t={t} />
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+            {displayRecipes.length === 0 && (
+              <div className="col-span-2 py-20 text-center text-stone-400 font-medium">{t.noResults}</div>
+            )}
+          </motion.div>
+        ) : (
+          <div className="pt-2 space-y-12 pb-10">
 
-                            {/* Content — fixed height */}
-                            <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {/* Title + category */}
-                              <div>
-                                <h3 style={{
-                                  fontSize: '14px', fontWeight: 800, color: '#fff',
-                                  lineHeight: 1.25, margin: '0 0 3px',
-                                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                }}>{recipe.name}</h3>
-                                <p style={{
-                                  fontSize: '11px', color: 'rgba(255,255,255,0.70)', fontWeight: 500, margin: 0,
-                                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                }}>{recipe.category || recipe.region}</p>
+
+
+
+            {/* Dynamic Sections from Admin CMS (Explorer) */}
+            {dynamicSections.filter((section: any) => section.config?.page === 'explorer').map((section, sidx) => {
+              let sectionRecipes: Recipe[] = [];
+
+              if (section.type === 'category') {
+                sectionRecipes = allRecipes.filter(r => r.category === section.config?.category);
+              } else if (section.type === 'region') {
+                sectionRecipes = allRecipes.filter(r => r.region?.toLowerCase().includes(section.config?.region?.toLowerCase() || ''));
+              } else if (section.type === 'quick') {
+                const maxTime = parseInt(section.config?.max_prep_time) || 30;
+                sectionRecipes = allRecipes.filter(r => (parseInt(r.prep_time) || 60) <= maxTime);
+              } else if (section.type === 'all') {
+                sectionRecipes = [...allRecipes];
+              } else {
+                sectionRecipes = allRecipes.filter(r => section.recipe_ids?.includes(r.id));
+              }
+
+              // Apply limit only if explicitly configured — default to 200 to show all selected recipes
+              sectionRecipes = sectionRecipes.slice(0, section.config?.limit || 200);
+
+              if (sectionRecipes.length === 0) return null;
+
+              if (section.type === 'dynamic_carousel') {
+                return (
+                  <section key={section.id} className="mb-8">
+                    <div className="px-6 flex justify-between items-center mb-4">
+                      <div>
+                        <h2 className="text-xl font-black text-stone-900 tracking-tight">{section.title}</h2>
+                        {section.subtitle && <p className="text-[10px] text-[#fb5607] font-bold uppercase tracking-widest mt-0.5">{section.subtitle}</p>}
+                      </div>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto px-6 no-scrollbar pb-8 pt-4">
+                      {sectionRecipes.map((recipe, ridx) => {
+                        const ratingNum = (4.0 + (ridx % 5) * 0.2).toFixed(1);
+                        return (
+                          <motion.div
+                            key={recipe.id}
+                            whileTap={{ scale: 0.96 }}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: ridx * 0.08 }}
+                            onClick={() => setSelectedRecipe(recipe)}
+                            className="flex-shrink-0 cursor-pointer group"
+                            style={{ width: '190px' }}
+                          >
+                            {/* Card — no border, just shadow */}
+                            <div style={{
+                              background: 'linear-gradient(160deg, #ff6b1a 0%, #fb5607 50%, #e84d00 100%)',
+                              borderRadius: '24px',
+                              overflow: 'hidden',
+                              boxShadow: '0 10px 30px rgba(0,0,0,0.18), 0 3px 8px rgba(0,0,0,0.10)',
+                            }}>
+                              {/* Image top — 4:3 for more height */}
+                              <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
+                                <img
+                                  src={recipe.image}
+                                  alt={recipe.name}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
+                                  className="group-hover:scale-105"
+                                />
                               </div>
 
-                              {/* Rating pill button */}
-                              <div style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                                background: 'rgba(255,255,255,0.20)',
-                                backdropFilter: 'blur(8px)',
-                                borderRadius: '20px',
-                                padding: '5px 10px',
-                                alignSelf: 'flex-start',
-                              }}>
-                                <Star size={12} style={{ color: '#fde68a', fill: '#fde68a', flexShrink: 0 }} />
-                                <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{ratingNum}</span>
-                              </div>
+                              {/* Content — fixed height */}
+                              <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {/* Title + category */}
+                                <div>
+                                  <h3 style={{
+                                    fontSize: '14px', fontWeight: 800, color: '#fff',
+                                    lineHeight: 1.25, margin: '0 0 3px',
+                                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                  }}>{recipe.name}</h3>
+                                  <p style={{
+                                    fontSize: '11px', color: 'rgba(255,255,255,0.70)', fontWeight: 500, margin: 0,
+                                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                  }}>{recipe.category || recipe.region}</p>
+                                </div>
 
-                              {/* CTA row */}
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.03em' }}>
-                                  Voir la recette
-                                </span>
+                                {/* Rating pill button */}
                                 <div style={{
-                                  width: '28px', height: '28px',
-                                  background: '#fff',
-                                  borderRadius: '50%',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                                  transition: 'transform 0.2s',
-                                }} className="group-hover:scale-110">
-                                  <ChevronRight size={14} style={{ color: '#fb5607' }} strokeWidth={3} />
+                                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                  background: 'rgba(255,255,255,0.20)',
+                                  backdropFilter: 'blur(8px)',
+                                  borderRadius: '20px',
+                                  padding: '5px 10px',
+                                  alignSelf: 'flex-start',
+                                }}>
+                                  <Star size={12} style={{ color: '#fde68a', fill: '#fde68a', flexShrink: 0 }} />
+                                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{ratingNum}</span>
+                                </div>
+
+                                {/* CTA row */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.03em' }}>
+                                    Voir la recette
+                                  </span>
+                                  <div style={{
+                                    width: '28px', height: '28px',
+                                    background: '#fff',
+                                    borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                                    transition: 'transform 0.2s',
+                                  }} className="group-hover:scale-110">
+                                    <ChevronRight size={14} style={{ color: '#fb5607' }} strokeWidth={3} />
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            }
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              }
 
-            if (section.type === 'horizontal_list') {
+              if (section.type === 'horizontal_list') {
+                return (
+                  <section key={section.id} className="mb-10">
+                    <div className="px-6 flex justify-between items-end mb-4">
+                      <div className="flex flex-col">
+                        <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
+                        {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
+                      </div>
+
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-3">
+                      {sectionRecipes.map((recipe, ridx) => {
+                        const isFav = currentUser?.favorites?.includes(recipe.id) ?? false;
+                        const ratingNum = (4.0 + (ridx % 5) * 0.2).toFixed(1);
+                        return (
+                          <motion.div
+                            key={recipe.id}
+                            whileTap={{ scale: 0.97 }}
+                            initial={{ opacity: 0, x: 24 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: ridx * 0.07 }}
+                            onClick={() => setSelectedRecipe(recipe)}
+                            className="flex-shrink-0 cursor-pointer"
+                            style={{ width: 'min(48vw, 185px)' }}
+                          >
+                            <div style={{
+                              background: '#fff', borderRadius: '20px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+                              overflow: 'hidden', border: '1px solid rgba(0,0,0,0.04)',
+                            }}>
+                              <div className="relative" style={{ aspectRatio: '4 / 3' }}>
+                                <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
+
+                                <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }} style={{ position: 'absolute', top: '10px', right: '10px', width: '30px', height: '30px', borderRadius: '50%', background: isFav ? '#ef4444' : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', transition: 'all 0.2s' }}>
+                                  <Heart size={14} style={{ color: isFav ? '#fff' : '#ef4444', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
+                                </button>
+                                <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)', borderRadius: '8px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '3px', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}>
+                                  <Star size={10} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
+                                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#374151', lineHeight: 1 }}>{ratingNum}</span>
+                                </div>
+                              </div>
+                              <div style={{ padding: '12px 14px 14px' }}>
+                                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#1a1a1a', lineHeight: 1.25, margin: '0 0 6px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{recipe.name}</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                                  <div style={{ background: '#f3f4f6', borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Clock size={10} style={{ color: '#6b7280' }} />
+                                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              }
+
+              if (section.type === 'vertical_list_2') {
+                return (
+                  <section key={section.id} className="mb-10">
+                    <div className="px-6 flex justify-between items-end mb-4">
+                      <div className="flex flex-col">
+                        <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
+                        {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
+                      </div>
+
+                    </div>
+                    <div className="px-6 grid gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                      {sectionRecipes.map((recipe, ridx) => {
+                        const isFav = currentUser?.favorites?.includes(recipe.id) ?? false;
+                        const ratingNum = (4.0 + (ridx % 5) * 0.2).toFixed(1);
+                        return (
+                          <motion.div
+                            key={recipe.id}
+                            whileTap={{ scale: 0.97 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: ridx * 0.06 }}
+                            onClick={() => setSelectedRecipe(recipe)}
+                            className="cursor-pointer"
+                          >
+                            <div className="hlist-card" style={{ borderRadius: '20px', overflow: 'hidden' }}>
+                              <div className="relative" style={{ aspectRatio: '4 / 3' }}>
+                                <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
+                                <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }} style={{ position: 'absolute', top: '8px', right: '8px', width: '28px', height: '28px', borderRadius: '50%', background: isFav ? '#ef4444' : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', transition: 'all 0.2s' }}>
+                                  <Heart size={13} style={{ color: isFav ? '#fff' : '#ef4444', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
+                                </button>
+                                <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)', borderRadius: '8px', padding: '2px 7px', display: 'flex', alignItems: 'center', gap: '3px', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}>
+                                  <Star size={10} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#374151', lineHeight: 1 }}>{ratingNum}</span>
+                                </div>
+                              </div>
+                              <div style={{ padding: '10px 12px 12px' }}>
+                                <h3 className="hlist-card-title" style={{ fontSize: '13px', fontWeight: 800, lineHeight: 1.25, margin: '0 0 5px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{recipe.name}</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                                  <div className="hlist-card-badge" style={{ borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Clock size={10} className="hlist-card-clock" />
+                                    <span className="hlist-card-time" style={{ fontSize: '11px', fontWeight: 700 }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              }
+
+              // ── VERTICAL LIST (fallback Explorer) ──
               return (
                 <section key={section.id} className="mb-10">
                   <div className="px-6 flex justify-between items-end mb-4">
@@ -2629,99 +2769,46 @@ export default function App() {
                     </div>
 
                   </div>
-                  <div className="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-3">
+                  <div className="px-6 flex flex-col gap-3">
                     {sectionRecipes.map((recipe, ridx) => {
                       const isFav = currentUser?.favorites?.includes(recipe.id) ?? false;
-                      const ratingNum = (4.0 + (ridx % 5) * 0.2).toFixed(1);
+                      const ratingNum = (4.0 + (ridx % 5) * 0.1).toFixed(1);
                       return (
                         <motion.div
                           key={recipe.id}
-                          whileTap={{ scale: 0.97 }}
-                          initial={{ opacity: 0, x: 24 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: ridx * 0.07 }}
-                          onClick={() => setSelectedRecipe(recipe)}
-                          className="flex-shrink-0 cursor-pointer"
-                          style={{ width: 'min(48vw, 185px)' }}
-                        >
-                          <div style={{
-                            background: '#fff', borderRadius: '20px',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
-                            overflow: 'hidden', border: '1px solid rgba(0,0,0,0.04)',
-                          }}>
-                            <div className="relative" style={{ aspectRatio: '4 / 3' }}>
-                              <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
-
-                              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }} style={{ position: 'absolute', top: '10px', right: '10px', width: '30px', height: '30px', borderRadius: '50%', background: isFav ? '#ef4444' : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', transition: 'all 0.2s' }}>
-                                <Heart size={14} style={{ color: isFav ? '#fff' : '#ef4444', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
-                              </button>
-                              <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)', borderRadius: '8px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '3px', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}>
-                                <Star size={10} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
-                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#374151', lineHeight: 1 }}>{ratingNum}</span>
-                              </div>
-                            </div>
-                            <div style={{ padding: '12px 14px 14px' }}>
-                              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#1a1a1a', lineHeight: 1.25, margin: '0 0 6px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{recipe.name}</h3>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
-                                <div style={{ background: '#f3f4f6', borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Clock size={10} style={{ color: '#6b7280' }} />
-                                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            }
-
-            if (section.type === 'vertical_list_2') {
-              return (
-                <section key={section.id} className="mb-10">
-                  <div className="px-6 flex justify-between items-end mb-4">
-                    <div className="flex flex-col">
-                      <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
-                      {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
-                    </div>
-
-                  </div>
-                  <div className="px-6 grid gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    {sectionRecipes.map((recipe, ridx) => {
-                      const isFav = currentUser?.favorites?.includes(recipe.id) ?? false;
-                      const ratingNum = (4.0 + (ridx % 5) * 0.2).toFixed(1);
-                      return (
-                        <motion.div
-                          key={recipe.id}
-                          whileTap={{ scale: 0.97 }}
-                          initial={{ opacity: 0, y: 20 }}
+                          whileTap={{ scale: 0.98 }}
+                          initial={{ opacity: 0, y: 16 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: ridx * 0.06 }}
                           onClick={() => setSelectedRecipe(recipe)}
-                          className="cursor-pointer"
+                          className="hlist-card"
+                          style={{
+                            borderRadius: '18px',
+                            display: 'flex', alignItems: 'center', gap: '14px',
+                            padding: '12px', cursor: 'pointer', overflow: 'hidden',
+                          }}
                         >
-                          <div className="hlist-card" style={{ borderRadius: '20px', overflow: 'hidden' }}>
-                            <div className="relative" style={{ aspectRatio: '4 / 3' }}>
-                              <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
-                              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }} style={{ position: 'absolute', top: '8px', right: '8px', width: '28px', height: '28px', borderRadius: '50%', background: isFav ? '#ef4444' : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', transition: 'all 0.2s' }}>
-                                <Heart size={13} style={{ color: isFav ? '#fff' : '#ef4444', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
-                              </button>
-                              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)', borderRadius: '8px', padding: '2px 7px', display: 'flex', alignItems: 'center', gap: '3px', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}>
-                                <Star size={10} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
-                                <span style={{ fontSize: '10px', fontWeight: 800, color: '#374151', lineHeight: 1 }}>{ratingNum}</span>
-                              </div>
+                          <div style={{ width: '76px', height: '76px', flexShrink: 0, borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
+                            <img src={recipe.image} alt={recipe.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p className="hlist-card-title" style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 5px', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {recipe.name}
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                              <Clock size={11} style={{ color: '#9ca3af', flexShrink: 0 }} />
+                              <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
                             </div>
-                            <div style={{ padding: '10px 12px 12px' }}>
-                              <h3 className="hlist-card-title" style={{ fontSize: '13px', fontWeight: 800, lineHeight: 1.25, margin: '0 0 5px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{recipe.name}</h3>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
-                                <div className="hlist-card-badge" style={{ borderRadius: '20px', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Clock size={10} className="hlist-card-clock" />
-                                  <span className="hlist-card-time" style={{ fontSize: '11px', fontWeight: 700 }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
-                                </div>
-                              </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', flexShrink: 0 }} />
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>{ratingNum}</span>
+                              <span style={{ fontSize: '10px', color: '#d1d5db' }}>·</span>
+                              <span style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{recipe.region || recipe.category || 'Africain'}</span>
                             </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
+                            <DifficultyBadge difficulty={recipe.difficulty} t={t} />
+                            <ChevronRight size={16} style={{ color: '#d1d5db' }} />
                           </div>
                         </motion.div>
                       );
@@ -2729,78 +2816,25 @@ export default function App() {
                   </div>
                 </section>
               );
-            }
-
-            // ── VERTICAL LIST (fallback Explorer) ──
-            return (
-              <section key={section.id} className="mb-10">
-                <div className="px-6 flex justify-between items-end mb-4">
-                  <div className="flex flex-col">
-                    <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
-                    {section.subtitle && <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">{section.subtitle}</p>}
-                  </div>
-
-                </div>
-                <div className="px-6 flex flex-col gap-3">
-                  {sectionRecipes.map((recipe, ridx) => {
-                    const isFav = currentUser?.favorites?.includes(recipe.id) ?? false;
-                    const ratingNum = (4.0 + (ridx % 5) * 0.1).toFixed(1);
-                    return (
-                      <motion.div
-                        key={recipe.id}
-                        whileTap={{ scale: 0.98 }}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: ridx * 0.06 }}
-                        onClick={() => setSelectedRecipe(recipe)}
-                        className="hlist-card"
-                        style={{
-                          borderRadius: '18px',
-                          display: 'flex', alignItems: 'center', gap: '14px',
-                          padding: '12px', cursor: 'pointer', overflow: 'hidden',
-                        }}
-                      >
-                        <div style={{ width: '76px', height: '76px', flexShrink: 0, borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
-                          <img src={recipe.image} alt={recipe.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p className="hlist-card-title" style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 5px', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {recipe.name}
-                          </p>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                            <Clock size={11} style={{ color: '#9ca3af', flexShrink: 0 }} />
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>{recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', flexShrink: 0 }} />
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>{ratingNum}</span>
-                            <span style={{ fontSize: '10px', color: '#d1d5db' }}>·</span>
-                            <span style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{recipe.region || recipe.category || 'Africain'}</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
-                          <DifficultyBadge difficulty={recipe.difficulty} t={t} />
-                          <ChevronRight size={16} style={{ color: '#d1d5db' }} />
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      )}
-    </div>
+            })}
+          </div>
+        )
+      }
+    </div >
   );
 
   const renderFavorites = () => {
     const favoriteRecipes = dbService.getFavorites(currentUser!, allRecipes);
 
     return (
-      <div className="flex-1 flex flex-col pb-44 pt-4">
-        <header className="p-6 pt-4">
-          <h1 className="text-2xl font-bold text-stone-800 tracking-tight">{t.favorites}</h1>
+      <div className={`flex-1 flex flex-col pb-44 pt-4 transition-colors ${isDark ? 'bg-[#111113]' : 'bg-stone-50'}`}>
+        <header className="px-6 pt-4 pb-2 flex items-center justify-between">
+          <h1 className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>{t.favorites}</h1>
+          {isOffline && (
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-rose-500">
+              <WifiOff size={20} />
+            </motion.div>
+          )}
         </header>
         <div className="px-6 space-y-4">
           {favoriteRecipes.length > 0 ? (
@@ -2833,16 +2867,23 @@ export default function App() {
       <AnimatePresence>
         {profileSubView && (
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className={`absolute inset-0 z-50 p-6 pt-6 flex flex-col ${isDark ? 'bg-[#111113]' : 'bg-white'}`}>
-            <header className="flex items-center gap-4 mb-8 shrink-0">
-              <button onClick={() => setProfileSubView(null)} className="p-2 btn-back-circle bg-stone-50 rounded-full"><ChevronLeft size={20} /></button>
-              <h2 className="text-xl font-black text-stone-800 tracking-tight">
-                {profileSubView === 'personalInfo' ? t.personalInfo :
-                  profileSubView === 'security' ? t.security :
-                    profileSubView === 'notifications' ? t.notifications :
-                      profileSubView === 'shopping' ? "Ma liste de courses" :
-                        profileSubView === 'about' ? t.about :
-                          t.settings}
-              </h2>
+            <header className="flex items-center justify-between mb-8 shrink-0">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setProfileSubView(null)} className="p-2 btn-back-circle bg-stone-50 rounded-full"><ChevronLeft size={20} /></button>
+                <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>
+                  {profileSubView === 'personalInfo' ? t.personalInfo :
+                    profileSubView === 'security' ? t.security :
+                      profileSubView === 'notifications' ? t.notifications :
+                        profileSubView === 'shopping' ? "Ma liste de courses" :
+                          profileSubView === 'about' ? t.about :
+                            t.settings}
+                </h2>
+              </div>
+              {isOffline && (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-rose-500 shrink-0">
+                  <WifiOff size={20} />
+                </motion.div>
+              )}
             </header>
 
             <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
@@ -3508,9 +3549,16 @@ export default function App() {
     const totalXOF = list.reduce((acc, i) => acc + (parseFloat(i.priceXOF ?? '0') || 0), 0);
 
     return (
-      <div className="flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <header className="px-6 pt-10 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-1 transition-all duration-500">
-          <h2 className="text-[24px] font-black text-stone-900 tracking-tight leading-none">{t.myShoppingList}</h2>
+      <div className={`flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-[#111113]' : 'bg-stone-50'}`}>
+        <header className={`px-6 pt-10 pb-6 sticky top-0 z-[100] border-b flex flex-col gap-1 transition-all duration-500 ${isDark ? 'bg-[#111113]/95 border-white/5' : 'bg-white/95 backdrop-blur-2xl border-stone-100'}`}>
+          <div className="flex items-center justify-between">
+            <h2 className={`text-[24px] font-black tracking-tight leading-none ${isDark ? 'text-white' : 'text-stone-900'}`}>{t.myShoppingList}</h2>
+            {isOffline && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-rose-500">
+                <WifiOff size={22} />
+              </motion.div>
+            )}
+          </div>
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">{list.length} {t.ingredients}</p>
             {totalXOF > 0 && <p className="text-[11px] font-black text-[#fb5607]">≈ {totalXOF.toLocaleString()} XOF</p>}
