@@ -1663,7 +1663,7 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sleek Persistent Header */}
-      <header className="px-6 pt-6 pb-6 bg-white/95 backdrop-blur-2xl sticky top-0 z-[100] border-b border-stone-100 flex flex-col gap-6 transition-all duration-500">
+      <header className={`px-6 pt-6 pb-6 sticky top-0 z-[100] border-b transition-all duration-500 flex flex-col gap-6 ${isDark ? 'bg-[#111113] border-white/5' : 'bg-white/95 backdrop-blur-2xl border-stone-100'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <motion.div
@@ -1674,7 +1674,7 @@ export default function App() {
               <img src="/images/chef_icon_v2.png" className={`w-14 h-14 object-contain -ml-1 ${isDark ? 'logo-dark-mode' : ''}`} alt="AfroCuisto Logo" />
             </motion.div>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-black text-stone-900 tracking-tight leading-none">Afro<span className="text-[#fb5607]">Cuisto</span></h1>
+              <h1 className={`text-2xl font-black tracking-tight leading-none ${isDark ? 'text-white' : 'text-stone-900'}`}>Afro<span className="text-[#fb5607]">Cuisto</span></h1>
               <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">{t.homeSlogan}</p>
             </div>
           </div>
@@ -1687,7 +1687,7 @@ export default function App() {
             )}
             <button
               onClick={() => setIsSearchExpanded(true)}
-              className="w-10 h-10 bg-stone-100 text-stone-600 rounded-full flex items-center justify-center border border-stone-200/50"
+              className={`w-10 h-10 rounded-full flex items-center justify-center border ${isDark ? 'bg-white/10 text-white border-white/10' : 'bg-stone-100 text-stone-600 border-stone-200/50'}`}
             >
               <Search size={18} />
             </button>
