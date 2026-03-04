@@ -396,9 +396,11 @@
   background-color: #1a1a1d !important;
 }
 
-/* ── ModernAlert ───────────────────────────────────────────────────────── */
-.dark .bg-white.shadow-xl {
+/* -- ModernAlert -- */
+.dark .bg-white.rounded-\[40px\].shadow-\[0_30px_70px_rgba\(0\,0\,0\,0\.3\)\] {
   background-color: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.05) !important;
 }
 
 /* ── Recipe Detail — step cards ────────────────────────────────────────── */
