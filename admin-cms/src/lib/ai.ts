@@ -116,6 +116,70 @@ class AIService {
         }
     }
 
+    /**
+     * Génère une recette COMPLÈTE avec toutes les métadonnées, ingrédients et étapes,
+     * en parfait alignement avec le schéma du formulaire RecipeForm.
+     */
+    async generateFullRecipe(dishName: string, context?: string): Promise<AIServiceResponse> {
+        const systemPrompt = `Tu es un chef cuisinier expert en cuisine africaine (principalement de l'Afrique de l'Ouest et du Centre), auteur de livres de cuisine et consultant culinaire.
+
+Tu dois générer une fiche recette EXTRÊMEMENT DÉTAILLÉE et AUTHENTIQUE pour le plat : "${dishName}"${context ? `\nContexte supplémentaire : ${context}` : ''}.
+
+RÉPONDS UNIQUEMENT EN JSON VALIDE avec EXACTEMENT cette structure (sans markdown, sans balises de code) :
+{
+  "name": "Nom officiel du plat",
+  "alias": "Nom en langue locale (Fon, Yoruba, Dioula, etc.)",
+  "region": "Région/Pays d'origine précis (ex: Bénin Sud, Côte d'Ivoire, Sénégal)",
+  "category": "EXACTEMENT une de ces valeurs: Pâtes et Céréales (Wɔ̌) | Sauces (Nùsúnnú) | Plats de Résistance & Ragoûts | Protéines & Grillades | Street Food & Snacks (Amuse-bouche) | Boissons & Douceurs | Condiments & Accompagnements",
+  "difficulty": "EXACTEMENT une de ces valeurs: Très Facile | Facile | Intermédiaire | Moyen | Difficile | Très Difficile",
+  "prep_time": "Durée réaliste ex: 20 min",
+  "cook_time": "Durée réaliste ex: 1h 30min",
+  "type": "Type de plat ex: Plat principal, Entrée, Dessert, Boisson, Sauce d'accompagnement",
+  "style": "Mode de cuisson ex: Mijoté, Braisé, Frit, Vapeur, Grillé",
+  "base": "Ingrédient principal ex: Igname, Poulet, Maïs, Manioc",
+  "origine_humaine": "Groupe ethnique/culturel d'origine ex: Fon, Yoruba, Baoulé, Wolof",
+  "description": "Paragraphe riche de 3-4 phrases sur l'histoire culturelle, l'origine du plat, son importance dans la société et sa saveur caractéristique.",
+  "technique_title": "Titre court de la technique clé ex: La fermentation du dawadawa",
+  "technique_description": "2-3 phrases décrivant la technique clé qui différencie ce plat et le rend authentique.",
+  "benefits": "1-2 phrases sur les bienfaits nutritionnels et santé du plat.",
+  "ingredients": [
+    {
+      "name": "Nom de l'ingrédient",
+      "quantity": "quantité numérique ou descriptive",
+      "unit": "unité de mesure (g, kg, cl, L, pièce, c. à soupe, c. à café, tasse, etc.)",
+      "notes": "note optionnelle ex: finement haché, en poudre, à température ambiante",
+      "category": "EXACTEMENT un de: Viandes & Poissons | Légumes & Tubercules | Épices & Aromates | Céréales & Légumineuses | Huiles & Condiments | Autres"
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Titre court de l'étape",
+      "description": "Instructions précises et détaillées pour réaliser cette étape, avec les temps et températures si nécessaire. Minimum 2 phrases."
+    }
+  ],
+  "rating": 4.5,
+  "servings": 4
+}
+
+RÈGLES D'OR:
+- Les ingrédients doivent être AUTHENTIQUES et disponibles en Afrique de l'Ouest.
+- Génère entre 8 et 18 ingrédients selon la complexité du plat.
+- Génère entre 5 et 10 étapes de préparation claires et détaillées.
+- Respecte STRICTEMENT les catégories et difficultés imposées.
+- La description doit être inspirante et culturellement précise.
+- Retourne du JSON pur, sans aucun commentaire ni balise markdown.`;
+
+        try {
+            const text = await this.callModel(`Génère la fiche complète pour: ${dishName}`, systemPrompt);
+            const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            const parsed = JSON.parse(cleaned);
+            return { data: parsed };
+        } catch (err: any) {
+            return { error: err.message };
+        }
+    }
+
     async suggestSections(catalogContext: string, goal: string): Promise<AIServiceResponse> {
         const systemPrompt = `Expert UX Cuisine. Analyse ce catalogue et propose une section thématique pour l'objectif : "${goal}".\nCatalogue :\n${catalogContext}\n\nRéponds en JSON :\n{\n  \"title\": \"titre\",\n  \"subtitle\": \"sous-titre\",\n  \"type\": \"dynamic_carousel | horizontal_list | vertical_list_1 | featured\",\n  \"recipe_ids\": [\"id1\", \"id2\", \"...\"],\n  \"reasoning\": \"pourquoi ces choix ?\"\n}`;
         try {

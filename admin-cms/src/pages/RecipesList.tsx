@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Edit2, Trash2, Search, RefreshCw, ChefHat, Clock, MapPin, Filter, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, RefreshCw, ChefHat, Clock, MapPin, Filter, X, Sparkles } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { RecipeAIWizard } from '../components/RecipeAIWizard';
 
 const CATEGORIES = [
     { value: "Pâtes et Céréales (Wɔ̌)", label: "Pâtes & Céréales", color: '#d97706', bg: '#fef3c7' },
@@ -31,6 +32,7 @@ export function RecipesList() {
     const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
     const [filterCategory, setFilterCategory] = useState('');
     const [filterDifficulty, setFilterDifficulty] = useState('');
+    const [showAIWizard, setShowAIWizard] = useState(false);
 
     async function fetchRecipes() {
         try {
@@ -123,6 +125,19 @@ export function RecipesList() {
                         title="Rafraîchir"
                     >
                         <RefreshCw size={16} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+                    </button>
+                    <button
+                        onClick={() => setShowAIWizard(true)}
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                            color: '#fff', border: 'none',
+                            borderRadius: '14px', padding: '10px 18px',
+                            fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                            boxShadow: '0 4px 16px rgba(109,40,217,0.3)',
+                        }}
+                    >
+                        <Sparkles size={16} /> Générer par IA
                     </button>
                     <Link
                         to="/recipes/create"
@@ -394,6 +409,13 @@ export function RecipesList() {
                     to   { transform: rotate(360deg); }
                 }
             `}</style>
+
+            {showAIWizard && (
+                <RecipeAIWizard
+                    onClose={() => setShowAIWizard(false)}
+                    onSaved={() => { fetchRecipes(); }}
+                />
+            )}
         </div>
     );
 }
