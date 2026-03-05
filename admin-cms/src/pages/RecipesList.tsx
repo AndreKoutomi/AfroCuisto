@@ -98,7 +98,7 @@ export function RecipesList() {
     };
 
     return (
-        <div style={{ maxWidth: '1200px' }}>
+        <div style={{ maxWidth: '1200px', width: '100%', boxSizing: 'border-box' }}>
 
             {/* ── Page Header ── */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
@@ -230,7 +230,7 @@ export function RecipesList() {
             </div>
 
             {/* ── Recipe list ── */}
-            <div style={cardStyle}>
+            <div style={{ ...cardStyle, overflowX: 'auto' }}>
                 {loading ? (
                     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {[1, 2, 3, 4, 5].map(i => (
