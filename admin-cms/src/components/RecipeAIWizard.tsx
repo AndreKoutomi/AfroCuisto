@@ -101,8 +101,10 @@ export function RecipeAIWizard({ onClose, onSaved }: Props) {
         if (!generated) return;
         setSavingMode('direct');
         setStep('saving');
+        setError('');
         try {
-            const payload: any = {
+            // Only include columns that exist in the recipes table
+            const payload: Record<string, any> = {
                 id: `rec_${Date.now()}`,
                 name: generated.name,
                 alias: generated.alias || '',
@@ -118,11 +120,10 @@ export function RecipeAIWizard({ onClose, onSaved }: Props) {
                 technique_title: generated.technique_title || '',
                 technique_description: generated.technique_description || '',
                 benefits: generated.benefits || '',
-                ingredients: generated.ingredients || [],
-                steps: generated.steps || [],
-                rating: generated.rating || 4.5,
-                servings: generated.servings || 4,
+                // DO NOT include: rating, servings, ingredients, steps
+                // (those columns don't exist in the DB schema)
             };
+
             const { error: dbError } = await supabase.from('recipes').insert([payload]);
             if (dbError) throw dbError;
             setStep('done');
