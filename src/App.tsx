@@ -522,174 +522,171 @@ const FeaturedStackCarousel: React.FC<{
   };
 
   return (
-    <section style={{ marginBottom: '32px', overflowX: 'hidden' }}>
-      {/* Clip wrapper — prevents horizontal overflow but allows shadows vertically */}
-      <div style={{ overflowX: 'hidden', overflowY: 'visible', width: '100%', paddingBottom: '60px', marginBottom: '-60px' }}>
-        <div style={{
-          position: 'relative',
-          width: '100%',
-          height: 'clamp(280px, 80vw, 400px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          perspective: '1000px',
-          perspectiveOrigin: '50% 50%',
-          overflow: 'visible',
-        }}>
-          {[-2, -1, 0, 1, 2].map((slot) => {
-            const recipeIndex = ((currentIndex + slot) % n + n) % n;
-            const recipe = recipes[recipeIndex];
-            const { xPercent, rotateY, scale, opacity, zIndex, y } = getCardProps(slot);
-            const isActive = slot === 0;
+    <section style={{ marginBottom: '32px' }}>
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: 'clamp(280px, 80vw, 400px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        perspective: '1000px',
+        perspectiveOrigin: '50% 50%',
+        overflow: 'visible',
+      }}>
+        {[-2, -1, 0, 1, 2].map((slot) => {
+          const recipeIndex = ((currentIndex + slot) % n + n) % n;
+          const recipe = recipes[recipeIndex];
+          const { xPercent, rotateY, scale, opacity, zIndex, y } = getCardProps(slot);
+          const isActive = slot === 0;
 
-            return (
-              <motion.div
-                key={`slot${slot}-${recipeIndex}`}
-                animate={{ x: `${xPercent}%`, rotateY, scale, opacity, y, zIndex }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
-                drag={isActive ? 'x' : false}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.15}
-                onDragStart={() => setIsDragging(true)}
-                onDragEnd={(_e, { offset: d, velocity: v }) => {
-                  setIsDragging(false);
-                  if (d.x < -40 || v.x < -200) goNext();
-                  else if (d.x > 40 || v.x > 200) goPrev();
-                }}
-                onClick={() => {
-                  if (isDragging) return;
-                  if (isActive) setSelectedRecipe(recipe);
-                  else if (slot < 0) goPrev();
-                  else goNext();
-                }}
+          return (
+            <motion.div
+              key={`slot${slot}-${recipeIndex}`}
+              animate={{ x: `${xPercent}%`, rotateY, scale, opacity, y, zIndex }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
+              drag={isActive ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={(_e, { offset: d, velocity: v }) => {
+                setIsDragging(false);
+                if (d.x < -40 || v.x < -200) goNext();
+                else if (d.x > 40 || v.x > 200) goPrev();
+              }}
+              onClick={() => {
+                if (isDragging) return;
+                if (isActive) setSelectedRecipe(recipe);
+                else if (slot < 0) goPrev();
+                else goNext();
+              }}
+              style={{
+                position: 'absolute',
+                width: 'clamp(180px, 52vw, 260px)',
+                height: '100%',
+                borderRadius: '28px',
+                overflow: 'hidden',
+                cursor: isActive ? 'grab' : 'pointer',
+                transformStyle: 'preserve-3d',
+                boxShadow: isActive
+                  ? '0 12px 24px rgba(0,0,0,0.35), 0 0 0 1.5px rgba(255,255,255,0.18)'
+                  : '0 4px 14px rgba(0,0,0,0.25)',
+                willChange: 'transform',
+                touchAction: 'pan-y',
+              }}
+            >
+              {/* Full-bleed image */}
+              <img
+                src={recipe.image}
+                alt={recipe.name}
+                draggable={false}
                 style={{
-                  position: 'absolute',
-                  width: 'clamp(180px, 52vw, 260px)',
-                  height: '100%',
-                  borderRadius: '28px',
-                  overflow: 'hidden',
-                  cursor: isActive ? 'grab' : 'pointer',
-                  transformStyle: 'preserve-3d',
-                  boxShadow: isActive
-                    ? '0 12px 24px rgba(0,0,0,0.35), 0 0 0 1.5px rgba(255,255,255,0.18)'
-                    : '0 4px 14px rgba(0,0,0,0.25)',
-                  willChange: 'transform',
-                  touchAction: 'pan-y',
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
                 }}
-              >
-                {/* Full-bleed image */}
-                <img
-                  src={recipe.image}
-                  alt={recipe.name}
-                  draggable={false}
-                  style={{
-                    position: 'absolute', inset: 0,
-                    width: '100%', height: '100%',
-                    objectFit: 'cover',
-                    pointerEvents: 'none',
-                    userSelect: 'none',
-                  }}
-                />
+              />
 
-                {/* Dim overlay on side cards */}
-                {!isActive && (
+              {/* Dim overlay on side cards */}
+              {!isActive && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(0,0,0,0.3)',
+                  backdropFilter: 'blur(1px)',
+                }} />
+              )}
+
+              {/* Active card: gradient + info */}
+              {isActive && (
+                <>
                   <div style={{
                     position: 'absolute', inset: 0,
-                    background: 'rgba(0,0,0,0.3)',
-                    backdropFilter: 'blur(1px)',
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)',
                   }} />
-                )}
-
-                {/* Active card: gradient + info */}
-                {isActive && (
-                  <>
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)',
-                    }} />
-                    <div style={{
-                      position: 'absolute', bottom: 0, left: 0, right: 0,
-                      padding: '20px 18px',
-                      display: 'flex', flexDirection: 'column', gap: '6px',
-                    }}>
-                      {recipe.difficulty && (
-                        <motion.span
-                          key={`d-${recipe.id}`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1, duration: 0.35 }}
-                          style={{
-                            alignSelf: 'flex-start',
-                            fontSize: '9px', fontWeight: 900,
-                            textTransform: 'uppercase', letterSpacing: '0.08em',
-                            padding: '3px 9px', borderRadius: '8px',
-                            background: 'rgba(255,255,255,0.2)',
-                            backdropFilter: 'blur(8px)',
-                            color: '#fff',
-                            border: '1px solid rgba(255,255,255,0.25)',
-                          }}
-                        >
-                          {recipe.difficulty}
-                        </motion.span>
-                      )}
-                      <motion.h2
-                        key={`t-${recipe.id}`}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.17, duration: 0.38 }}
-                        style={{
-                          margin: 0,
-                          fontSize: 'clamp(17px, 5vw, 22px)',
-                          fontWeight: 900, color: '#fff',
-                          lineHeight: 1.15, letterSpacing: '-0.02em',
-                          textShadow: '0 2px 8px rgba(0,0,0,0.4)',
-                        }}
-                      >
-                        {recipe.name}
-                      </motion.h2>
-                      <motion.div
-                        key={`m-${recipe.id}`}
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    padding: '20px 18px',
+                    display: 'flex', flexDirection: 'column', gap: '6px',
+                  }}>
+                    {recipe.difficulty && (
+                      <motion.span
+                        key={`d-${recipe.id}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.25, duration: 0.35 }}
+                        transition={{ delay: 0.1, duration: 0.35 }}
                         style={{
-                          display: 'flex', alignItems: 'center',
-                          justifyContent: 'space-between', marginTop: '4px',
+                          alignSelf: 'flex-start',
+                          fontSize: '9px', fontWeight: 900,
+                          textTransform: 'uppercase', letterSpacing: '0.08em',
+                          padding: '3px 9px', borderRadius: '8px',
+                          background: 'rgba(255,255,255,0.2)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.25)',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {recipe.region && (
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
-                              📍 {recipe.region}
-                            </span>
-                          )}
-                          {recipe.prepTime && (
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
-                              ⏱ {recipe.prepTime}
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setSelectedRecipe(recipe); }}
-                          style={{
-                            background: '#fff', border: 'none',
-                            borderRadius: '20px', padding: '7px 14px',
-                            fontSize: '10px', fontWeight: 900,
-                            color: '#111', cursor: 'pointer',
-                            boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
-                          }}
-                        >
-                          Voir →
-                        </button>
-                      </motion.div>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </div> {/* end clip wrapper */}
+                        {recipe.difficulty}
+                      </motion.span>
+                    )}
+                    <motion.h2
+                      key={`t-${recipe.id}`}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.17, duration: 0.38 }}
+                      style={{
+                        margin: 0,
+                        fontSize: 'clamp(17px, 5vw, 22px)',
+                        fontWeight: 900, color: '#fff',
+                        lineHeight: 1.15, letterSpacing: '-0.02em',
+                        textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      {recipe.name}
+                    </motion.h2>
+                    <motion.div
+                      key={`m-${recipe.id}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25, duration: 0.35 }}
+                      style={{
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', marginTop: '4px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {recipe.region && (
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                            📍 {recipe.region}
+                          </span>
+                        )}
+                        {recipe.prepTime && (
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                            ⏱ {recipe.prepTime}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedRecipe(recipe); }}
+                        style={{
+                          background: '#fff', border: 'none',
+                          borderRadius: '20px', padding: '7px 14px',
+                          fontSize: '10px', fontWeight: 900,
+                          color: '#111', cursor: 'pointer',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        Voir →
+                      </button>
+                    </motion.div>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
 
       {/* Dots */}
       {n > 1 && (
