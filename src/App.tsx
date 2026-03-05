@@ -49,7 +49,8 @@ import {
   Sparkles,
   Check,
   AlertCircle,
-  Loader
+  Loader,
+  RefreshCw
 } from 'lucide-react';
 import { recipes } from './data';
 import { Recipe, Difficulty, User, UserSettings, ShoppingItem } from './types';
@@ -61,8 +62,8 @@ import { Capacitor } from '@capacitor/core';
 import { SystemBars, SystemBarsStyle } from '@capacitor/core';
 
 // --- Constants & Config ---
-const springTransition = { type: 'spring', stiffness: 500, damping: 28, mass: 0.5 };
-const layoutTransition = { type: 'spring', stiffness: 350, damping: 25 };
+const springTransition = { type: 'spring', stiffness: 700, damping: 36, mass: 0.35 };
+const layoutTransition = { type: 'spring', stiffness: 500, damping: 32 };
 
 const normalizeString = (str: string) =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -344,7 +345,7 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
           initial="enter"
           animate="center"
           exit="exit"
-          transition={{ duration: 0.65, ease: [0.32, 0, 0.18, 1] }}
+          transition={{ duration: 0.3, ease: [0.32, 0, 0.18, 1] }}
           className="absolute inset-0"
         >
           <img
@@ -416,7 +417,7 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             {/* Badge */}
             <motion.div
@@ -498,209 +499,206 @@ const FeaturedStackCarousel: React.FC<{
   section: any;
   recipes: Recipe[];
   setSelectedRecipe: (r: Recipe) => void;
-}> = ({ section, recipes, setSelectedRecipe }) => {
+}> = ({ recipes, setSelectedRecipe }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   if (!recipes.length) return null;
   const n = recipes.length;
 
-  // Infinite loop — wrap around
   const goNext = () => setCurrentIndex(i => (i + 1) % n);
   const goPrev = () => setCurrentIndex(i => (i - 1 + n) % n);
 
+  const getCardProps = (slot: number) => {
+    const abs = Math.abs(slot);
+    return {
+      xPercent: slot * 38,
+      rotateY: slot * -22,
+      scale: abs === 0 ? 1 : Math.max(0.62, 1 - abs * 0.16),
+      opacity: abs === 0 ? 1 : Math.max(0.35, 1 - abs * 0.3),
+      zIndex: 10 - abs,
+      y: abs * 4,
+    };
+  };
+
   return (
-    <section className="mb-10" style={{ overflow: 'visible' }}>
-      {/* 3D Perspective Container */}
-      <div
-        style={{
-          perspective: '900px',
-          perspectiveOrigin: '30% 50%',
-          position: 'relative',
-          height: 'clamp(170px, 46vw, 240px)',
-          marginLeft: '20px',
-          marginRight: '20px',
-        }}
-      >
-        {/* Build up to 4 slots: current + 3 next (looped) */}
-        {Array.from({ length: Math.min(n, 4) }, (_, slot) => {
-          const index = (currentIndex + slot) % n;
-          const recipe = recipes[index];
-          const offset = slot; // 0 = active, 1/2/3 = behind
-          const isActive = offset === 0;
-          // Each background card: shifts right, rotates, scales down, fades
-          const xShift = isActive ? 0 : 62 + offset * 13;
-          const rotY = isActive ? 0 : -38 + offset * 5;
-          const sc = isActive ? 1 : 0.78 - offset * 0.06;
-          const op = isActive ? 1 : Math.max(0, 0.85 - offset * 0.25);
+    <section style={{ marginBottom: '32px' }}>
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: 'clamp(240px, 68vw, 340px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        perspective: '1000px',
+        perspectiveOrigin: '50% 50%',
+        overflow: 'visible',
+      }}>
+        {[-2, -1, 0, 1, 2].map((slot) => {
+          const recipeIndex = ((currentIndex + slot) % n + n) % n;
+          const recipe = recipes[recipeIndex];
+          const { xPercent, rotateY, scale, opacity, zIndex, y } = getCardProps(slot);
+          const isActive = slot === 0;
 
           return (
             <motion.div
-              key={`${recipe.id}-slot${offset}`}
-              animate={{
-                x: isActive ? '0%' : `${xShift}%`,
-                rotateY: rotY,
-                scale: sc,
-                opacity: op,
-                zIndex: 10 - offset,
-              }}
-              transition={{ type: 'spring', stiffness: 280, damping: 26, mass: 0.8 }}
+              key={`slot${slot}-${recipeIndex}`}
+              animate={{ x: `${xPercent}%`, rotateY, scale, opacity, y, zIndex }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
               drag={isActive ? 'x' : false}
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.12}
-              onDragEnd={(_e, { offset: d }) => {
-                if (d.x < -50) goNext();
-                else if (d.x > 50) goPrev();
+              dragElastic={0.15}
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={(_e, { offset: d, velocity: v }) => {
+                setIsDragging(false);
+                if (d.x < -40 || v.x < -200) goNext();
+                else if (d.x > 40 || v.x > 200) goPrev();
               }}
               onClick={() => {
+                if (isDragging) return;
                 if (isActive) setSelectedRecipe(recipe);
-                else { for (let s = 0; s < offset; s++) goNext(); }
+                else if (slot < 0) goPrev();
+                else goNext();
               }}
               style={{
                 position: 'absolute',
-                top: 0, left: 0,
-                width: '100%', height: '100%',
+                width: 'clamp(180px, 52vw, 260px)',
+                height: '100%',
                 borderRadius: '28px',
                 overflow: 'hidden',
                 cursor: isActive ? 'grab' : 'pointer',
                 transformStyle: 'preserve-3d',
-                transformOrigin: 'right center',
-                background: 'linear-gradient(135deg, #c0392b 0%, #e55820 50%, #f59e0b 100%)',
-                display: 'flex', flexDirection: 'row',
-                alignItems: 'center', justifyContent: 'space-between',
-                padding: '22px 20px',
-                gap: '12px',
                 boxShadow: isActive
-                  ? '0 18px 50px rgba(229,88,32,0.4), 0 4px 12px rgba(0,0,0,0.12)'
-                  : '0 8px 24px rgba(0,0,0,0.12)',
-                touchAction: 'pan-y',
+                  ? '0 28px 60px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(255,255,255,0.18)'
+                  : '0 10px 30px rgba(0,0,0,0.35)',
                 willChange: 'transform',
+                touchAction: 'pan-y',
               }}
             >
-              {/* Decorative circles */}
-              <div style={{ position: 'absolute', right: '-20px', top: '-20px', width: '130px', height: '130px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', right: '50px', bottom: '-40px', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-
-              {/* Left content — staggered entrance on active card */}
-              <div style={{ flex: 1, minWidth: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {/* Badge */}
-                <motion.div
-                  key={isActive ? `badge-${recipe.id}` : undefined}
-                  initial={isActive ? { opacity: 0, y: 18 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05, duration: 0.4, ease: 'easeOut' }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '5px',
-                    background: 'rgba(255,255,255,0.26)',
-                    borderRadius: '14px', padding: '5px 10px', marginBottom: '12px',
-                  }}
-                >
-                  <span style={{ fontSize: '11px' }}>💎</span>
-                  <span style={{ fontSize: '9px', fontWeight: 900, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.2 }}>
-                    {section.subtitle || 'Chef d\'œuvre'}
-                  </span>
-                </motion.div>
-
-                {/* Recipe Name */}
-                <motion.h2
-                  key={isActive ? `title-${recipe.id}` : undefined}
-                  initial={isActive ? { opacity: 0, y: 22 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.12, duration: 0.45, ease: 'easeOut' }}
-                  style={{
-                    margin: '0 0 10px', fontSize: 'clamp(18px, 5.5vw, 26px)',
-                    fontWeight: 900, color: '#fff', lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
-                    display: '-webkit-box', WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word',
-                  }}
-                >
-                  {recipe.name}
-                </motion.h2>
-
-                {/* Difficulty pill */}
-                {recipe.difficulty && (
-                  <motion.div
-                    key={isActive ? `diff-${recipe.id}` : undefined}
-                    initial={isActive ? { opacity: 0, y: 16 } : false}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.4, ease: 'easeOut' }}
-                    style={{ marginBottom: '12px' }}
-                  >
-                    <span style={{
-                      display: 'inline-block',
-                      fontSize: '9px', fontWeight: 900,
-                      textTransform: 'uppercase', letterSpacing: '0.07em',
-                      padding: '4px 10px', borderRadius: '10px',
-                      background: recipe.difficulty === 'Facile' || recipe.difficulty === 'Très Facile'
-                        ? 'rgba(52,211,153,0.25)'
-                        : recipe.difficulty === 'Moyen'
-                          ? 'rgba(251,191,36,0.25)'
-                          : 'rgba(248,113,113,0.25)',
-                      color: recipe.difficulty === 'Facile' || recipe.difficulty === 'Très Facile'
-                        ? '#6ee7b7'
-                        : recipe.difficulty === 'Moyen'
-                          ? '#fde68a'
-                          : '#fca5a5',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                    }}>
-                      {recipe.difficulty}
-                    </span>
-                  </motion.div>
-                )}
-
-                {/* CTA */}
-                <motion.button
-                  key={isActive ? `cta-${recipe.id}` : undefined}
-                  initial={isActive ? { opacity: 0, y: 14, scale: 0.9 } : false}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.28, duration: 0.4, ease: 'easeOut' }}
-                  onClick={(e) => { e.stopPropagation(); setSelectedRecipe(recipe); }}
-                  style={{
-                    background: '#fff', border: 'none', borderRadius: '18px',
-                    padding: '8px 16px', fontSize: '11px', fontWeight: 900,
-                    color: '#c0392b', cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.18)', transition: 'box-shadow 0.2s',
-                  }}
-                >
-                  Découvrir →
-                </motion.button>
-              </div>
-
-              {/* Circular recipe image — spring bounce */}
-              <motion.div
-                key={isActive ? `img-${recipe.id}` : undefined}
-                initial={isActive ? { opacity: 0, scale: 0.6, rotate: -12 } : false}
-                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                transition={isActive ? { delay: 0.1, type: 'spring', stiffness: 260, damping: 18 } : { duration: 0 }}
+              {/* Full-bleed image */}
+              <img
+                src={recipe.image}
+                alt={recipe.name}
+                draggable={false}
                 style={{
-                  flexShrink: 0,
-                  width: 'clamp(80px, 28vw, 120px)',
-                  height: 'clamp(80px, 28vw, 120px)',
-                  borderRadius: '50%', overflow: 'hidden',
-                  border: '3px solid rgba(255,255,255,0.45)',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.28)',
-                  zIndex: 1,
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
                 }}
-              >
-                <img src={recipe.image} alt={recipe.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-              </motion.div>
+              />
+
+              {/* Dim overlay on side cards */}
+              {!isActive && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(0,0,0,0.3)',
+                  backdropFilter: 'blur(1px)',
+                }} />
+              )}
+
+              {/* Active card: gradient + info */}
+              {isActive && (
+                <>
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)',
+                  }} />
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    padding: '20px 18px',
+                    display: 'flex', flexDirection: 'column', gap: '6px',
+                  }}>
+                    {recipe.difficulty && (
+                      <motion.span
+                        key={`d-${recipe.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1, duration: 0.35 }}
+                        style={{
+                          alignSelf: 'flex-start',
+                          fontSize: '9px', fontWeight: 900,
+                          textTransform: 'uppercase', letterSpacing: '0.08em',
+                          padding: '3px 9px', borderRadius: '8px',
+                          background: 'rgba(255,255,255,0.2)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.25)',
+                        }}
+                      >
+                        {recipe.difficulty}
+                      </motion.span>
+                    )}
+                    <motion.h2
+                      key={`t-${recipe.id}`}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.17, duration: 0.38 }}
+                      style={{
+                        margin: 0,
+                        fontSize: 'clamp(17px, 5vw, 22px)',
+                        fontWeight: 900, color: '#fff',
+                        lineHeight: 1.15, letterSpacing: '-0.02em',
+                        textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      {recipe.name}
+                    </motion.h2>
+                    <motion.div
+                      key={`m-${recipe.id}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25, duration: 0.35 }}
+                      style={{
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', marginTop: '4px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {recipe.region && (
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                            📍 {recipe.region}
+                          </span>
+                        )}
+                        {recipe.prepTime && (
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                            ⏱ {recipe.prepTime}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedRecipe(recipe); }}
+                        style={{
+                          background: '#fff', border: 'none',
+                          borderRadius: '20px', padding: '7px 14px',
+                          fontSize: '10px', fontWeight: 900,
+                          color: '#111', cursor: 'pointer',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        Voir →
+                      </button>
+                    </motion.div>
+                  </div>
+                </>
+              )}
             </motion.div>
           );
         })}
       </div>
 
-      {/* Dots pagination */}
+      {/* Dots */}
       {n > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginTop: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginTop: '16px' }}>
           {recipes.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
               style={{
-                width: idx === currentIndex ? 20 : 6,
+                width: idx === currentIndex ? 22 : 6,
                 height: 6, borderRadius: 3, border: 'none',
-                background: idx === currentIndex ? '#c0392b' : 'rgba(0,0,0,0.12)',
+                background: idx === currentIndex ? '#c0392b' : 'rgba(0,0,0,0.15)',
                 transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
                 cursor: 'pointer', padding: 0,
               }}
@@ -712,15 +710,41 @@ const FeaturedStackCarousel: React.FC<{
   );
 };
 
-// --- NavButton ---
 
-type NavButtonProps = {
-  icon: React.ElementType;
-  isActive: boolean;
-  onClick: () => void;
+// Material-style SVG icons (filled active, outlined inactive)
+const NavIcon = ({ id, active }: { id: string; active: boolean }) => {
+  const color = active ? '#F94D00' : 'rgba(255,255,255,0.65)';
+  const icons: Record<string, React.ReactElement> = {
+    home: active ? (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={color}><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
+    ) : (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinejoin="round"><path d="M3 12L12 3l9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" /></svg>
+    ),
+    search: active ? (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={color}><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14" /></svg>
+    ) : (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7"><circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" /></svg>
+    ),
+    favs: active ? (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={color}><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg>
+    ) : (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" /></svg>
+    ),
+    cart: active ? (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={color}><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm0 10a2 2 0 110-4 2 2 0 010 4z" /></svg>
+    ) : (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" /></svg>
+    ),
+    profile: active ? (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={color}><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>
+    ) : (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+    ),
+  };
+  return icons[id] || null;
 };
 
-const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
+const NavButton = ({ iconId, isActive, onClick }: { iconId: string; isActive: boolean; onClick: () => void }) => {
   return (
     <motion.button
       onClick={onClick}
@@ -729,7 +753,7 @@ const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
       className="relative flex items-center justify-center"
       style={{ width: 60, height: 60, flexShrink: 0 }}
     >
-      {/* Sliding white bubble (shared layoutId = smooth morphing) */}
+      {/* Sliding white bubble */}
       {isActive && (
         <motion.div
           layoutId="nav-white-bubble"
@@ -737,22 +761,12 @@ const NavButton = ({ icon: Icon, isActive, onClick }: NavButtonProps) => {
           className="absolute inset-0 rounded-full nav-bubble"
         />
       )}
-
-      {/* Icon */}
       <motion.div
-        animate={{
-          scale: isActive ? 1.1 : 1,
-          y: isActive ? -1 : 0,
-        }}
+        animate={{ scale: isActive ? 1.12 : 1, y: isActive ? -1 : 0 }}
         transition={{ type: 'spring', stiffness: 480, damping: 26 }}
         className="relative z-10"
       >
-        <Icon
-          size={21}
-          strokeWidth={isActive ? 2.4 : 1.8}
-          color={isActive ? '#F94D00' : 'rgba(255,255,255,0.58)'}
-          fill={isActive ? 'none' : 'rgba(255,255,255,0.58)'}
-        />
+        <NavIcon id={iconId} active={isActive} />
       </motion.div>
     </motion.button>
   );
@@ -1282,7 +1296,7 @@ export default function App() {
             shoppingList: remoteProfile?.shoppingList || existingLocal?.shoppingList || [],
             joinedDate: existingLocal?.joinedDate || new Date(sessionUser.created_at || Date.now()).toLocaleDateString(),
             settings: mergedSettings,
-            avatar: existingLocal?.avatar || remoteProfile?.avatar
+            avatar: remoteProfile?.avatar || existingLocal?.avatar
           };
 
           setCurrentUser(userObj);
@@ -1770,11 +1784,11 @@ export default function App() {
   }, [isDark]);
 
   const navItems = [
-    { id: 'home', icon: Home, label: t.home },
-    { id: 'search', icon: Search, label: t.explorer },
-    { id: 'favs', icon: Heart, label: t.favorites },
-    { id: 'cart', icon: ShoppingBag, label: t.shoppingList },
-    { id: 'profile', icon: UserIcon, label: t.profile },
+    { id: 'home', iconId: 'home', label: t.home },
+    { id: 'search', iconId: 'search', label: t.explorer },
+    { id: 'favs', iconId: 'favs', label: t.favorites },
+    { id: 'cart', iconId: 'cart', label: t.shoppingList },
+    { id: 'profile', iconId: 'profile', label: t.profile },
   ];
 
   // --- Sub-Renderers (extracted for clarity) ---
@@ -1782,7 +1796,7 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sleek Persistent Header */}
-      <header className={`px-6 pt-6 pb-6 sticky top-0 z-[100] border-b transition-all duration-500 flex flex-col gap-6 ${isDark ? 'bg-[#111113] border-white/5' : 'bg-white/95 backdrop-blur-2xl border-stone-100'}`}>
+      <header className={`px-6 pt-6 pb-6 sticky top-0 z-[100] w-full left-0 right-0 border-b transition-all duration-500 flex flex-col gap-6 ${isScrolled ? (isDark ? 'bg-[#111113]/95 border-b border-white/5 shadow-xl' : 'bg-white/95 backdrop-blur-2xl border-b border-stone-100 shadow-xl shadow-stone-200/40') : 'bg-transparent border-transparent'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <motion.div
@@ -3012,12 +3026,23 @@ export default function App() {
         <h2 className="text-2xl font-bold text-stone-800">{currentUser?.name}</h2>
         <p className="text-stone-500 text-sm">{currentUser?.email}</p>
 
-        {/* Cloud Connection Status */}
-        <div className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-stone-100 shadow-sm">
-          <div className={`w-2 h-2 rounded-full animate-pulse ${dbService.supabase ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`} />
-          <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 flex items-center gap-1.5">
-            Cloud Sync: {dbService.supabase ? 'Activé' : 'Désactivé'}
-          </span>
+        {/* Cloud Connection Status + Refresh */}
+        <div className="mt-4 flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-stone-100 shadow-sm">
+            <div className={`w-2 h-2 rounded-full animate-pulse ${dbService.supabase ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">
+              Cloud Sync: {dbService.supabase ? 'Activé' : 'Désactivé'}
+            </span>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.85, rotate: 180 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            onClick={() => window.location.reload()}
+            title="Actualiser les recettes"
+            className={`w-8 h-8 rounded-full flex items-center justify-center border border-stone-100 shadow-sm bg-white transition-colors ${isSyncing ? 'text-[#fb5607]' : 'text-stone-400 hover:text-stone-600'}`}
+          >
+            <RefreshCw size={14} strokeWidth={2.5} />
+          </motion.button>
         </div>
       </header>
 
@@ -3054,25 +3079,7 @@ export default function App() {
           <ChevronRight size={18} className="text-stone-300" />
         </button>
 
-        <button
-          onClick={() => window.location.reload()}
-          className="w-full flex items-center justify-between p-4 bg-white/50 rounded-3xl border border-dashed border-stone-200 shadow-sm active:bg-stone-50 transition-colors mt-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 bg-white rounded-xl flex items-center justify-center ${isSyncing ? 'text-terracotta' : 'text-stone-400'}`}>
-              <motion.div animate={isSyncing ? { rotate: 360 } : {}} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
-                <Wifi size={20} />
-              </motion.div>
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="font-bold text-stone-700 text-sm">Actualiser les recettes</span>
-              <span className="text-[10px] text-stone-400 font-medium tracking-tight">Vérifier les nouveaux plats sur le serveur</span>
-            </div>
-          </div>
-          <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${isSyncing ? 'bg-terracotta/10 text-terracotta' : 'bg-stone-100 text-stone-400'}`}>
-            {isSyncing ? 'Sync...' : 'Prêt'}
-          </div>
-        </button>
+
         <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 bg-rose-50 rounded-3xl text-rose-600 font-bold mt-6"><LogOut size={20} /> {t.logout}</button>
       </section>
     </div>
@@ -3213,10 +3220,10 @@ export default function App() {
 
       return (
         <motion.div
-          initial={{ opacity: 0, scale: 0.85, y: 60, filter: 'blur(8px)' }}
+          initial={{ opacity: 0, scale: 0.94, y: 28, filter: 'blur(4px)' }}
           animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, scale: 0.9, y: 40, filter: 'blur(6px)' }}
-          transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.7 }}
+          exit={{ opacity: 0, scale: 0.96, y: 18, filter: 'blur(3px)' }}
+          transition={{ type: 'spring', damping: 38, stiffness: 480, mass: 0.5 }}
           className="absolute inset-0 z-[100] bg-white overflow-hidden w-full flex flex-col origin-bottom shadow-[0_-20px_60px_rgba(0,0,0,0.15)]"
         >
           <div className="absolute top-0 inset-x-0 z-[110] pointer-events-none p-6 pt-12">
@@ -3780,9 +3787,9 @@ export default function App() {
 
   if (!currentUser) return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className={`h-screen max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,4px)] transition-colors duration-300 ${isDark ? 'dark bg-[#111113]' : 'bg-stone-50'}`}
     >
       {renderAuth()}
@@ -3792,18 +3799,18 @@ export default function App() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 1.08, filter: 'blur(20px)' }}
-      animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
       className={`h-screen max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-colors duration-300 pt-[env(safe-area-inset-top,4px)] ${isDark ? 'dark bg-[#111113]' : 'bg-stone-50'}`}
     >
       <main onScroll={onMainScroll} ref={mainScrollRef as any} className="flex-1 overflow-y-auto no-scrollbar relative min-h-0">
         <AnimatePresence mode="wait">
-          {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0, scale: 0.94, filter: 'blur(10px)' }} animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} exit={{ opacity: 0, scale: 1.06, filter: 'blur(10px)' }} transition={springTransition} className="h-full">{renderHome()}</motion.div>}
-          {activeTab === 'search' && <motion.div key="search" initial={{ opacity: 0, y: 30, filter: 'blur(5px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -30, filter: 'blur(5px)' }} transition={springTransition} className="h-full">{renderExplorer()}</motion.div>}
-          {activeTab === 'favs' && <motion.div key="favs" initial={{ opacity: 0, x: 40, filter: 'blur(5px)' }} animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, x: -40, filter: 'blur(5px)' }} transition={springTransition} className="h-full">{renderFavorites()}</motion.div>}
-          {activeTab === 'cart' && <motion.div key="cart" initial={{ opacity: 0, x: 40, filter: 'blur(5px)' }} animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, x: -40, filter: 'blur(5px)' }} transition={springTransition} className="h-full">{renderShoppingList()}</motion.div>}
-          {activeTab === 'profile' && <motion.div key="profile" initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: 40, filter: 'blur(10px)' }} transition={springTransition} className="h-full">{renderProfile()}</motion.div>}
+          {activeTab === 'home' && <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={springTransition} className="h-full">{renderHome()}</motion.div>}
+          {activeTab === 'search' && <motion.div key="search" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={springTransition} className="h-full">{renderExplorer()}</motion.div>}
+          {activeTab === 'favs' && <motion.div key="favs" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={springTransition} className="h-full">{renderFavorites()}</motion.div>}
+          {activeTab === 'cart' && <motion.div key="cart" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={springTransition} className="h-full">{renderShoppingList()}</motion.div>}
+          {activeTab === 'profile' && <motion.div key="profile" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={springTransition} className="h-full">{renderProfile()}</motion.div>}
         </AnimatePresence>
       </main>
 
@@ -3834,14 +3841,6 @@ export default function App() {
             transition={{ type: 'spring', damping: 24, stiffness: 360, mass: 0.85 }}
             className="absolute bottom-6 left-4 right-4 z-[110]"
           >
-            {/* Ambient drop shadow */}
-            <div
-              className="absolute inset-0 rounded-[40px]"
-              style={{
-                borderRadius: 40,
-                boxShadow: '0 16px 48px rgba(249,77,0,0.38), 0 4px 12px rgba(0,0,0,0.18)',
-              }}
-            />
 
             {/* Main pill */}
             <div
@@ -3849,6 +3848,7 @@ export default function App() {
               style={{
                 height: 76,
                 background: 'linear-gradient(160deg, #ff6120 0%, #F94D00 55%, #d93d00 100%)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12)',
               }}
             >
               {/* Inner highlight at top */}
@@ -3865,12 +3865,11 @@ export default function App() {
               />
 
               {navItems.map((item) => {
-                const Icon = item.icon;
                 const isActive = activeTab === item.id;
                 return (
                   <React.Fragment key={item.id}>
                     <NavButton
-                      icon={Icon}
+                      iconId={item.iconId}
                       isActive={isActive}
                       onClick={() => navigateTo(item.id)}
                     />
