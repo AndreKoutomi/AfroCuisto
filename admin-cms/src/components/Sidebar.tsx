@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookText, LayoutGrid, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, BookText, LayoutGrid, MessageSquare, Users } from 'lucide-react';
 
 export function Sidebar() {
     return (
@@ -32,6 +32,13 @@ export function Sidebar() {
                 >
                     <LayoutGrid size={20} style={{ marginRight: '8px' }} />
                     <span>Sections</span>
+                </NavLink>
+                <NavLink
+                    to="/users"
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                >
+                    <Users size={20} style={{ marginRight: '8px' }} />
+                    <span>Utilisateurs</span>
                 </NavLink>
                 <NavLink
                     to="/feedback"

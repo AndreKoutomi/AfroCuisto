@@ -6,6 +6,7 @@ import { RecipeForm } from './pages/RecipeForm';
 import { SectionsManager } from './pages/SectionsManager';
 import { SectionForm } from './pages/SectionForm';
 import { Feedback } from './pages/Feedback';
+import { UsersPage } from './pages/Users';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -17,11 +18,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (location.pathname === '/sections/edit/') return 'Modifier la Section';
     if (location.pathname === '/feedback') return 'Retours Clients';
     if (location.pathname === '/dashboard') return 'Tableau de bord';
+    if (location.pathname === '/users') return 'Utilisateurs';
     return 'Bienvenue sur AfriHub';
   };
 
   const getBreadcrumb = () => {
     if (location.pathname.startsWith('/sections')) return 'Pages / Sections';
+    if (location.pathname.startsWith('/users')) return 'Pages / Utilisateurs';
     return 'Pages / Tableau de bord';
   };
 
@@ -81,6 +84,7 @@ function App() {
           <Route path="/sections" element={<SectionsManager />} />
           <Route path="/sections/create" element={<SectionForm />} />
           <Route path="/sections/edit/:id" element={<SectionForm />} />
+          <Route path="/users" element={<UsersPage />} />
           <Route path="/feedback" element={<Feedback />} />
         </Routes>
       </AppLayout>

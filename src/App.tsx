@@ -116,7 +116,8 @@ const PreparationStep = ({ step, index, recipeId }: { step: string; index: numbe
   );
 };
 
-// ─── Coverflow Carousel (used for dynamic_carousel sections) ───────────────
+
+// ─── Cinematic Stack Carousel (dynamic_carousel sections) ──────────────────
 const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval, currentUser, toggleFavorite }: {
   recipes: Recipe[];
   setSelectedRecipe: (r: Recipe) => void;
@@ -127,285 +128,284 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
 }) => {
   const [active, setActive] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isProgrammaticScroll = useRef(false);
-  const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [dragStart, setDragStart] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const n = recipes.length;
   if (!n) return null;
 
-  // ── Scroll to active card (programmatic) ──────────────────────────────────
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    isProgrammaticScroll.current = true;
-    const cardWidth = el.offsetWidth * 0.82 + 16;
-    el.scrollTo({ left: active * cardWidth, behavior: 'smooth' });
-    // Reset flag after the smooth scroll animation ends (~400ms)
-    const t = setTimeout(() => { isProgrammaticScroll.current = false; }, 450);
-    return () => clearTimeout(t);
-  }, [active]);
-
-  // ── Autoplay — loop infinitely ────────────────────────────────────────────
-  useEffect(() => {
-    if (!autoplayInterval || isPaused) return;
-    const t = setInterval(() => {
-      setActive(prev => (prev + 1) % n);
-    }, autoplayInterval);
-    return () => clearInterval(t);
-  }, [autoplayInterval, isPaused, n]);
-
-  // ── Detect active card on native touch swipe only ─────────────────────────
-  const onScroll = () => {
-    // Ignore scroll events triggered by our own programmatic scrollTo
-    if (isProgrammaticScroll.current) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = el.offsetWidth * 0.82 + 16;
-    const idx = Math.round(el.scrollLeft / cardWidth);
-    if (idx !== active && idx >= 0 && idx < n) {
-      setActive(idx);
-      // Pause autoplay while user is manually swiping, then resume
+  const goTo = (i: number, fromUser = false) => {
+    setActive(i);
+    setProgress(0);
+    startTimeRef.current = null;
+    if (fromUser) {
       setIsPaused(true);
-      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
-      pauseTimerRef.current = setTimeout(() => setIsPaused(false), 4000);
+      setTimeout(() => setIsPaused(false), 4500);
     }
   };
+  const goNext = (fromUser = false) => goTo((active + 1) % n, fromUser);
+  const goPrev = (fromUser = false) => goTo((active - 1 + n) % n, fromUser);
 
-  const goTo = (i: number) => {
-    setActive(i);
-    setIsPaused(true);
-    if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
-    pauseTimerRef.current = setTimeout(() => setIsPaused(false), 4000);
+  useEffect(() => {
+    if (!autoplayInterval || isPaused || n <= 1) return;
+    const duration = autoplayInterval;
+    const animate = (now: number) => {
+      if (!startTimeRef.current) startTimeRef.current = now;
+      const p = Math.min((now - startTimeRef.current) / duration, 1);
+      setProgress(p);
+      if (p >= 1) {
+        setActive(prev => (prev + 1) % n);
+        startTimeRef.current = null;
+        setProgress(0);
+      } else {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [active, autoplayInterval, isPaused, n]);
+
+  const onTouchStart = (e: React.TouchEvent) => setDragStart(e.touches[0].clientX);
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (dragStart === null) return;
+    const delta = dragStart - e.changedTouches[0].clientX;
+    if (Math.abs(delta) > 40) delta > 0 ? goNext(true) : goPrev(true);
+    setDragStart(null);
   };
-  const prev = () => goTo(Math.max(0, active - 1));
-  const next = () => goTo(Math.min(n - 1, active + 1));
+  const onMouseDown = (e: React.MouseEvent) => setDragStart(e.clientX);
+  const onMouseUp = (e: React.MouseEvent) => {
+    if (dragStart === null) return;
+    const delta = dragStart - e.clientX;
+    if (Math.abs(delta) > 40) delta > 0 ? goNext(true) : goPrev(true);
+    setDragStart(null);
+  };
+
+  const ambientPalettes = [
+    ['#fb5607', '#ff8c42'], ['#7c3aed', '#a78bfa'], ['#059669', '#34d399'],
+    ['#0891b2', '#22d3ee'], ['#d97706', '#fbbf24'], ['#dc2626', '#f87171'],
+    ['#db2777', '#f472b6'], ['#4338ca', '#818cf8'],
+  ];
+  const [c1, c2] = ambientPalettes[active % ambientPalettes.length];
 
   return (
-    <div className="relative w-full">
+    <div
+      style={{ position: 'relative', width: '100%', userSelect: 'none' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+    >
+      {/* Stack */}
+      <div style={{
+        position: 'relative',
+        height: 'clamp(320px, 85vw, 430px)',
+        margin: '0 20px',
+        perspective: '900px',
+      }}>
+        {/* Ambient glow */}
+        <motion.div
+          key={`glow-${active}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7 }}
+          style={{
+            position: 'absolute', inset: '-30%', zIndex: 0, pointerEvents: 'none',
+            background: `radial-gradient(ellipse 65% 55% at 50% 65%, ${c1}28, transparent 70%)`,
+            filter: 'blur(20px)',
+          }}
+        />
 
-      {/* ── Scrollable track ─────────────────────────────────────────────── */}
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        style={{
-          display: 'flex',
-          gap: '14px',
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
-          scrollBehavior: 'smooth',
-          paddingLeft: '6vw',
-          paddingRight: '6vw',
-          paddingTop: '15px',
-          paddingBottom: '15px',
-          msOverflowStyle: 'none',
-          scrollbarWidth: 'none',
-        }}
-      >
         {recipes.map((recipe, i) => {
-          const isActive = i === active;
+          const offset = ((i - active) % n + n) % n;
+          const absOffset = offset <= n / 2 ? offset : offset - n;
+          if (Math.abs(absOffset) > 3) return null;
           const isFav = currentUser?.favorites?.includes(recipe.id) ?? false;
+          const isActive = absOffset === 0;
+          const tx = absOffset * 56;
+          const tz = -Math.abs(absOffset) * 52;
+          const ry = absOffset * 7;
+          const scale = 1 - Math.abs(absOffset) * 0.09;
+          const opacity = isActive ? 1 : Math.abs(absOffset) === 1 ? 0.68 : 0.35;
 
           return (
             <motion.div
               key={recipe.id}
-              animate={{
-                scale: isActive ? 1 : 0.93,
-                opacity: isActive ? 1 : 0.7,
-              }}
-              transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-              onClick={() => { if (isActive) setSelectedRecipe(recipe); else goTo(i); }}
+              animate={{ x: tx, z: tz, rotateY: ry, scale, opacity }}
+              transition={{ type: 'spring', stiffness: 280, damping: 26, mass: 0.9 }}
+              onClick={() => isActive ? setSelectedRecipe(recipe) : goTo(i, true)}
               style={{
-                flexShrink: 0,
-                width: '82vw',
-                maxWidth: '340px',
-                scrollSnapAlign: 'center',
-                cursor: 'pointer',
-                borderRadius: '28px',
-                overflow: 'hidden',
-                position: 'relative',
-                aspectRatio: '3/4',
+                position: 'absolute', inset: 0, zIndex: 10 - Math.abs(absOffset),
+                borderRadius: 28, overflow: 'hidden', cursor: 'pointer',
+                transformStyle: 'preserve-3d',
                 boxShadow: isActive
-                  ? '0 10px 28px rgba(0,0,0,0.14), 0 3px 8px rgba(0,0,0,0.08)'
-                  : '0 3px 10px rgba(0,0,0,0.08)',
+                  ? `0 20px 56px rgba(0,0,0,0.26), 0 6px 18px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.12)`
+                  : `0 6px 20px rgba(0,0,0,0.12)`,
               }}
             >
-              {/* Photo */}
               <img
-                src={recipe.image}
-                alt={recipe.name}
+                src={recipe.image} alt={recipe.name} draggable={false}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
-
-              {/* Multi-layer gradient overlay with enhanced top scrim for extreme white backgrounds */}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%)',
+                background: 'linear-gradient(175deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.88) 100%)',
               }} />
+              {isActive && (
+                <motion.div
+                  animate={{ opacity: [0.2, 0.55, 0.2] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none',
+                    background: `linear-gradient(0deg, ${c1}50 0%, transparent 52%)`,
+                  }}
+                />
+              )}
 
-              {/* Top row: category badge + heart */}
-              <div style={{
-                position: 'absolute', top: 16, left: 16, right: 16,
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-              }}>
-                {recipe.category && (
+              {/* Top bar */}
+              <div style={{ position: 'absolute', top: 16, left: 16, right: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {recipe.category ? (
                   <span style={{
-                    background: 'rgba(0,0,0,0.3)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '20px',
-                    padding: '6px 14px',
-                    fontSize: '10px',
-                    fontWeight: 900,
-                    color: '#fff',
-                    letterSpacing: '0.04em',
-                    maxWidth: '70%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    textTransform: 'uppercase',
+                    background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(14px)',
+                    border: '1px solid rgba(255,255,255,0.16)',
+                    borderRadius: 20, padding: '5px 13px',
+                    fontSize: 9, fontWeight: 900, color: '#fff',
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
                   }}>
                     {recipe.category}
                   </span>
-                )}
-                {toggleFavorite && (
-                  <button
+                ) : <div />}
+                {toggleFavorite && isActive && (
+                  <motion.button
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.12, type: 'spring', stiffness: 400 }}
+                    whileTap={{ scale: 0.82 }}
                     onClick={e => { e.stopPropagation(); toggleFavorite(recipe.id); }}
                     style={{
-                      width: '40px', height: '40px', borderRadius: '50%',
-                      background: isFav ? '#ef4444' : 'rgba(0,0,0,0.3)',
-                      backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255,255,255,0.15)',
+                      width: 40, height: 40, borderRadius: '50%',
+                      background: isFav ? '#fb5607' : 'rgba(0,0,0,0.30)',
+                      backdropFilter: 'blur(14px)',
+                      border: `1px solid ${isFav ? '#fb5607' : 'rgba(255,255,255,0.18)'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', flexShrink: 0,
-                      transition: 'all 0.2s',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      cursor: 'pointer',
+                      boxShadow: isFav ? '0 4px 16px rgba(251,86,7,0.45)' : 'none',
                     }}
                   >
-                    <Heart size={18} style={{ color: '#fff', fill: isFav ? '#fff' : 'none' }} strokeWidth={isFav ? 0 : 2.5} />
-                  </button>
+                    <Heart size={17} style={{ color: '#fff', fill: isFav ? '#fff' : 'none' }} strokeWidth={2.5} />
+                  </motion.button>
                 )}
               </div>
 
-              {/* Bottom content */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 20px 24px' }}>
-                {/* Region */}
-                {recipe.region && (
-                  <p style={{
-                    margin: '0 0 6px', fontSize: '11px', fontWeight: 700,
-                    color: 'rgba(255,255,255,0.65)', letterSpacing: '0.04em', textTransform: 'uppercase',
-                  }}>
-                    📍 {recipe.region}
+              {/* Bottom */}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 22px 24px' }}>
+                <AnimatePresence mode="wait">
+                  {isActive && (
+                    <motion.div
+                      key={`content-${recipe.id}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <p style={{ margin: '0 0 5px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        📍 {recipe.region}
+                      </p>
+                      <h3 style={{
+                        margin: '0 0 14px',
+                        fontSize: 'clamp(20px, 5.5vw, 26px)',
+                        fontWeight: 900, color: '#fff', lineHeight: 1.1,
+                        letterSpacing: '-0.03em', textShadow: '0 2px 14px rgba(0,0,0,0.5)',
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}>
+                        {recipe.name}
+                      </h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {recipe.prepTime && (
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 5,
+                              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: 20, padding: '5px 11px',
+                            }}>
+                              <Clock size={11} style={{ color: '#fff' }} />
+                              <span style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>{recipe.prepTime}</span>
+                            </div>
+                          )}
+                          {recipe.difficulty && (
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 5,
+                              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: 20, padding: '5px 11px',
+                            }}>
+                              <Flame size={11} style={{ color: c1 }} />
+                              <span style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>{recipe.difficulty}</span>
+                            </div>
+                          )}
+                        </div>
+                        <motion.button
+                          whileTap={{ scale: 0.92 }}
+                          onClick={e => { e.stopPropagation(); setSelectedRecipe(recipe); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                            color: '#fff', border: 'none', borderRadius: 20,
+                            padding: '9px 16px', fontSize: 11, fontWeight: 900,
+                            cursor: 'pointer', boxShadow: `0 6px 18px ${c1}55`,
+                            whiteSpace: 'nowrap', flexShrink: 0,
+                          }}
+                        >
+                          Voir <ChevronRight size={13} strokeWidth={3} />
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {!isActive && Math.abs(absOffset) === 1 && (
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.65)', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {recipe.name}
                   </p>
                 )}
-
-                {/* Recipe Name */}
-                <h3 style={{
-                  margin: '0 0 12px',
-                  fontSize: 'clamp(20px, 5.5vw, 26px)',
-                  fontWeight: 900,
-                  color: '#fff',
-                  lineHeight: 1.15,
-                  letterSpacing: '-0.03em',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textShadow: '0 2px 12px rgba(0,0,0,0.4)',
-                }}>
-                  {recipe.name}
-                </h3>
-
-                {/* Bottom row: time + difficulty */}
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  {recipe.prepTime && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '5px',
-                      background: 'rgba(255,255,255,0.20)',
-                      backdropFilter: 'blur(8px)',
-                      borderRadius: '20px', padding: '5px 12px',
-                    }}>
-                      <Clock size={12} style={{ color: '#fff' }} />
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{recipe.prepTime}</span>
-                    </div>
-                  )}
-                  {recipe.difficulty && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '5px',
-                      background: 'rgba(255,255,255,0.20)',
-                      backdropFilter: 'blur(8px)',
-                      borderRadius: '20px', padding: '5px 12px',
-                    }}>
-                      <Flame size={12} style={{ color: '#fff' }} />
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{recipe.difficulty}</span>
-                    </div>
-                  )}
-                </div>
               </div>
             </motion.div>
           );
         })}
       </div>
 
-      {/* ── Prev / Next arrows ─────────────────────────────────────────────── */}
-      {active > 0 && (
-        <button
-          className="carousel-arrow"
-          onClick={prev}
-          style={{
-            position: 'absolute', left: 8, top: '42%', transform: 'translateY(-50%)',
-            width: '38px', height: '38px', borderRadius: '50%',
-            backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', zIndex: 20, transition: 'all 0.15s',
-          }}
-          aria-label="Précédent"
-        >
-          <ChevronLeft size={18} className="carousel-arrow-icon" />
-        </button>
-      )}
-      {active < n - 1 && (
-        <button
-          className="carousel-arrow"
-          onClick={next}
-          style={{
-            position: 'absolute', right: 8, top: '42%', transform: 'translateY(-50%)',
-            width: '38px', height: '38px', borderRadius: '50%',
-            backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', zIndex: 20, transition: 'all 0.15s',
-          }}
-          aria-label="Suivant"
-        >
-          <ChevronRight size={18} className="carousel-arrow-icon" />
-        </button>
-      )}
-
-      {/* ── Dot indicators — sur fond sombre ─────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', paddingBottom: '16px', paddingTop: '4px' }}>
-        {recipes.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className={i === active ? 'carousel-dot-active' : 'carousel-dot'}
-            style={{
-              width: i === active ? 24 : 7,
-              height: 7,
-              borderRadius: 4,
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              transition: 'width 0.35s cubic-bezier(0.34,1.56,0.64,1), background 0.25s',
-            }}
-            aria-label={`Slide ${i + 1}`}
-          />
-        ))}
+      {/* Dots + progress */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, paddingTop: 18, paddingBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {recipes.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i, true)}
+              style={{
+                width: i === active ? 26 : 7, height: 7,
+                borderRadius: 4, border: 'none', cursor: 'pointer', padding: 0,
+                background: i === active ? c1 : 'rgba(0,0,0,0.13)',
+                transition: 'width 0.4s cubic-bezier(0.34,1.56,0.64,1), background 0.3s',
+                boxShadow: i === active ? `0 2px 8px ${c1}55` : 'none',
+              }}
+            />
+          ))}
+        </div>
+        {autoplayInterval && !isPaused && (
+          <div style={{ width: 60, height: 2, borderRadius: 2, background: 'rgba(0,0,0,0.09)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 2, background: c1, width: `${progress * 100}%`, transition: 'none' }} />
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
+
 const AUTOPLAY_DURATION = 4500;
+
+
+
 
 const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite, t }: {
   recipes: Recipe[],
@@ -3202,8 +3202,11 @@ export default function App() {
 
       return (
         <motion.div
-          initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={springTransition}
-          className="absolute inset-0 z-[100] bg-white overflow-hidden w-full flex flex-col"
+          initial={{ y: '100%', scale: 0.92, opacity: 0, borderRadius: '40px' }}
+          animate={{ y: 0, scale: 1, opacity: 1, borderRadius: '0px' }}
+          exit={{ y: '100%', scale: 0.92, opacity: 0, borderRadius: '40px' }}
+          transition={{ type: 'spring', damping: 28, stiffness: 220, mass: 0.6 }}
+          className="absolute inset-0 z-[100] bg-white overflow-hidden w-full flex flex-col origin-bottom shadow-[0_-20px_60px_rgba(0,0,0,0.15)]"
         >
           <div className="absolute top-0 inset-x-0 z-[110] pointer-events-none p-6 pt-12">
             <div className="relative w-full flex justify-between items-start pointer-events-none">
