@@ -88,8 +88,8 @@ export function UsersPage() {
 
     const getAvatarColor = (id: string) => {
         const colors = [
-            ['#4318FF', '#7551FF'],
             ['#fb5607', '#ff8c42'],
+            ['#F94D00', '#ff8c42'],
             ['#059669', '#34d399'],
             ['#d97706', '#fbbf24'],
             ['#7c3aed', '#a78bfa'],
@@ -111,7 +111,7 @@ export function UsersPage() {
             {/* ── Stats ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
                 {[
-                    { label: 'Utilisateurs inscrits', value: stats.total, suffix: 'comptes', icon: <Users size={20} />, color: '#4318FF', bg: '#EEF2FF' },
+                    { label: 'Utilisateurs inscrits', value: stats.total, suffix: 'comptes', icon: <Users size={20} />, color: '#fb5607', bg: '#fff5f0' },
                     { label: 'Mode Sombre activé', value: stats.darkMode, suffix: 'utilisateurs', icon: <Shield size={20} />, color: '#7c3aed', bg: '#F5F3FF' },
                     { label: 'Favoris moyens', value: stats.avgFavorites, suffix: 'par compte', icon: <Heart size={20} />, color: '#fb5607', bg: '#FFF7ED' },
                 ].map(s => (
@@ -181,7 +181,7 @@ export function UsersPage() {
             {/* ── Content ── */}
             {loading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', gap: '16px', color: '#9ca3af' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #e5e7eb', borderTopColor: '#4318FF', animation: 'spin 0.8s linear infinite' }} />
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #e5e7eb', borderTopColor: '#fb5607', animation: 'spin 0.8s linear infinite' }} />
                     <p style={{ fontWeight: 600, margin: 0 }}>Chargement des utilisateurs...</p>
                 </div>
             ) : error ? (

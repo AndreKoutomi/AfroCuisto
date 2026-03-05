@@ -70,23 +70,26 @@ const normalizeString = (str: string) =>
 // --- Sub-Components & Helpers ---
 
 const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) => {
-  const colors = {
+  const colors: Record<string, string> = {
     'Facile': 'bg-emerald-100 text-emerald-700 border-emerald-200',
     'Très Facile': 'bg-emerald-50 text-emerald-600 border-emerald-100',
     'Moyen': 'bg-amber-100 text-amber-700 border-amber-200',
     'Difficile': 'bg-rose-100 text-rose-700 border-rose-200'
   };
 
-  const labels = {
-    'Facile': t.easy,
-    'Très Facile': t.veryEasy,
-    'Moyen': t.medium,
-    'Difficile': t.hard
+  const labels: Record<string, string> = {
+    'Facile': t?.easy || 'Facile',
+    'Très Facile': t?.veryEasy || 'Très Facile',
+    'Moyen': t?.medium || 'Moyen',
+    'Difficile': t?.hard || 'Difficile'
   };
 
+  const colorClass = colors[difficulty] || 'bg-stone-100 text-stone-600 border-stone-200';
+  const label = labels[difficulty] || difficulty || '—';
+
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight border ${colors[difficulty as keyof typeof colors] || 'bg-stone-100 text-stone-600'}`}>
-      {labels[difficulty as keyof typeof labels]}
+    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight border ${colorClass}`}>
+      {label}
     </span>
   );
 };
@@ -136,7 +139,16 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
     const interval = setInterval(() => {
       const next = (active + 1) % n;
       setActive(next);
-      scrollRef.current?.children[next]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      const container = scrollRef.current;
+      if (container) {
+        const child = container.children[next] as HTMLElement;
+        if (child) {
+          container.scrollTo({
+            left: child.offsetLeft - container.offsetWidth / 2 + child.offsetWidth / 2,
+            behavior: 'smooth'
+          });
+        }
+      }
     }, autoplayInterval);
     return () => clearInterval(interval);
   }, [active, n, autoplayInterval]);
@@ -150,7 +162,7 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
   };
 
   return (
-    <div className="relative w-full group overflow-visible pt-2 pb-8">
+    <div className="relative w-full group overflow-visible pt-2 pb-5">
       {/* Background Aura (Parallax-ish) */}
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[120%] pointer-events-none opacity-30 blur-[100px] z-0 overflow-hidden">
         <div
@@ -162,7 +174,7 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="flex gap-5 overflow-x-auto no-scrollbar scroll-smooth px-[10vw]"
+        className="flex gap-5 overflow-x-auto no-scrollbar scroll-smooth px-[10vw] pb-14"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {recipes.map((recipe, i) => {
@@ -243,17 +255,7 @@ const SnapCarousel = ({ recipes, setSelectedRecipe, sectionId, autoplayInterval,
                 </motion.div>
               </div>
 
-              {/* Progress bar for isActive */}
-              {isActive && (
-                <div className="absolute bottom-0 left-0 h-1 bg-white/20 w-full z-20">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: autoplayInterval ? autoplayInterval / 1000 : 0, ease: "linear" }}
-                    className="h-full bg-white"
-                  />
-                </div>
-              )}
+
             </motion.div>
           );
         })}
@@ -488,6 +490,194 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
         aria-label="Suivant"
       />
     </div>
+  );
+};
+
+
+const FeaturedStackCarousel: React.FC<{
+  section: any;
+  recipes: Recipe[];
+  setSelectedRecipe: (r: Recipe) => void;
+}> = ({ section, recipes, setSelectedRecipe }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!recipes.length) return null;
+  const n = recipes.length;
+
+  // Infinite loop — wrap around
+  const goNext = () => setCurrentIndex(i => (i + 1) % n);
+  const goPrev = () => setCurrentIndex(i => (i - 1 + n) % n);
+
+  return (
+    <section className="mb-10" style={{ overflow: 'visible' }}>
+      {/* 3D Perspective Container */}
+      <div
+        style={{
+          perspective: '900px',
+          perspectiveOrigin: '30% 50%',
+          position: 'relative',
+          height: 'clamp(170px, 46vw, 240px)',
+          marginLeft: '20px',
+          marginRight: '20px',
+        }}
+      >
+        {/* Build up to 4 slots: current + 3 next (looped) */}
+        {Array.from({ length: Math.min(n, 4) }, (_, slot) => {
+          const index = (currentIndex + slot) % n;
+          const recipe = recipes[index];
+          const offset = slot; // 0 = active, 1/2/3 = behind
+          const isActive = offset === 0;
+          // Each background card: shifts right, rotates, scales down, fades
+          const xShift = isActive ? 0 : 62 + offset * 13;
+          const rotY = isActive ? 0 : -38 + offset * 5;
+          const sc = isActive ? 1 : 0.78 - offset * 0.06;
+          const op = isActive ? 1 : Math.max(0, 0.85 - offset * 0.25);
+
+          return (
+            <motion.div
+              key={`${recipe.id}-slot${offset}`}
+              animate={{
+                x: isActive ? '0%' : `${xShift}%`,
+                rotateY: rotY,
+                scale: sc,
+                opacity: op,
+                zIndex: 10 - offset,
+              }}
+              transition={{ type: 'spring', stiffness: 280, damping: 26, mass: 0.8 }}
+              drag={isActive ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.12}
+              onDragEnd={(_e, { offset: d }) => {
+                if (d.x < -50) goNext();
+                else if (d.x > 50) goPrev();
+              }}
+              onClick={() => {
+                if (isActive) setSelectedRecipe(recipe);
+                else { for (let s = 0; s < offset; s++) goNext(); }
+              }}
+              style={{
+                position: 'absolute',
+                top: 0, left: 0,
+                width: '100%', height: '100%',
+                borderRadius: '28px',
+                overflow: 'hidden',
+                cursor: isActive ? 'grab' : 'pointer',
+                transformStyle: 'preserve-3d',
+                transformOrigin: 'right center',
+                background: 'linear-gradient(135deg, #c0392b 0%, #e55820 50%, #f59e0b 100%)',
+                display: 'flex', flexDirection: 'row',
+                alignItems: 'center', justifyContent: 'space-between',
+                padding: '22px 20px',
+                gap: '12px',
+                boxShadow: isActive
+                  ? '0 18px 50px rgba(229,88,32,0.4), 0 4px 12px rgba(0,0,0,0.12)'
+                  : '0 8px 24px rgba(0,0,0,0.12)',
+                touchAction: 'pan-y',
+                willChange: 'transform',
+              }}
+            >
+              {/* Decorative circles */}
+              <div style={{ position: 'absolute', right: '-20px', top: '-20px', width: '130px', height: '130px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', right: '50px', bottom: '-40px', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
+
+              {/* Left content */}
+              <div style={{ flex: 1, minWidth: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {/* Badge */}
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  background: 'rgba(255,255,255,0.26)',
+                  borderRadius: '14px', padding: '5px 10px', marginBottom: '12px',
+                }}>
+                  <span style={{ fontSize: '11px' }}>💎</span>
+                  <span style={{ fontSize: '9px', fontWeight: 900, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.2 }}>
+                    {section.subtitle || 'Chef d\'œuvre'}
+                  </span>
+                </div>
+                {/* Recipe Name + Difficulty */}
+                <h2 style={{
+                  margin: '0 0 10px', fontSize: 'clamp(18px, 5.5vw, 26px)',
+                  fontWeight: 900, color: '#fff', lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                  display: '-webkit-box', WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word',
+                }}>
+                  {recipe.name}
+                </h2>
+                {/* Difficulty pill */}
+                {recipe.difficulty && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      fontSize: '9px', fontWeight: 900,
+                      textTransform: 'uppercase', letterSpacing: '0.07em',
+                      padding: '4px 10px', borderRadius: '10px',
+                      background: recipe.difficulty === 'Facile' || recipe.difficulty === 'Très Facile'
+                        ? 'rgba(52,211,153,0.25)'
+                        : recipe.difficulty === 'Moyen'
+                          ? 'rgba(251,191,36,0.25)'
+                          : 'rgba(248,113,113,0.25)',
+                      color: recipe.difficulty === 'Facile' || recipe.difficulty === 'Très Facile'
+                        ? '#6ee7b7'
+                        : recipe.difficulty === 'Moyen'
+                          ? '#fde68a'
+                          : '#fca5a5',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                    }}>
+                      {recipe.difficulty}
+                    </span>
+                  </div>
+                )}
+                {/* CTA */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedRecipe(recipe); }}
+                  style={{
+                    background: '#fff', border: 'none', borderRadius: '18px',
+                    padding: '8px 16px', fontSize: '11px', fontWeight: 900,
+                    color: '#c0392b', cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.18)', transition: 'all 0.2s',
+                  }}
+                >
+                  Découvrir →
+                </button>
+              </div>
+
+              {/* Circular recipe image on the right */}
+              <div style={{
+                flexShrink: 0,
+                width: 'clamp(80px, 28vw, 120px)',
+                height: 'clamp(80px, 28vw, 120px)',
+                borderRadius: '50%', overflow: 'hidden',
+                border: '3px solid rgba(255,255,255,0.45)',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.28)',
+                zIndex: 1,
+              }}>
+                <img src={recipe.image} alt={recipe.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Dots pagination */}
+      {n > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginTop: '14px' }}>
+          {recipes.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              style={{
+                width: idx === currentIndex ? 20 : 6,
+                height: 6, borderRadius: 3, border: 'none',
+                background: idx === currentIndex ? '#c0392b' : 'rgba(0,0,0,0.12)',
+                transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
+                cursor: 'pointer', padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 };
 
@@ -998,9 +1188,9 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         </div>
 
         <div className="pt-4 pb-2">
-          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white/10 dark:bg-white/[0.08] backdrop-blur-xl rounded-full border border-white/20 dark:border-white/10 shadow-lg transition-all hover:scale-105 active:scale-95 cursor-default">
-            <span className="text-[9px] font-black text-stone-400 dark:text-white/60 uppercase tracking-[0.2em]">Powered by</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-terracotta/20 dark:bg-terracotta/40" />
+          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-stone-200/40 dark:bg-white/[0.08] backdrop-blur-xl rounded-full border border-stone-300/50 dark:border-white/10 shadow-lg transition-all hover:scale-105 active:scale-95 cursor-default">
+            <span className="text-[9px] font-black text-stone-700 dark:text-white/60 uppercase tracking-[0.2em]">Powered by</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-slate-400/30 dark:bg-white/20" />
             <span className="text-[14px] font-black text-terracotta tracking-tight drop-shadow-[0_2px_10px_rgba(230,88,32,0.3)]">André Koutomi</span>
           </div>
         </div>
@@ -1621,7 +1811,7 @@ export default function App() {
             style={{ background: isDark ? 'rgba(10,10,12,0.96)' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
           >
             {/* Search Header */}
-            <div className="px-5 pt-[env(safe-area-inset-top,16px)] pb-4 pt-12 flex items-center gap-3">
+            <div className="px-5 pb-4 pt-10 flex items-center gap-3">
               <button
                 onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
                 className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${isDark ? 'bg-white/10 text-white border-white/10' : 'bg-stone-100 text-stone-600 border-stone-200/50'}`}
@@ -1802,7 +1992,7 @@ export default function App() {
 
         if (section.type === 'dynamic_carousel') {
           return (
-            <section key={section.id} className="mb-12">
+            <section key={section.id} className="mb-2">
               <div className="px-6 flex justify-between items-end mb-2">
                 <div className="flex flex-col">
                   <h2 className="text-xl font-black text-stone-800 tracking-tight">{section.title}</h2>
@@ -1935,105 +2125,14 @@ export default function App() {
             );
           }
 
-          // Rendu Single (FORMAT TITANESQUE)
-          const featuredRecipe = sectionRecipes[0];
-          if (!featuredRecipe) return null;
+          // Rendu Single (FORMAT TITANESQUE) SUPERPOSE
           return (
-            <section key={section.id} className="px-6 mb-14">
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedRecipe(featuredRecipe)}
-                style={{
-                  borderRadius: '42px',
-                  background: 'linear-gradient(135deg, #c0392b 0%, #e55820 50%, #f59e0b 100%)',
-                  padding: '40px 36px 40px 42px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '28px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  boxShadow: '0 20px 55px rgba(229,88,32,0.45), 0 6px 18px rgba(0,0,0,0.25)',
-                }}
-              >
-                {/* Cercles décoratifs de fond encore plus grands */}
-                <div style={{
-                  position: 'absolute', right: '-40px', top: '-40px',
-                  width: '220px', height: '220px', borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.08)',
-                }} />
-                <div style={{
-                  position: 'absolute', right: '120px', bottom: '-70px',
-                  width: '160px', height: '160px', borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.06)',
-                }} />
-
-                {/* Contenu gauche */}
-                <div style={{ flex: 1, minWidth: 0, zIndex: 1 }}>
-                  {/* Plus gros Badge */}
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '10px',
-                    background: 'rgba(255,255,255,0.28)',
-                    borderRadius: '24px', padding: '6px 20px', marginBottom: '18px',
-                  }}>
-                    <span style={{ fontSize: '15px' }}>💎</span>
-                    <span style={{ fontSize: '13px', fontWeight: 900, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      {section.subtitle || 'Chef d\'œuvre'}
-                    </span>
-                  </div>
-                  {/* Nom de la recette Titanesque */}
-                  <h2 style={{
-                    margin: '0 0 24px',
-                    fontSize: 'clamp(28px, 9vw, 40px)',
-                    fontWeight: 900,
-                    color: '#fff',
-                    lineHeight: 1,
-                    letterSpacing: '-0.04em',
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                  }}>
-                    {featuredRecipe.name}
-                  </h2>
-                  {/* Plus gros Bouton */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setSelectedRecipe(featuredRecipe); }}
-                    style={{
-                      background: '#fff',
-                      border: 'none',
-                      borderRadius: '28px',
-                      padding: '14px 34px',
-                      fontSize: '17px',
-                      fontWeight: 900,
-                      color: '#c0392b',
-                      cursor: 'pointer',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.28)',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    Voir l'histoire du plat →
-                  </button>
-                </div>
-
-                {/* Image du plat — droite Titanesque */}
-                <div style={{
-                  flexShrink: 0,
-                  width: 'min(185px, 45vw)',
-                  height: 'min(185px, 45vw)',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: '6px solid rgba(255,255,255,0.5)',
-                  boxShadow: '0 15px 45px rgba(0,0,0,0.4)',
-                  zIndex: 1,
-                }}>
-                  <img
-                    src={featuredRecipe.image}
-                    alt={featuredRecipe.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-              </motion.div>
-            </section>
+            <FeaturedStackCarousel
+              key={section.id}
+              section={section}
+              recipes={sectionRecipes}
+              setSelectedRecipe={setSelectedRecipe}
+            />
           );
         }
 
@@ -2331,20 +2430,21 @@ export default function App() {
                           {recipe.prepTime ? `${recipe.prepTime} min` : '30 min'}
                         </span>
                       </div>
-                      {/* Rating + category */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {/* Rating + region + difficulty */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
                         <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', flexShrink: 0 }} />
                         <span style={{ fontSize: '11px', fontWeight: 700, color: '#374151' }}>{ratingNum}</span>
                         <span style={{ fontSize: '10px', color: '#d1d5db' }}>·</span>
-                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
                           {recipe.region || recipe.category || 'Africain'}
                         </span>
+                        <span style={{ fontSize: '10px', color: '#d1d5db' }}>·</span>
+                        <DifficultyBadge difficulty={recipe.difficulty} t={t} />
                       </div>
                     </div>
 
-                    {/* Right: difficulty badge + chevron */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
-                      <DifficultyBadge difficulty={recipe.difficulty} t={t} />
+                    {/* Right: chevron only */}
+                    <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                       <ChevronRight size={16} style={{ color: '#d1d5db' }} />
                     </div>
                   </motion.div>
@@ -2362,7 +2462,7 @@ export default function App() {
   const renderExplorer = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Immersive Search Header */}
-      <header className={`px-6 pt-4 pb-6 sticky top-0 z-40 transition-all ${isDark ? 'bg-[#111113]/95 border-b border-white/5 shadow-xl shadow-black/20' : 'bg-white/90 backdrop-blur-2xl'}`}>
+      <header className={`px-6 pt-7 pb-6 sticky top-0 z-40 transition-all ${isDark ? 'bg-[#111113]/95 border-b border-white/5 shadow-xl shadow-black/20' : 'bg-white/90 backdrop-blur-2xl'}`}>
         <div className="flex items-center justify-between mb-6">
           <h1 className={`text-3xl font-black shrink-0 ${isDark ? 'text-white' : 'text-stone-900'}`}>{selectedCategory || 'Explorer'}</h1>
           {isOffline && (
@@ -2443,7 +2543,7 @@ export default function App() {
 
               if (section.type === 'dynamic_carousel') {
                 return (
-                  <section key={section.id} className="mb-8">
+                  <section key={section.id} className="mb-2">
                     <div className="px-6 flex justify-between items-center mb-4">
                       <div>
                         <h2 className="text-xl font-black text-stone-900 tracking-tight">{section.title}</h2>
@@ -2469,7 +2569,7 @@ export default function App() {
                               background: 'linear-gradient(160deg, #ff6b1a 0%, #fb5607 50%, #e84d00 100%)',
                               borderRadius: '24px',
                               overflow: 'hidden',
-                              boxShadow: '0 10px 30px rgba(0,0,0,0.18), 0 3px 8px rgba(0,0,0,0.10)',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.05)',
                             }}>
                               {/* Image top — 4:3 for more height */}
                               <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
@@ -2727,13 +2827,21 @@ export default function App() {
         <div className="px-6 space-y-4">
           {favoriteRecipes.length > 0 ? (
             favoriteRecipes.map(recipe => (
-              <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className="bg-white p-3 rounded-3xl border border-stone-100 flex items-center gap-4">
-                <img src={recipe.image} className="w-16 h-16 rounded-2xl object-cover" />
-                <div className="flex-1">
-                  <h4 className="font-bold text-stone-800 text-sm">{recipe.name}</h4>
-                  <p className="text-[10px] text-stone-400">{recipe.region}</p>
+              <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)} className={`p-3 rounded-[28px] flex items-center gap-4 transition-all shadow-[0_8px_20px_rgba(0,0,0,0.06)] border ${isDark ? 'bg-white/5 border-white/5' : 'bg-white border-stone-100/50 shadow-stone-200/30'}`}>
+                <img src={recipe.image} className="w-16 h-16 rounded-2xl object-cover shadow-sm" />
+                <div className="flex-1 min-w-0">
+                  <h4 className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-stone-800'}`}>{recipe.name}</h4>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <p className={`text-[10px] font-medium ${isDark ? 'text-stone-500' : 'text-stone-400'}`}>{recipe.region}</p>
+                    <div className="flex items-center gap-1 text-[10px] text-[#fb5607] font-bold">
+                      <Clock size={10} />
+                      <span>{recipe.prepTime}</span>
+                    </div>
+                  </div>
                 </div>
-                <button onClick={e => { e.stopPropagation(); toggleFavorite(recipe.id); }} className="text-rose-500 p-2"><Heart size={20} fill="currentColor" /></button>
+                <button onClick={e => { e.stopPropagation(); toggleFavorite(recipe.id); }} className="text-rose-500 p-2 active:scale-90 transition-transform">
+                  <Heart size={20} fill="currentColor" />
+                </button>
               </div>
             ))
           ) : (
@@ -3328,7 +3436,7 @@ export default function App() {
     const toBuy = list.filter(i => !i.isPurchased);
     const UNITS = ['g', 'kg', 'L', 'mL', 'cl', 'pcs', 'tbsp', 'tsp', 'pinch'];
 
-    const ShoppingItemRow = ({ item, dimmed }: { item: any; dimmed?: boolean }) => {
+    const ShoppingItemRow: React.FC<{ item: any; dimmed?: boolean }> = ({ item, dimmed }) => {
       const [editQty, setEditQty] = React.useState(item.quantity ?? '');
       const [editUnit, setEditUnit] = React.useState(item.unit ?? 'g');
       const [editPrice, setEditPrice] = React.useState(item.priceXOF ?? '');

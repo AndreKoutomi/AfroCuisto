@@ -35,6 +35,7 @@ export interface Recipe {
   pedagogicalNote?: string;
   type?: string;
   base?: string;
+  isFeatured?: boolean;
   style?: string;
   origine_humaine?: string; // Avoiding collision with 'origine' if used as region
   videoUrl?: string;

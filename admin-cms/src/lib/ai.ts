@@ -17,11 +17,17 @@ class AIService {
     // 1️⃣ Gestion de la clé API
     // ---------------------------------------------------------------------
     private getApiKey(): string {
-        // 1. Priorité à la clé globale du projet (configurée par le dev)
+        // Priorité absolue au localStorage pour la personnalisation utilisateur
+        const userKey = localStorage.getItem('gemini_api_key');
+        if (userKey) return userKey;
+
+        // Repli sur la clé globale si configurée
         const globalKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (globalKey) return globalKey;
-        // 2. Repli sur la clé de l'utilisateur (localStorage)
-        return localStorage.getItem('gemini_api_key') || '';
+        return globalKey || '';
+    }
+
+    private getBaseUrl(): string {
+        return localStorage.getItem('ai_base_url') || '';
     }
 
     // ---------------------------------------------------------------------
@@ -42,16 +48,28 @@ class AIService {
     // ---------------------------------------------------------------------
     private async callModel(prompt: string, systemPrompt: string): Promise<string> {
         const key = this.getApiKey();
-        if (!key) throw new Error('Clé API manquante');
+        if (!key) throw new Error('Clé API manquante. Configurez-la dans les Réglages.');
+
         const model = this.getModel();
+        const customUrl = this.getBaseUrl();
         const isGemini = model.startsWith('gemini');
-        const endpoint = isGemini
-            ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
-            : 'https://api.openai.com/v1/chat/completions';
+
+        let endpoint = '';
+        if (isGemini) {
+            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        } else {
+            // Utilisation du customUrl ou de l'URL par défaut d'OpenAI
+            const baseUrl = customUrl.replace(/\/$/, '') || 'https://api.openai.com/v1';
+            endpoint = `${baseUrl}/chat/completions`;
+        }
+
         const body = isGemini
             ? {
-                contents: [{ parts: [{ text: systemPrompt }, { text: prompt }] }],
-                generationConfig: { temperature: 0.8, responseMimeType: 'application/json' },
+                contents: [{ parts: [{ text: `${systemPrompt}\n\nUser request: ${prompt}` }] }],
+                generationConfig: {
+                    temperature: 0.8,
+                    responseMimeType: 'application/json'
+                },
             }
             : {
                 model,
@@ -60,12 +78,14 @@ class AIService {
                     { role: 'user', content: prompt },
                 ],
                 temperature: 0.8,
+                response_format: { type: "json_object" } // Standard OpenAI JSON mode
             };
+
         const headers: HeadersInit = { 'Content-Type': 'application/json' };
         if (!isGemini) {
-            // @ts-ignore - dynamic addition of Authorization header for OpenAI
             (headers as any)['Authorization'] = `Bearer ${key}`;
         }
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers,
@@ -106,22 +126,50 @@ class AIService {
         }
     }
 
-    /** Retourne un petit échantillon de recettes (nom + catégorie) pour le wizard */
-    async getSampleRecipes(count: number): Promise<string[]> {
+    /** Retourne un échantillon de recettes (id + nom) pour le wizard */
+    async getSampleRecipes(count: number): Promise<{ id: string; name: string }[]> {
         const { data, error } = await supabase
             .from('recipes')
             .select('id, name, category')
-            .order('popularity', { ascending: false })
+            .order('name') // popularity n'existe pas, on utilise name
             .limit(count);
         if (error) throw new Error(error.message);
-        return data.map((r: any) => `${r.name} (${r.category})`);
+        return data.map((r: any) => ({ id: r.id, name: `${r.name} (${r.category})` }));
     }
-    async generateSection(type: string, theme: string, recipes: string[]): Promise<AIServiceResponse> {
-        const systemPrompt = `You are an expert UX designer for African cuisine apps. Create a section of type "${type}" with the theme "${theme}". Include the following recipes: ${recipes.join(', ')}. Return ONLY a valid JSON with keys: title, subtitle, type, recipe_ids (array of IDs), reasoning, page (optional).`;
+
+    async generateSection(type: string, theme: string, recipes: { id: string; name: string }[]): Promise<AIServiceResponse> {
+        const catalogContext = recipes.map(r => `ID: ${r.id} | Nom: ${r.name}`).join('\n');
+        const systemPrompt = `You are an expert UX designer for an African cuisine app called "AfroCuisto".
+Your goal is to create a compelling content section for the admin dashboard.
+
+SECTION TYPE: ${type}
+THEME: ${theme}
+
+AVAILABLE RECIPES (PICK FROM THESE):
+${catalogContext}
+
+REQUIRED JSON STRUCTURE:
+{
+  "title": "A catchy title in French",
+  "subtitle": "An inviting subtitle in French",
+  "type": "${type}",
+  "recipe_ids": ["selected_id_1", "selected_id_2"],
+  "reasoning": "Brief explanation in French",
+  "page": "home or explorer"
+}
+
+IMPORTANT:
+- Use only IDs from the catalog above.
+- The title and subtitle must be in French.
+- Return ONLY the JSON object.`;
+
         try {
-            const text = await this.callModel('', systemPrompt);
-            return { data: JSON.parse(text) };
+            const text = await this.callModel('Generate the section JSON now.', systemPrompt);
+            // Nettoyage au cas où l'IA ajoute des balises markdown ```json
+            const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return { data: JSON.parse(cleanedText) };
         } catch (err: any) {
+            console.error('AI Generation error:', err);
             return { error: err.message };
         }
     }

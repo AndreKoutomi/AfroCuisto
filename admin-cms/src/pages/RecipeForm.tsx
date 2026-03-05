@@ -213,11 +213,11 @@ export function RecipeForm() {
                     disabled={loading}
                     style={{
                         display: 'inline-flex', alignItems: 'center', gap: '8px',
-                        background: '#4318ff', color: '#fff', border: 'none',
+                        background: 'var(--primary)', color: '#fff', border: 'none',
                         borderRadius: '14px', padding: '12px 24px',
                         fontSize: '14px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
                         opacity: loading ? 0.7 : 1,
-                        boxShadow: '0 4px 16px rgba(67,24,255,0.25)',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
                     }}
                 >
                     {loading
@@ -236,17 +236,17 @@ export function RecipeForm() {
                     {aiPrefilled && (
                         <div style={{
                             borderRadius: '16px',
-                            background: 'linear-gradient(135deg, #eef2ff, #ede9fe)',
-                            border: '1.5px solid #c7d2fe',
+                            background: '#fff5f0',
+                            border: '1.5px solid #fed7aa',
                             padding: '14px 18px',
                             display: 'flex', alignItems: 'center', gap: '12px',
                         }}>
-                            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'linear-gradient(135deg, #4318ff, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'linear-gradient(135deg, #ff6b1a, #fb5607)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <Sparkles size={16} color="#fff" />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#312e81' }}>Pré-rempli par l'Assistant IA ✨</p>
-                                <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#6366f1' }}>Vérifiez et complétez les champs — ajoutez notamment une photo du plat.</p>
+                                <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#9a3412' }}>Pré-rempli par l'Assistant IA ✨</p>
+                                <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#ea580c' }}>Vérifiez et complétez les champs — ajoutez notamment une photo du plat.</p>
                             </div>
                             <button onClick={() => setAiPrefilled(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '4px' }}>
                                 <X size={15} />
@@ -256,7 +256,7 @@ export function RecipeForm() {
 
                     {/* Panel: Identity */}
                     <div style={cardStyle}>
-                        {sectionHeader(<ChefHat size={18} color="#7c3aed" />, 'Identité du Plat', 'Nom, alias et classification', '#ede9fe')}
+                        {sectionHeader(<ChefHat size={18} color="var(--primary)" />, 'Identité du Plat', 'Nom, alias et classification', '#fff5f0')}
                         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                             <Field label="Nom de la recette *">
                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -269,12 +269,12 @@ export function RecipeForm() {
                                             ...inputStyle,
                                             width: 'auto',
                                             padding: '0 16px',
-                                            background: aiLoading ? '#f3f4f6' : 'linear-gradient(135deg, #7c3aed, #4318ff)',
+                                            background: aiLoading ? '#f3f4f6' : 'linear-gradient(135deg, #ff8c42, #fb5607)',
                                             color: aiLoading ? '#9ca3af' : '#fff',
                                             border: 'none',
                                             cursor: aiLoading ? 'not-allowed' : 'pointer',
                                             display: 'flex', alignItems: 'center', gap: '8px',
-                                            boxShadow: aiLoading ? 'none' : '0 4px 12px rgba(124,58,237,0.2)',
+                                            boxShadow: aiLoading ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.12)',
                                         }}
                                     >
                                         {aiLoading ? <Zap size={14} className="animate-spin" /> : <Wand2 size={14} />}
@@ -314,7 +314,7 @@ export function RecipeForm() {
 
                     {/* Panel: Description */}
                     <div style={cardStyle}>
-                        {sectionHeader(<BookOpen size={18} color="#4318ff" />, "Détails de la Recette", "Description, technique et bénéfices", "#f4f7fe")}
+                        {sectionHeader(<BookOpen size={18} color="var(--primary)" />, "Détails de la Recette", "Description, technique et bénéfices", "#fff5f0")}
                         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                             <Field label="Description / Introduction">
                                 <textarea
@@ -493,10 +493,10 @@ export function RecipeForm() {
                     </div>
 
                     {/* Complétude rapide */}
-                    <div style={{ background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)', borderRadius: '16px', padding: '16px 18px' }}>
+                    <div style={{ background: '#fff5f0', borderRadius: '16px', padding: '16px 18px', border: '1px solid #fed7aa' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                            <Tag size={14} color="#7c3aed" />
-                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#5b21b6', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Complétion du profil</span>
+                            <Tag size={14} color="var(--primary)" />
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Complétion du profil</span>
                         </div>
                         {[
                             { label: 'Nom', done: !!formData.name, icon: <ChefHat size={12} /> },
@@ -509,19 +509,19 @@ export function RecipeForm() {
                             <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 0' }}>
                                 <div style={{
                                     width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-                                    background: f.done ? '#7c3aed' : 'rgba(124,58,237,0.15)',
+                                    background: f.done ? 'var(--primary)' : 'rgba(251, 86, 7, 0.15)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: f.done ? '#fff' : '#a78bfa',
+                                    color: f.done ? '#fff' : '#fb5607',
                                 }}>
                                     {f.icon}
                                 </div>
-                                <span style={{ fontSize: '12px', fontWeight: 600, color: f.done ? '#5b21b6' : '#a78bfa', textDecoration: f.done ? 'none' : 'none' }}>{f.label}</span>
-                                {f.done && <span style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 800, color: '#7c3aed' }}>✓</span>}
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: f.done ? '#9a3412' : '#fb5607' }}>{f.label}</span>
+                                {f.done && <span style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 800, color: 'var(--primary)' }}>✓</span>}
                             </div>
                         ))}
-                        <div style={{ marginTop: '12px', height: '6px', borderRadius: '99px', background: 'rgba(124,58,237,0.15)', overflow: 'hidden' }}>
+                        <div style={{ marginTop: '12px', height: '6px', borderRadius: '99px', background: 'rgba(251, 86, 7, 0.1)', overflow: 'hidden' }}>
                             <div style={{
-                                height: '100%', borderRadius: '99px', background: '#7c3aed',
+                                height: '100%', borderRadius: '99px', background: 'var(--primary)',
                                 width: `${([formData.name, formData.image, formData.category, formData.description, formData.region, formData.benefits].filter(Boolean).length / 6) * 100}%`,
                                 transition: 'width 0.3s ease',
                             }} />

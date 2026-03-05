@@ -224,16 +224,16 @@ export function SectionForm() {
             {isAIPrefilled && (
                 <div style={{
                     marginBottom: '24px', padding: '16px 20px',
-                    background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)',
-                    borderRadius: '16px', border: '1.5px solid #c4b5fd',
+                    background: '#fff5f0',
+                    borderRadius: '16px', border: '1.5px solid #fed7aa',
                     display: 'flex', alignItems: 'center', gap: '14px',
                 }}>
-                    <div style={{ width: '38px', height: '38px', background: 'linear-gradient(135deg, #7c3aed, #4318ff)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: '38px', height: '38px', background: 'linear-gradient(135deg, #ff6b1a, #fb5607)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Sparkles size={18} color="#fff" />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#5b21b6' }}>Section pré-remplie par l'IA ✦</p>
-                        <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#7c3aed', fontWeight: 500 }}>
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#9a3412' }}>Section pré-remplie par l'IA ✦</p>
+                        <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#ea580c', fontWeight: 500 }}>
                             Vérifiez le titre, le type et les recettes sélectionnées avant de sauvegarder.
                         </p>
                     </div>
@@ -266,12 +266,12 @@ export function SectionForm() {
                     disabled={loading}
                     style={{
                         display: 'inline-flex', alignItems: 'center', gap: '8px',
-                        background: '#4318ff', color: '#fff',
+                        background: 'var(--primary)', color: '#fff',
                         border: 'none', borderRadius: '14px',
                         padding: '12px 24px', fontSize: '14px', fontWeight: 700,
                         cursor: loading ? 'not-allowed' : 'pointer',
                         opacity: loading ? 0.7 : 1,
-                        boxShadow: '0 4px 16px rgba(67,24,255,0.25)',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
                         transition: 'all 0.2s',
                     }}
                 >
@@ -289,8 +289,8 @@ export function SectionForm() {
                     {/* Panel 1: Identité de la section */}
                     <div style={cardStyle}>
                         <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Sparkles size={16} color="#7c3aed" />
+                            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #fff5f0, #ffebd8)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Sparkles size={16} color="var(--primary)" />
                             </div>
                             <div>
                                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>Identité</h3>
@@ -413,8 +413,8 @@ export function SectionForm() {
                                     const isActive = formData.type === 'dynamic_carousel';
                                     return (
                                         <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'dynamic_carousel' }))}
-                                            style={{ border: isActive ? '2.5px solid #4318ff' : '2px solid #f0f0f0', background: isActive ? '#f5f3ff' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
-                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#4318ff' }}><CheckCircle2 size={14} /></div>}
+                                            style={{ border: isActive ? '2.5px solid var(--primary)' : '2px solid #f0f0f0', background: isActive ? '#fff5f0' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: 'var(--primary)' }}><CheckCircle2 size={14} /></div>}
                                             {/* Mockup */}
                                             <div style={{ width: '100%', aspectRatio: '9/7', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '-8px' }}>
                                                 {/* Side card left */}
@@ -431,13 +431,13 @@ export function SectionForm() {
                                                 <div style={{ width: '34%', aspectRatio: '2/3', borderRadius: '12px', background: 'linear-gradient(135deg, #fff3e0, #ffe0b2)', position: 'absolute', right: '2px', top: '8px', opacity: 0.55, transform: 'rotate(4deg) scale(0.88)', boxShadow: '0 3px 10px rgba(0,0,0,0.10)' }} />
                                                 {/* Dots */}
                                                 <div style={{ position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '3px' }}>
-                                                    <div style={{ width: '10px', height: '3px', borderRadius: '2px', background: '#4318ff' }} />
+                                                    <div style={{ width: '10px', height: '3px', borderRadius: '2px', background: 'var(--primary)' }} />
                                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d1d5db' }} />
                                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d1d5db' }} />
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'center' }}>
-                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#4318ff' : '#374151' }}>Carrousel</p>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? 'var(--primary)' : '#374151' }}>Carrousel</p>
                                                 <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>Défilement</p>
                                             </div>
                                         </button>
@@ -643,9 +643,9 @@ export function SectionForm() {
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                                             <p style={{ ...labelStyle, margin: 0 }}>Options du Coverflow</p>
                                             {isAutoplay && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#eef2ff', borderRadius: '20px', padding: '4px 10px' }}>
-                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4318ff', animation: 'pulse 1.5s infinite' }} />
-                                                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#4318ff' }}>AUTO · {intervalSec}s</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff5f0', borderRadius: '20px', padding: '4px 10px' }}>
+                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', animation: 'pulse 1.5s infinite' }} />
+                                                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)' }}>AUTO · {intervalSec}s</span>
                                                 </div>
                                             )}
                                         </div>
@@ -661,14 +661,14 @@ export function SectionForm() {
                                                 cursor: 'pointer', transition: 'all 0.2s',
                                             }}>
                                                 <div>
-                                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: isAutoplay ? '#4318ff' : '#374151' }}>Défilement auto</p>
+                                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: isAutoplay ? 'var(--primary)' : '#374151' }}>Défilement auto</p>
                                                     <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af' }}>Avance seul</p>
                                                 </div>
                                                 <input
                                                     type="checkbox" id="autoplay"
                                                     checked={isAutoplay}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, autoplay: e.target.checked } }))}
-                                                    style={{ width: '18px', height: '18px', accentColor: '#4318ff', cursor: 'pointer' }}
+                                                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
                                                 />
                                             </label>
                                             {/* Show dots toggle */}
@@ -685,7 +685,7 @@ export function SectionForm() {
                                                     type="checkbox" id="show_dots"
                                                     checked={formData.config?.show_dots === true || formData.config?.show_dots === 'true'}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, show_dots: e.target.checked } }))}
-                                                    style={{ width: '18px', height: '18px', accentColor: '#4318ff', cursor: 'pointer' }}
+                                                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
                                                 />
                                             </label>
                                         </div>
@@ -693,7 +693,7 @@ export function SectionForm() {
                                         {/* Row 2: Timing pills — visible only when autoplay ON */}
                                         {isAutoplay && (
                                             <div>
-                                                <p style={{ ...labelStyle, marginBottom: '10px', color: '#4318ff' }}>⏱ Intervalle de défilement</p>
+                                                <p style={{ ...labelStyle, marginBottom: '10px', color: 'var(--primary)' }}>⏱ Intervalle de défilement</p>
                                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                                     {TIMING_OPTIONS.map(opt => {
                                                         const active = intervalMs === opt.value;
@@ -705,13 +705,13 @@ export function SectionForm() {
                                                                 style={{
                                                                     display: 'flex', flexDirection: 'column', alignItems: 'center',
                                                                     padding: '8px 14px', borderRadius: '12px', cursor: 'pointer',
-                                                                    border: active ? '2px solid #4318ff' : '1.5px solid #e5e7eb',
-                                                                    background: active ? 'linear-gradient(135deg, #eef2ff, #ede9fe)' : '#fff',
+                                                                    border: active ? '2px solid var(--primary)' : '1.5px solid #e5e7eb',
+                                                                    background: active ? 'linear-gradient(135deg, #fff5f0, #ffebd8)' : '#fff',
                                                                     transition: 'all 0.15s', minWidth: '52px',
                                                                 }}
                                                             >
-                                                                <span style={{ fontSize: '14px', fontWeight: 800, color: active ? '#4318ff' : '#374151' }}>{opt.label}</span>
-                                                                <span style={{ fontSize: '9px', color: active ? '#7c3aed' : '#9ca3af', marginTop: '2px', fontWeight: 600 }}>{opt.desc}</span>
+                                                                <span style={{ fontSize: '14px', fontWeight: 800, color: active ? 'var(--primary)' : '#374151' }}>{opt.label}</span>
+                                                                <span style={{ fontSize: '9px', color: active ? 'var(--primary)' : '#9ca3af', marginTop: '2px', fontWeight: 600 }}>{opt.desc}</span>
                                                             </button>
                                                         );
                                                     })}
@@ -721,14 +721,14 @@ export function SectionForm() {
                                                     <div
                                                         style={{
                                                             height: '100%', borderRadius: '4px',
-                                                            background: 'linear-gradient(90deg, #4318ff, #7c3aed)',
+                                                            background: 'linear-gradient(90deg, #fb5607, #ff8c42)',
                                                             width: `${Math.round((intervalMs / 10000) * 100)}%`,
                                                             transition: 'width 0.3s ease',
                                                         }}
                                                     />
                                                 </div>
                                                 <p style={{ margin: '6px 0 0', fontSize: '10px', color: '#9ca3af', fontWeight: 500 }}>
-                                                    La card suivante s'affiche après <strong style={{ color: '#4318ff' }}>{intervalSec} secondes</strong>
+                                                    La card suivante s'affiche après <strong style={{ color: 'var(--primary)' }}>{intervalSec} secondes</strong>
                                                 </p>
                                             </div>
                                         )}

@@ -128,10 +128,10 @@ export function RecipesList() {
                         to="/recipes/create"
                         style={{
                             display: 'inline-flex', alignItems: 'center', gap: '8px',
-                            background: '#4318ff', color: '#fff', textDecoration: 'none',
+                            background: 'var(--primary)', color: '#fff', textDecoration: 'none',
                             borderRadius: '14px', padding: '10px 20px',
                             fontSize: '14px', fontWeight: 700,
-                            boxShadow: '0 4px 16px rgba(67,24,255,0.25)',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
                         }}
                     >
                         <Plus size={17} /> Nouvelle Recette
@@ -142,7 +142,7 @@ export function RecipesList() {
             {/* ── Stats bar ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
                 {[
-                    { label: 'Total recettes', value: recipes.length, icon: ChefHat, color: '#4318ff', bg: '#ede9fe' },
+                    { label: 'Total recettes', value: recipes.length, icon: ChefHat, color: 'var(--primary)', bg: '#fff5f0' },
                     { label: 'Résultats', value: filteredRecipes.length, icon: Search, color: '#059669', bg: '#d1fae5' },
                     { label: 'Catégories', value: [...new Set(recipes.map(r => r.category).filter(Boolean))].length, icon: Filter, color: '#d97706', bg: '#fef3c7' },
                     { label: 'Régions', value: [...new Set(recipes.map(r => r.region).filter(Boolean))].length, icon: MapPin, color: '#0891b2', bg: '#e0f2fe' },

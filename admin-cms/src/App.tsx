@@ -7,6 +7,7 @@ import { SectionsManager } from './pages/SectionsManager';
 import { SectionForm } from './pages/SectionForm';
 import { Feedback } from './pages/Feedback';
 import { UsersPage } from './pages/Users';
+import { Settings } from './pages/Settings';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -19,12 +20,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (location.pathname === '/feedback') return 'Retours Clients';
     if (location.pathname === '/dashboard') return 'Tableau de bord';
     if (location.pathname === '/users') return 'Utilisateurs';
-    return 'Bienvenue sur AfriHub';
+    if (location.pathname === '/settings') return 'Réglages IA';
+    return 'Bienvenue sur AfroCuisto';
   };
 
   const getBreadcrumb = () => {
     if (location.pathname.startsWith('/sections')) return 'Pages / Sections';
     if (location.pathname.startsWith('/users')) return 'Pages / Utilisateurs';
+    if (location.pathname.startsWith('/settings')) return 'Réglages / IA';
     return 'Pages / Tableau de bord';
   };
 
@@ -57,7 +60,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <button className="avatar flex items-center gap-3" onClick={() => alert('Profil Administrateur bientôt disponible')}>
               <span className="badge badge-primary" style={{ cursor: 'pointer' }}>Super Admin</span>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#4318FF', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                 A
               </div>
             </button>
@@ -86,6 +89,7 @@ function App() {
           <Route path="/sections/edit/:id" element={<SectionForm />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/feedback" element={<Feedback />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </AppLayout>
     </Router>

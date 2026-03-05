@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #4318FF;
-  --primary-hover: #3311DB;
+  --primary: #fb5607;
+  --primary-hover: #e84d00;
   --bg-color: #F4F7FE;
   --surface: #ffffff;
   --surface-hover: #fcfcfc;
@@ -16,13 +16,13 @@
 
   --sidebar-bg: #ffffff;
   --sidebar-text: #A3AED0;
-  --sidebar-hover: #F4F7FE;
+  --sidebar-hover: #fff5f0;
   --sidebar-active: #ffffff;
 
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow-soft: 0px 18px 40px rgba(112, 144, 176, 0.12);
-  --shadow-sm: 0px 2px 4px rgba(112, 144, 176, 0.08);
+  --shadow-soft: 0px 18px 40px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0px 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -111,7 +111,7 @@ button {
 
 .nav-item.active {
   color: var(--primary);
-  background-color: rgba(67, 24, 255, 0.08);
+  background-color: rgba(251, 86, 7, 0.08);
 }
 
 .nav-item.active::after {
@@ -265,12 +265,12 @@ button {
 .btn-primary {
   background-color: var(--primary);
   color: white;
-  box-shadow: 0 4px 12px rgba(67, 24, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
-  box-shadow: 0 6px 16px rgba(67, 24, 255, 0.35);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .btn-secondary {
@@ -339,7 +339,7 @@ button {
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
 }
 
 select.form-control {
@@ -366,7 +366,7 @@ textarea.form-control {
 }
 
 .badge-primary {
-  background-color: rgba(67, 24, 255, 0.1);
+  background-color: rgba(251, 86, 7, 0.1);
   color: var(--primary);
 }
 
@@ -535,7 +535,7 @@ textarea.form-control {
 
 /* Loaders */
 .loader {
-  border: 3px solid rgba(67, 24, 255, 0.1);
+  border: 3px solid rgba(251, 86, 7, 0.1);
   border-left-color: var(--primary);
   border-radius: 50%;
   width: 24px;
@@ -591,7 +591,7 @@ textarea.form-control {
 
 .upload-area:hover {
   border-color: var(--primary);
-  background-color: rgba(67, 24, 255, 0.02);
+  background-color: rgba(251, 86, 7, 0.02);
 }
 
 /* Custom Scrollbar */

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
     Plus, Trash2, ArrowUp, ArrowDown, LayoutGrid, GalleryHorizontal,
     List, AlignJustify, Smartphone, Compass, Sparkles, RefreshCw,
-    Lightbulb, Star
+    Star
 } from 'lucide-react';
 import { aiService } from '../lib/ai';
 import { Link } from 'react-router-dom';
@@ -32,20 +32,17 @@ interface AIGeneratedSection {
 
 export function SectionsManager() {
     const [sections, setSections] = useState<any[]>([]);
-    const [recipes, setRecipes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // AI logic state
-    const [aiSuggestions, setAiSuggestions] = useState<AIGeneratedSection[]>([]);
-    const [isAiScanning, setIsAiScanning] = useState(false);
     // 🎩 AI Section Creation Wizard state
     const [wizardOpen, setWizardOpen] = useState(false);
     const [wizardStep, setWizardStep] = useState(1);
     const [selectedType, setSelectedType] = useState<string>('dynamic_carousel');
     const [theme, setTheme] = useState('');
-    const [sampleRecipes, setSampleRecipes] = useState<string[]>([]);
     const [generatedSection, setGeneratedSection] = useState<AIGeneratedSection | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
     const [editedTitle, setEditedTitle] = useState('');
     const [editedSubtitle, setEditedSubtitle] = useState('');
     const [editedRecipeIds, setEditedRecipeIds] = useState<string[]>([]);
@@ -58,12 +55,10 @@ export function SectionsManager() {
     async function fetchData() {
         try {
             setLoading(true);
-            const [sectionRes, recipeRes] = await Promise.all([
+            const [sectionRes] = await Promise.all([
                 supabase.from('home_sections').select('*').order('order_index'),
-                supabase.from('recipes').select('id, name, category, region, difficulty, prep_time, cook_time, image').order('name'),
             ]);
             if (sectionRes.data) setSections(sectionRes.data);
-            if (recipeRes.data) setRecipes(recipeRes.data);
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
@@ -119,77 +114,15 @@ export function SectionsManager() {
         }
     }
 
-    async function scanCatalogForSuggestions() {
-        if (recipes.length < 3) return;
-        setIsAiScanning(true);
 
-        const context = recipes.slice(0, 40).map(r => `${r.name}(${r.category})`).join(', ');
-        const { data, error } = await aiService.suggestSections(context, "Propose une section thématique originale basée sur les plats présents.");
-
-        if (data) {
-            setAiSuggestions(prev => [data, ...prev].slice(0, 3));
-        } else if (error) {
-            alert(error);
-        }
-        setIsAiScanning(false);
-    }
 
     const homeSections = sections.filter(s => !s.config?.page || s.config.page === 'home');
     const explorerSections = sections.filter(s => s.config?.page === 'explorer');
 
     // ── Components ───────────────────────────────────────────────────────────
-    const RecipePreviewChip = ({ recipeId }: { recipeId: string }) => {
-        const recipe = recipes.find(r => r.id === recipeId);
-        if (!recipe) return null;
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f9fafb', borderRadius: '12px', padding: '8px 12px', border: '1px solid #f0f0f0' }}>
-                <img src={recipe.image} alt={recipe.name} style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} onError={e => (e.currentTarget.style.display = 'none')} />
-                <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{recipe.name}</p>
-                    <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', fontWeight: 500 }}>{recipe.category}</p>
-                </div>
-            </div>
-        );
-    };
 
-    const AISuggestionCard = ({ suggestion, onAccept }: { suggestion: AIGeneratedSection; onAccept: (s: AIGeneratedSection) => void }) => (
-        <div style={{
-            background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-            borderRadius: '20px', border: '1.5px solid #ddd6fe',
-            padding: '20px', position: 'relative',
-            display: 'flex', flexDirection: 'column'
-        }}>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Lightbulb size={18} color="#fff" />
-                </div>
-                <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#111827' }}>{suggestion.title}</p>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#6d28d9', fontWeight: 600 }}>{suggestion.subtitle}</p>
-                </div>
-            </div>
-            <p style={{ margin: '0 0 16px', fontSize: '12px', color: '#5b21b6', fontStyle: 'italic', lineHeight: 1.5, background: 'rgba(255,255,255,0.4)', padding: '10px', borderRadius: '12px' }}>
-                "{suggestion.reasoning}"
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
-                {suggestion.recipe_ids.slice(0, 4).map(rid => (
-                    <RecipePreviewChip key={rid} recipeId={rid} />
-                ))}
-            </div>
-            <button
-                onClick={() => onAccept(suggestion)}
-                style={{
-                    marginTop: 'auto', width: '100%', padding: '12px', borderRadius: '12px',
-                    background: '#7c3aed', color: '#fff', border: 'none',
-                    fontSize: '13px', fontWeight: 800, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                    boxShadow: '0 4px 12px rgba(124,58,237,0.25)'
-                }}
-            >
-                <Plus size={16} /> Ajouter cette section
-            </button>
-        </div>
-    );
+
+
 
 
     const SectionCard = ({ section, idx, group }: { section: any; idx: number; group: any[] }) => {
@@ -203,7 +136,7 @@ export function SectionsManager() {
         return (
             <div style={{
                 background: '#fff', borderRadius: '18px',
-                border: isAIGenerated ? '1.5px solid #ddd6fe' : '1px solid #f0f0f0',
+                border: isAIGenerated ? '1.5px solid #ffd8c2' : '1px solid #f0f0f0',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                 padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px',
                 opacity: isDeleting ? 0.5 : 1,
@@ -217,7 +150,7 @@ export function SectionsManager() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>{section.title}</span>
-                        {isAIGenerated && <Sparkles size={12} color="#7c3aed" />}
+                        {isAIGenerated && <Sparkles size={12} color="#fb5607" />}
                     </div>
                     <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>{section.subtitle}</p>
                 </div>
@@ -226,7 +159,7 @@ export function SectionsManager() {
                     <button onClick={() => handleMoveGroup(section.id, 'down', group)} disabled={isLast} style={{ padding: '6px', borderRadius: '8px', border: '1px solid #eee', background: '#fff', cursor: isLast ? 'not-allowed' : 'pointer' }}><ArrowDown size={14} /></button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Link to={`/sections/edit/${section.id}`} style={{ padding: '8px 12px', borderRadius: '10px', background: '#4318ff', color: '#fff', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>Modifier</Link>
+                    <Link to={`/sections/edit/${section.id}`} style={{ padding: '8px 12px', borderRadius: '10px', background: 'var(--primary)', color: '#fff', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>Modifier</Link>
                     <button onClick={() => handleDelete(section.id)} style={{ padding: '8px', borderRadius: '10px', background: '#fff5f5', border: '1px solid #fee2e2', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
                 </div>
             </div>
@@ -261,67 +194,31 @@ export function SectionsManager() {
                     <p style={{ color: '#9ca3af', margin: '4px 0 0' }}>Organisez le contenu de votre application mobile</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <button onClick={scanCatalogForSuggestions} disabled={isAiScanning} style={{
-                        display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '14px',
-                        background: isAiScanning ? '#f3f4f6' : 'linear-gradient(135deg, #7c3aed, #4318ff)',
-                        color: isAiScanning ? '#9ca3af' : '#fff', border: 'none', fontWeight: 700, cursor: isAiScanning ? 'wait' : 'pointer',
-                        boxShadow: isAiScanning ? 'none' : '0 4px 15px rgba(124,58,237,0.3)'
-                    }}>
-                        {isAiScanning ? <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={18} />}
-                        {isAiScanning ? 'Analyse...' : 'Scanner avec l\'IA'}
-                    </button>
+
                     <button onClick={() => {
                         setWizardStep(1);
                         setTheme('');
                         setWizardOpen(true);
                     }} style={{
                         display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '14px',
-                        background: 'linear-gradient(135deg, #7c3aed, #4318ff)',
+                        background: 'linear-gradient(135deg, #ff6b1a, #fb5607)',
                         color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer',
-                        boxShadow: '0 4px 15px rgba(124,58,237,0.3)'
+                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.25)'
                     }}>
                         <Sparkles size={18} /> Créer avec IA
                     </button>
 
                     <Link to="/sections/create" style={{
                         display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '14px',
-                        background: '#4318ff', color: '#fff', textDecoration: 'none', fontWeight: 700,
-                        boxShadow: '0 4px 15px rgba(67,24,255,0.2)'
+                        background: 'var(--primary)', color: '#fff', textDecoration: 'none', fontWeight: 700,
+                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.25)'
                     }}>
                         <Plus size={18} /> Nouvelle Section
                     </Link>
                 </div>
             </div>
 
-            {/* Suggestions Feed */}
-            {aiSuggestions.length > 0 && (
-                <div style={{ marginBottom: '40px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                        <Sparkles size={20} color="#7c3aed" />
-                        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Suggestions Magiques</h2>
-                        <span style={{ fontSize: '10px', background: '#7c3aed', color: '#fff', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>Nouveau</span>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                        {aiSuggestions.map((s, i) => (
-                            <AISuggestionCard key={i} suggestion={s} onAccept={async (sug) => {
-                                const newId = `ai_${Date.now()}`;
-                                const maxOrder = sections.reduce((max, s) => Math.max(max, s.order_index || 0), -1);
-                                try {
-                                    const { error } = await supabase.from('home_sections').insert([{
-                                        id: newId, title: sug.title, subtitle: sug.subtitle,
-                                        type: sug.type, recipe_ids: sug.recipe_ids,
-                                        config: { page: sug.page || 'home', design_style: 'design_1', ai_generated: true },
-                                        order_index: maxOrder + 1,
-                                    }]);
-                                    if (error) throw error;
-                                    setAiSuggestions(prev => prev.filter(item => item !== sug));
-                                    fetchData();
-                                } catch (e: any) { alert(e.message); }
-                            }} />
-                        ))}
-                    </div>
-                </div>
-            )}
+
 
             {/* Main Sections */}
             {loading ? (
@@ -396,7 +293,7 @@ export function SectionsManager() {
                                     placeholder="ex: Spécialités épicées du Sénégal"
                                     style={{
                                         width: '100%', padding: '15px', borderRadius: '15px',
-                                        border: '1.5px solid #ede9fe', background: '#f5f3ff',
+                                        border: '1.5px solid #ffd8c2', background: '#fff5f0',
                                         fontSize: '15px', color: '#111827', outline: 'none',
                                         marginBottom: '20px'
                                     }}
@@ -405,8 +302,8 @@ export function SectionsManager() {
                                     onClick={() => setWizardStep(3)}
                                     style={{
                                         width: '100%', padding: '15px', borderRadius: '15px',
-                                        background: '#7c3aed', color: '#fff', border: 'none',
-                                        fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)'
+                                        background: '#fb5607', color: '#fff', border: 'none',
+                                        fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                                     }}
                                 >
                                     Suivant
@@ -416,15 +313,26 @@ export function SectionsManager() {
                         {wizardStep === 3 && (
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{ marginBottom: '20px' }}>
-                                    <Sparkles size={40} color="#7c3aed" style={{ animation: 'spin 2s linear infinite' }} />
+                                    <Sparkles
+                                        size={40}
+                                        color={aiLoading ? "#fb5607" : "#d1d5db"}
+                                        style={{ animation: aiLoading ? 'spin 1.5s linear infinite' : 'none' }}
+                                    />
                                 </div>
-                                <h2 style={{ marginBottom: '8px', fontSize: '18px', fontWeight: 800 }}>Prêt pour la magie ?</h2>
-                                <p style={{ marginBottom: '20px', fontSize: '14px', color: '#6b7280' }}>L'IA va sélectionner les meilleurs plats et rédiger les titres pour vous.</p>
+                                <h2 style={{ marginBottom: '8px', fontSize: '18px', fontWeight: 800 }}>
+                                    {aiLoading ? 'Génération en cours...' : 'Prêt pour la magie ?'}
+                                </h2>
+                                <p style={{ marginBottom: '20px', fontSize: '14px', color: '#6b7280' }}>
+                                    {aiLoading
+                                        ? "L'IA analyse le catalogue pour concocter la meilleure sélection..."
+                                        : "L'IA va sélectionner les meilleurs plats et rédiger les titres pour vous."}
+                                </p>
                                 <button
+                                    disabled={aiLoading}
                                     onClick={async () => {
+                                        setAiLoading(true);
                                         try {
-                                            const sample = await aiService.getSampleRecipes(10);
-                                            setSampleRecipes(sample);
+                                            const sample = await aiService.getSampleRecipes(20);
                                             const res = await aiService.generateSection(selectedType, theme, sample);
                                             if (res.data) {
                                                 setGeneratedSection(res.data);
@@ -433,19 +341,24 @@ export function SectionsManager() {
                                                 setEditedRecipeIds(res.data.recipe_ids);
                                                 setWizardStep(4);
                                             } else {
-                                                alert(res.error || 'Erreur IA');
+                                                alert(res.error || 'Erreur IA : Recommencez ou vérifiez votre clé API.');
                                             }
-                                        } catch (e) {
-                                            alert('Erreur lors de la génération');
+                                        } catch (e: any) {
+                                            alert(`Erreur technique : ${e.message}`);
+                                        } finally {
+                                            setAiLoading(false);
                                         }
                                     }}
                                     style={{
                                         width: '100%', padding: '15px', borderRadius: '15px',
-                                        background: '#7c3aed', color: '#fff', border: 'none',
-                                        fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)'
+                                        background: aiLoading ? '#f3f4f6' : '#fb5607',
+                                        color: aiLoading ? '#9ca3af' : '#fff',
+                                        border: 'none',
+                                        fontWeight: 800, cursor: aiLoading ? 'not-allowed' : 'pointer',
+                                        boxShadow: aiLoading ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.15)'
                                     }}
                                 >
-                                    Lancer la Génération
+                                    {aiLoading ? <RefreshCw size={18} className="animate-spin" /> : 'Lancer la Génération'}
                                 </button>
                             </div>
                         )}
@@ -468,25 +381,28 @@ export function SectionsManager() {
                                 <button
                                     onClick={async () => {
                                         try {
-                                            const { error } = await supabase.from('home_sections').insert({
+                                            const newId = `${Date.now()}`;
+                                            const { error } = await supabase.from('home_sections').insert([{
+                                                id: newId,
                                                 title: editedTitle,
                                                 subtitle: editedSubtitle,
                                                 type: selectedType,
                                                 recipe_ids: editedRecipeIds,
                                                 config: { ai_generated: true, page: generatedSection.page || 'home' },
                                                 order_index: sections.length,
-                                            });
+                                            }]);
                                             if (error) throw error;
                                             fetchData();
                                             setWizardOpen(false);
-                                        } catch (e) {
-                                            alert('Erreur lors de l\'enregistrement');
+                                        } catch (e: any) {
+                                            console.error('Save AI section error:', e);
+                                            alert(`Erreur lors de l'enregistrement : ${e.message || 'Vérifiez la console'}`);
                                         }
                                     }}
                                     style={{
                                         width: '100%', padding: '15px', borderRadius: '15px',
                                         background: '#10b981', color: '#fff', border: 'none',
-                                        fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                                        fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                                     }}
                                 >
                                     Appliquer et Sauvegarder

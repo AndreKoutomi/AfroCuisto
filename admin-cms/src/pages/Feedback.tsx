@@ -31,7 +31,7 @@ function getInitials(name: string) {
 
 function getAvatarGradient(name: string) {
     const palettes = [
-        ['#4318FF', '#7551FF'], ['#fb5607', '#ff8c42'],
+        ['#fb5607', '#ff8c42'], ['#F94D00', '#ff8c42'],
         ['#059669', '#34d399'], ['#d97706', '#fbbf24'],
         ['#7c3aed', '#a78bfa'], ['#0891b2', '#22d3ee'],
         ['#db2777', '#f472b6'], ['#65a30d', '#a3e635'],
@@ -123,7 +123,7 @@ export function Feedback() {
     // ── Loading ───────────────────────────────────────────────────────────────
     if (loading) return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #f3f4f6', borderTopColor: '#4318FF', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #f3f4f6', borderTopColor: '#fb5607', animation: 'spin 0.8s linear infinite' }} />
             <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: 14 }}>Chargement des retours clients...</p>
         </div>
     );
@@ -137,10 +137,10 @@ export function Feedback() {
                 {/* Score global */}
                 <div style={{
                     gridColumn: 'span 1',
-                    background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%)',
+                    background: 'linear-gradient(135deg, #fb5607 0%, #ff8c42 60%, #ffa552 100%)',
                     borderRadius: 28, padding: '28px 24px',
                     display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                    boxShadow: '0 8px 32px rgba(67,56,202,0.25)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
                     color: '#fff', position: 'relative', overflow: 'hidden',
                 }}>
                     <div style={{ position: 'absolute', right: -20, top: -20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
@@ -164,8 +164,8 @@ export function Feedback() {
                 {/* Total avis */}
                 <div style={{ background: '#fff', borderRadius: 28, padding: '24px', border: '1px solid #f0f0f0', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <MessageSquare size={18} color="#4318FF" />
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fff5f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <MessageSquare size={18} color="#fb5607" />
                         </div>
                         <p style={{ margin: 0, fontSize: 10, fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Avis reçus</p>
                     </div>
@@ -207,7 +207,7 @@ export function Feedback() {
                                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', width: 8, textAlign: 'right', flexShrink: 0 }}>{rating}</span>
                                 <Star size={10} color="#fbbf24" fill="#fbbf24" style={{ flexShrink: 0 }} />
                                 <div style={{ flex: 1, height: 6, borderRadius: 99, background: '#f3f4f6', overflow: 'hidden' }}>
-                                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: rating >= 4 ? '#4318FF' : rating === 3 ? '#fbbf24' : '#ef4444', transition: 'width 0.6s ease' }} />
+                                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: rating >= 4 ? '#fb5607' : rating === 3 ? '#fbbf24' : '#ef4444', transition: 'width 0.6s ease' }} />
                                 </div>
                                 <span style={{ fontSize: 11, fontWeight: 700, color: '#374151', width: 26, textAlign: 'right', flexShrink: 0 }}>{count}</span>
                             </div>
@@ -240,8 +240,8 @@ export function Feedback() {
                                 height: 36, borderRadius: 99, border: '1.5px solid',
                                 padding: '0 12px', cursor: 'pointer',
                                 fontSize: 12, fontWeight: 800, transition: 'all 0.15s',
-                                borderColor: filterRating === r ? '#4318FF' : '#e5e7eb',
-                                background: filterRating === r ? '#4318FF' : '#fff',
+                                borderColor: filterRating === r ? '#fb5607' : '#e5e7eb',
+                                background: filterRating === r ? '#fb5607' : '#fff',
                                 color: filterRating === r ? '#fff' : '#6b7280',
                                 display: 'flex', alignItems: 'center', gap: 4,
                             }}

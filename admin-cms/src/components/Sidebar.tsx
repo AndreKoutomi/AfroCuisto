@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookText, LayoutGrid, MessageSquare, Users } from 'lucide-react';
+import { LayoutDashboard, BookText, LayoutGrid, MessageSquare, Users, Settings } from 'lucide-react';
 
 export function Sidebar() {
     return (
         <aside className="sidebar">
-            <div className="sidebar-header">
-                <span style={{ color: 'var(--text-main)' }}>Afri</span><span style={{ color: 'var(--primary)' }}>Hub</span>
+            <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src="/images/chef_icon_v2.png" alt="Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+                <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                    <span style={{ color: 'var(--text-main)' }}>Afro</span><span style={{ color: 'var(--primary)' }}>Cuisto</span>
+                </div>
                 <span className="badge badge-primary text-xs ml-2" style={{ marginLeft: 'auto' }}>PRO</span>
             </div>
 
@@ -47,6 +50,13 @@ export function Sidebar() {
                     <MessageSquare size={20} style={{ marginRight: '8px' }} />
                     <span>Retour client</span>
                     <span className="badge badge-primary text-[10px] ml-auto">NEW</span>
+                </NavLink>
+                <NavLink
+                    to="/settings"
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                >
+                    <Settings size={20} style={{ marginRight: '8px' }} />
+                    <span>Réglages IA</span>
                 </NavLink>
             </nav>
 
