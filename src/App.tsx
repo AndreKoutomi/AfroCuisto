@@ -524,7 +524,7 @@ const FeaturedStackCarousel: React.FC<{
   return (
     <section style={{ marginBottom: '32px', overflowX: 'hidden' }}>
       {/* Clip wrapper — prevents horizontal overflow but allows shadows vertically */}
-      <div style={{ overflowX: 'hidden', overflowY: 'visible', width: '100%', paddingBottom: '12px', marginBottom: '-6px' }}>
+      <div style={{ overflowX: 'hidden', overflowY: 'visible', width: '100%', paddingBottom: '36px', marginBottom: '-36px' }}>
         <div style={{
           position: 'relative',
           width: '100%',
