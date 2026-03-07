@@ -17,13 +17,19 @@ class AIService {
     // 1️⃣ Gestion de la clé API
     // ---------------------------------------------------------------------
     private getApiKey(): string {
+        const model = this.getModel();
+        const isGemini = model.startsWith('gemini');
+
         // Priorité absolue au localStorage pour la personnalisation utilisateur
         const userKey = localStorage.getItem('gemini_api_key');
         if (userKey) return userKey;
 
-        // Repli sur la clé globale si configurée
-        const globalKey = import.meta.env.VITE_GEMINI_API_KEY;
-        return globalKey || '';
+        // Repli sur les clés globales
+        if (isGemini) {
+            return (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+        } else {
+            return (import.meta as any).env.VITE_OPENAI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+        }
     }
 
     private getBaseUrl(): string {
@@ -33,9 +39,9 @@ class AIService {
     // ---------------------------------------------------------------------
     // 2️⃣ Gestion du modèle (Gemini ou OpenAI)
     // ---------------------------------------------------------------------
-    /** Retourne le modèle actuellement sélectionné (stocké en localStorage) */
+    /** Retourne le modèle actuellement sélectionné (stocké en localStorage ou env) */
     private getModel(): string {
-        return localStorage.getItem('gemini_model') || DEFAULT_MODEL;
+        return localStorage.getItem('gemini_model') || (import.meta as any).env.VITE_AI_MODEL || DEFAULT_MODEL;
     }
 
     /** Permet de changer le modèle depuis l'UI (ex. via Settings) */

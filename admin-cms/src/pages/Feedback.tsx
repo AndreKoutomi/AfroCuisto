@@ -414,6 +414,132 @@ export function Feedback() {
                     </div>
                 </>
             )}
+            <DishSuggestions />
+        </div>
+    );
+}
+
+// Suggestions de plats récupérées depuis l'application mobile
+interface DishSuggestion {
+    id: string;
+    name: string;
+    ingredients: string;
+    description: string;
+    created_at: string;
+}
+
+function parseSuggestionDescription(description: string) {
+    const [mainDescription, extraBlock] = description.split('\n\n---\nInformations complémentaires\n');
+    const extras = (extraBlock || '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    return {
+        mainDescription: mainDescription?.trim() || '',
+        extras,
+    };
+}
+
+export function DishSuggestions() {
+    const [suggestions, setSuggestions] = useState<DishSuggestion[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchSuggestions();
+    }, []);
+
+    async function fetchSuggestions() {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('dish_suggestions')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error && error.code !== '42P01') throw error;
+            setSuggestions(data || []);
+        } catch (err) {
+            console.error('Erreur lors de la récupération des suggestions:', err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (loading) return <p>Chargement des suggestions...</p>;
+
+    return (
+        <div style={{ marginTop: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <div>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9ca3af' }}>Contributions reçues</p>
+                    <h2 style={{ margin: '6px 0 0', fontSize: 24, fontWeight: 900, color: '#111827' }}>Suggestions de plats</h2>
+                </div>
+                <button
+                    onClick={fetchSuggestions}
+                    style={{ width: 42, height: 42, borderRadius: 14, border: '1.5px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280' }}
+                    title="Actualiser les suggestions"
+                >
+                    <RefreshCw size={16} />
+                </button>
+            </div>
+
+            {suggestions.length === 0 ? (
+                <div style={{ background: '#fff', borderRadius: 28, padding: 36, border: '1px dashed #e5e7eb', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#9ca3af' }}>Aucune suggestion envoyée pour le moment.</p>
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+                    {suggestions.map((suggestion) => {
+                        const parsed = parseSuggestionDescription(suggestion.description || '');
+                        return (
+                            <div
+                                key={suggestion.id}
+                                style={{
+                                    background: '#fff',
+                                    borderRadius: 28,
+                                    border: '1px solid #f0f0f0',
+                                    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                                    padding: 22,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 16,
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                                    <div>
+                                        <p style={{ margin: 0, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9ca3af' }}>Suggestion</p>
+                                        <h3 style={{ margin: '6px 0 0', fontSize: 20, fontWeight: 900, color: '#111827' }}>{suggestion.name}</h3>
+                                    </div>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af' }}>
+                                        {new Date(suggestion.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9ca3af' }}>Ingrédients</p>
+                                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: '#374151' }}>{suggestion.ingredients}</p>
+                                </div>
+
+                                <div>
+                                    <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9ca3af' }}>Description</p>
+                                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7, color: '#374151' }}>{parsed.mainDescription || '—'}</p>
+                                </div>
+
+                                {parsed.extras.length > 0 && (
+                                    <div style={{ background: '#f9fafb', borderRadius: 18, padding: 14, border: '1px solid #f3f4f6' }}>
+                                        <p style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9ca3af' }}>Informations complémentaires</p>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                            {parsed.extras.map((line, index) => (
+                                                <p key={`${suggestion.id}-${index}`} style={{ margin: 0, fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>{line}</p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

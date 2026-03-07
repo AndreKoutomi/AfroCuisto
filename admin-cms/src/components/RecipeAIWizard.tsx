@@ -77,7 +77,6 @@ export function RecipeAIWizard({ onClose, onSaved }: Props) {
     const [generated, setGenerated] = useState<GeneratedRecipe | null>(null);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState<'overview' | 'ingredients' | 'steps'>('overview');
-    const [savingMode, setSavingMode] = useState<'direct' | 'form' | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => { inputRef.current?.focus(); }, []);
@@ -99,7 +98,6 @@ export function RecipeAIWizard({ onClose, onSaved }: Props) {
 
     const handleSaveDirect = async () => {
         if (!generated) return;
-        setSavingMode('direct');
         setStep('saving');
         setError('');
         try {
@@ -134,7 +132,6 @@ export function RecipeAIWizard({ onClose, onSaved }: Props) {
             setError(err.message || 'Erreur lors de la sauvegarde.');
             setStep('preview');
         } finally {
-            setSavingMode(null);
         }
     };
 

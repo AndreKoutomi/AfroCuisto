@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Users, Mail, Calendar, Search, Shield, RefreshCw, Copy, Check, Heart, ShoppingBag } from 'lucide-react';
+import DishSuggestionForm from '../components/DishSuggestionForm';
 
 interface UserProfile {
     id: string;
@@ -204,7 +205,7 @@ export function UsersPage() {
                 <div style={{ background: '#fff', borderRadius: '28px', border: '1px solid #f0f0f0', boxShadow: '0 1px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
                     {/* Table Header */}
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 80px', gap: '12px', padding: '14px 24px', background: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-                        {['Utilisateur', 'Email', 'Langue', 'Favoris', 'Inscription', 'Mode'].map(h => (
+                        {["Utilisateur", "Email", "Langue", "Favoris", "Inscription", "Mode"].map(h => (
                             <span key={h} style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</span>
                         ))}
                     </div>
@@ -332,11 +333,20 @@ export function UsersPage() {
                     <div style={{ padding: '12px 24px', background: '#fafafa', borderTop: '1px solid #f0f0f0' }}>
                         <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#9ca3af' }}>
                             {filtered.length} utilisateur{filtered.length !== 1 ? 's' : ''} affiché{filtered.length !== 1 ? 's' : ''}
-                            {search && ` · Recherche : "${search}"`}
+                            {search && ` · Recherche : "{search}"`}
                         </p>
                     </div>
                 </div>
             )}
+
+            <h2>Contribution</h2>
+            <DishSuggestionForm onSubmit={(dish: { name: string; ingredients: string; description: string; }) => console.log('Dish submitted:', dish)} />
+            <div className="contribution-menu">
+                <ul>
+                    <li><a href="#">Proposer un plat</a></li>
+                    <li><a href="#">Voir les contributions</a></li>
+                </ul>
+            </div>
         </div>
     );
 }

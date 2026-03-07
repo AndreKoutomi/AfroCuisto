@@ -366,6 +366,7 @@
 .dark .bg-white.text-stone-700.border-stone-100\/80 {
   background-color: #1a1a1d !important;
   border-color: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 50px;
 }
 
 .dark .bg-white.text-stone-700.border-stone-100\/80:hover {
@@ -667,6 +668,7 @@
   background-color: rgba(30, 30, 33, 0.8) !important;
   border-color: rgba(255, 255, 255, 0.06) !important;
 }
+
 /* -- Settings Back Button Circle ---------------------------------------- */
 .btn-back-circle {
   background-color: #f9fafb !important;
@@ -691,3 +693,36 @@
   background-color: #252528 !important;
 }
 
+.carousel-container {
+  perspective: 1000px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.carousel-item {
+  transition: transform 0.5s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform-style: preserve-3d;
+}
+
+.carousel-item:hover {
+  transform: scale(1.05) rotateY(10deg);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-background {
+  background: linear-gradient(135deg, #ff6b6b, #f06595);
+  animation: parallax 10s infinite alternate;
+}
+
+@keyframes parallax {
+  from {
+    background-position: 0% 0%;
+  }
+
+  to {
+    background-position: 100% 100%;
+  }
+}

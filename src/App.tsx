@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import DishSuggestionForm from './components/DishSuggestionForm';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ChefHat,
@@ -279,21 +280,19 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
   t: any
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState<number | null>(null);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const progressRef = useRef<number>(0);
+  const [dragOffset, setDragOffset] = useState(0);
   const startTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const goTo = (idx: number, dir: 'left' | 'right' = 'right') => {
-    setPrevIndex(activeIndex);
     setDirection(dir);
     setActiveIndex(idx);
     setProgress(0);
-    progressRef.current = 0;
     startTimeRef.current = null;
+    setDragOffset(0);
   };
 
   const goNext = () => goTo((activeIndex + 1) % recipes.length, 'right');
@@ -301,14 +300,14 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
 
   useEffect(() => {
     if (recipes.length <= 1 || isPaused) return;
+
     const animate = (now: number) => {
       if (!startTimeRef.current) startTimeRef.current = now;
       const elapsed = now - startTimeRef.current;
       const p = Math.min(elapsed / AUTOPLAY_DURATION, 1);
       setProgress(p);
-      progressRef.current = p;
+
       if (p >= 1) {
-        setPrevIndex(activeIndex);
         setDirection('right');
         setActiveIndex(prev => (prev + 1) % recipes.length);
         startTimeRef.current = null;
@@ -317,179 +316,268 @@ const HeroCarousel = ({ recipes, setSelectedRecipe, currentUser, toggleFavorite,
         rafRef.current = requestAnimationFrame(animate);
       }
     };
+
     rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [activeIndex, recipes.length, isPaused]);
 
   if (!recipes.length) return null;
+
   const recipe = recipes[activeIndex];
+  const previousRecipe = recipes[(activeIndex - 1 + recipes.length) % recipes.length];
+  const nextRecipe = recipes[(activeIndex + 1) % recipes.length];
   const isFav = currentUser?.favorites.includes(recipe.id);
+
+  const sideCardClass = 'absolute top-[30px] bottom-[34px] w-[44%] rounded-[34px] overflow-hidden pointer-events-none';
 
   return (
     <div
-      className="relative w-full overflow-hidden"
-      style={{ height: '78vw', maxHeight: '360px', touchAction: 'pan-y', borderRadius: '0 0 32px 32px', marginBottom: 2 }}
+      className="relative w-full overflow-visible px-2"
+      style={{ touchAction: 'pan-y', marginBottom: 8 }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* — Background layers (cross-fade between slides) — */}
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={recipe.id}
-          custom={direction}
-          variants={{
-            enter: (d: string) => ({ x: d === 'right' ? '100%' : '-100%', scale: 1.1 }),
-            center: { x: 0, scale: 1 },
-            exit: (d: string) => ({ x: d === 'right' ? '-30%' : '30%', scale: 0.95, opacity: 0 }),
-          }}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ duration: 0.3, ease: [0.32, 0, 0.18, 1] }}
-          className="absolute inset-0"
-        >
-          <img
-            src={recipe.image}
-            className="w-full h-full object-cover"
-            alt={recipe.name}
-          />
-          {/* Cinematic gradient with top scrim for readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/40" />
-          {/* Dual-direction scrim: dark at top for UI buttons visibility on white photos */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
-        </motion.div>
-      </AnimatePresence>
+      <div className="absolute inset-x-8 top-12 h-[78%] rounded-[40px] bg-[#fb5607]/12 blur-3xl pointer-events-none" />
+      <div className="absolute left-1/2 top-[18%] h-[54%] w-[72%] -translate-x-1/2 rounded-full bg-white/70 blur-[90px] pointer-events-none" />
 
-      {/* — Shimmer / ambient glow pulse — */}
-      <motion.div
-        key={`glow-${recipe.id}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.18, 0] }}
-        transition={{ duration: 2.5, ease: 'easeInOut', repeat: Infinity, repeatDelay: 1.5 }}
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 80%, rgba(251,86,7,0.25), transparent)' }}
-      />
+      <div className="relative h-[84vw] max-h-[430px] min-h-[320px] overflow-visible">
+        <AnimatePresence initial={false} mode="wait">
+          <motion.div
+            key={`left-${previousRecipe.id}-${activeIndex}`}
+            initial={{ opacity: 0.2, x: -12, scale: 0.9 }}
+            animate={{ opacity: 0.42, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -28, scale: 0.88 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className={`${sideCardClass} left-0 origin-left`}
+            style={{ transform: 'perspective(1200px) rotateY(16deg)' }}
+          >
+            <img src={previousRecipe.image} alt={previousRecipe.name} className="w-full h-full object-cover scale-110" />
+            <div className="absolute inset-0 bg-white/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/45 via-white/15 to-black/25" />
+          </motion.div>
+        </AnimatePresence>
 
-      {/* — Top bar — */}
-      <div className="absolute top-4 left-5 right-5 flex items-center justify-between z-20">
-        {/* Dot indicators */}
-        <div className="flex items-center gap-1.5">
-          {recipes.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i, i > activeIndex ? 'right' : 'left')}
-              className="relative overflow-hidden rounded-full transition-all duration-500"
-              style={{ width: i === activeIndex ? 24 : 6, height: 6 }}
-            >
-              <div className="absolute inset-0 bg-white/30 rounded-full" />
-              {i === activeIndex && (
-                <motion.div
-                  className="absolute inset-y-0 left-0 bg-white rounded-full"
-                  style={{ width: `${progress * 100}%` }}
-                />
-              )}
-            </button>
-          ))}
+        <AnimatePresence initial={false} mode="wait">
+          <motion.div
+            key={`right-${nextRecipe.id}-${activeIndex}`}
+            initial={{ opacity: 0.2, x: 12, scale: 0.9 }}
+            animate={{ opacity: 0.42, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 28, scale: 0.88 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className={`${sideCardClass} right-0 origin-right`}
+            style={{ transform: 'perspective(1200px) rotateY(-16deg)' }}
+          >
+            <img src={nextRecipe.image} alt={nextRecipe.name} className="w-full h-full object-cover scale-110" />
+            <div className="absolute inset-0 bg-white/20" />
+            <div className="absolute inset-0 bg-gradient-to-l from-white/45 via-white/15 to-black/25" />
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-2">
+          <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/50 px-3 py-2 shadow-[0_10px_30px_rgba(255,255,255,0.35)] backdrop-blur-xl">
+            {recipes.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i, i > activeIndex ? 'right' : 'left')}
+                className="relative h-1.5 overflow-hidden rounded-full transition-all duration-500"
+                style={{ width: i === activeIndex ? 26 : 7, background: 'rgba(17,24,39,0.12)' }}
+                aria-label={`Aller à la slide ${i + 1}`}
+              >
+                {i === activeIndex && (
+                  <motion.div
+                    className="absolute inset-y-0 left-0 rounded-full"
+                    style={{ width: `${progress * 100}%`, background: 'linear-gradient(90deg, #fb5607, #ff8c42)' }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
+            className={`h-11 w-11 rounded-full border backdrop-blur-xl shadow-[0_16px_40px_rgba(0,0,0,0.14)] transition-all duration-300 ${isFav ? 'bg-white text-[#fb5607] border-white/80' : 'bg-white/45 text-stone-900 border-white/60'}`}
+          >
+            <Heart size={18} fill={isFav ? 'currentColor' : 'none'} strokeWidth={2.4} className="mx-auto" />
+          </motion.button>
         </div>
 
-        {/* Favorite button */}
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
-          className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center shadow-lg transition-all duration-300 ${isFav ? 'bg-white text-[#fb5607] border-white shadow-[#fb5607]/20' : 'bg-black/25 text-white border-white/20'
-            }`}
-        >
-          <Heart size={18} fill={isFav ? 'currentColor' : 'none'} strokeWidth={2.5} />
-        </motion.button>
-      </div>
-
-      {/* — Bottom content — */}
-      <div className="absolute bottom-0 inset-x-0 p-5 z-20">
-        <AnimatePresence mode="wait" custom={direction}>
+        <AnimatePresence initial={false} mode="wait" custom={direction}>
           <motion.div
             key={recipe.id}
             custom={direction}
             variants={{
-              enter: (d: string) => ({ x: d === 'right' ? 40 : -40, opacity: 0 }),
-              center: { x: 0, opacity: 1 },
-              exit: (d: string) => ({ x: d === 'right' ? -20 : 20, opacity: 0 }),
+              enter: (d: string) => ({ opacity: 0, x: d === 'right' ? 56 : -56, scale: 0.92 }),
+              center: { opacity: 1, x: 0, scale: 1 },
+              exit: (d: string) => ({ opacity: 0, x: d === 'right' ? -48 : 48, scale: 0.95 }),
             }}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.16}
+            onDragStart={() => setIsPaused(true)}
+            onDrag={(event, info) => setDragOffset(info.offset.x)}
+            onDragEnd={(event, info) => {
+              setDragOffset(0);
+              setIsPaused(false);
+              if (info.offset.x < -70 || info.velocity.x < -280) goNext();
+              else if (info.offset.x > 70 || info.velocity.x > 280) goPrev();
+            }}
+            className="absolute inset-x-[18%] top-5 bottom-0 z-10 overflow-hidden rounded-[36px] border border-white/70 bg-white/14 shadow-[0_24px_70px_rgba(15,23,42,0.24)] backdrop-blur-sm"
+            style={{ cursor: 'grab' }}
+            onClick={() => setSelectedRecipe(recipe)}
           >
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="inline-flex items-center gap-1.5 mb-2.5"
-            >
-              <span className="px-2.5 py-1 rounded-xl bg-[#fb5607]/25 border border-[#fb5607]/40 text-[10px] font-black text-[#fb5607] uppercase tracking-widest backdrop-blur-md">
-                ✦ Sélection du Chef
-              </span>
-              <span className="px-2.5 py-1 rounded-xl bg-white/10 border border-white/15 text-[10px] font-black text-white/90 backdrop-blur-md flex items-center gap-1">
-                <Star size={9} className="fill-amber-400 text-amber-400" /> 4.9
-              </span>
-            </motion.div>
+            <img src={recipe.image} className="absolute inset-0 h-full w-full object-cover" alt={recipe.name} />
 
-            {/* Title */}
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.22 }}
-              className="text-white font-black leading-[1.1] mb-3 drop-shadow-lg"
-              style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}
-            >
-              {recipe.name}
-            </motion.h2>
-
-            {/* Meta row */}
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.30 }}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-white/80 text-xs font-bold">
-                  <MapPin size={12} className="text-[#fb5607]" />
-                  {recipe.region}
+              className="absolute inset-0"
+              animate={{
+                background: [
+                  'radial-gradient(circle at 20% 18%, rgba(255,255,255,0.26), transparent 30%)',
+                  'radial-gradient(circle at 75% 18%, rgba(255,255,255,0.22), transparent 28%)',
+                  'radial-gradient(circle at 20% 18%, rgba(255,255,255,0.26), transparent 30%)'
+                ]
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/14 via-transparent to-black/82" />
+            <div className="absolute inset-x-0 bottom-0 h-[56%] bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+            <div className="absolute inset-[1px] rounded-[35px] border border-white/35" />
+
+            <div className="absolute left-5 top-5 right-5 flex items-start justify-between">
+              <div className="flex flex-col gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.16)]">
+                  <Sparkles size={12} className="text-[#ffd166]" />
+                  Édition signature
                 </span>
-                <span className="w-px h-3 bg-white/20" />
-                <span className="flex items-center gap-1 text-white/80 text-xs font-bold">
-                  <Clock size={12} className="text-white/50" />
-                  {recipe.cookTime}
-                </span>
+                {recipe.difficulty && (
+                  <span className="inline-flex w-fit rounded-full border border-white/25 bg-black/18 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white/92 backdrop-blur-md">
+                    {recipe.difficulty}
+                  </span>
+                )}
               </div>
 
-              {/* CTA */}
-              <motion.button
-                whileTap={{ scale: 0.93 }}
-                onClick={() => setSelectedRecipe(recipe)}
-                className="flex items-center gap-1.5 bg-[#fb5607] text-white text-[11px] font-black px-4 py-2.5 rounded-2xl shadow-lg shadow-[#fb5607]/30"
+              {recipe.category && (
+                <span className="rounded-full border border-white/35 bg-black/18 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white/92 backdrop-blur-md">
+                  {recipe.category}
+                </span>
+              )}
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <motion.div
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08, duration: 0.45 }}
+                className="rounded-[28px] border border-white/18 bg-white/10 p-4 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.18)]"
               >
-                Voir la recette <ChevronRight size={13} strokeWidth={3} />
-              </motion.button>
-            </motion.div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="mb-1 text-[10px] font-black uppercase tracking-[0.24em] text-white/60">
+                      Collection premium
+                    </p>
+                    <h2 className="text-[30px] font-black leading-[0.98] tracking-[-0.04em] text-white drop-shadow-lg">
+                      {recipe.name}
+                    </h2>
+                  </div>
+                  <div className="rounded-[22px] border border-white/20 bg-black/20 px-3 py-2 text-right backdrop-blur-md">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45">Note</p>
+                    <div className="mt-1 flex items-center gap-1 text-sm font-black text-white">
+                      <Star size={13} className="fill-[#ffd166] text-[#ffd166]" />
+                      4.9
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4 flex flex-wrap items-center gap-2.5 text-[11px] font-bold text-white/82">
+                  {recipe.region && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/8 px-3 py-2">
+                      <MapPin size={12} className="text-[#ff8c42]" />
+                      {recipe.region}
+                    </span>
+                  )}
+                  {(recipe.cookTime || recipe.prepTime) && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/8 px-3 py-2">
+                      <Clock size={12} className="text-white/70" />
+                      {recipe.cookTime || recipe.prepTime}
+                    </span>
+                  )}
+                  {recipe.difficulty && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/8 px-3 py-2">
+                      <Flame size={12} className="text-[#fb5607]" />
+                      {recipe.difficulty}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="max-w-[55%]">
+                    <p className="line-clamp-2 text-[12px] leading-relaxed text-white/70">
+                      {recipe.description || t?.contributionDesc || 'Une recette raffinée, inspirée des saveurs africaines les plus élégantes.'}
+                    </p>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRecipe(recipe);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-[11px] font-black text-stone-900 shadow-[0_18px_40px_rgba(255,255,255,0.28)]"
+                  >
+                    Découvrir
+                    <ChevronRight size={14} strokeWidth={3} />
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         </AnimatePresence>
-      </div>
 
-      {/* — Touch / swipe nav zones (invisible) — */}
-      <button
-        className="absolute left-0 inset-y-0 w-1/4 z-10"
-        onClick={goPrev}
-        style={{ background: 'transparent' }}
-        aria-label="Précédent"
-      />
-      <button
-        className="absolute right-0 inset-y-0 w-1/4 z-10"
-        onClick={goNext}
-        style={{ background: 'transparent' }}
-        aria-label="Suivant"
-      />
+        <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-stone-200/70 bg-white/80 px-3 py-2 shadow-[0_12px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl">
+          <button
+            onClick={goPrev}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-900 text-white shadow-[0_10px_20px_rgba(17,24,39,0.18)]"
+            aria-label="Précédent"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div className="flex items-center gap-1.5 px-1">
+            {recipes.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i, i > activeIndex ? 'right' : 'left')}
+                className="rounded-full transition-all duration-300"
+                style={{
+                  width: i === activeIndex ? 18 : 6,
+                  height: 6,
+                  background: i === activeIndex ? 'linear-gradient(90deg, #fb5607, #ff8c42)' : 'rgba(148,163,184,0.45)'
+                }}
+                aria-label={`Sélectionner la slide ${i + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={goNext}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fb5607] text-white shadow-[0_12px_24px_rgba(251,86,7,0.32)]"
+            aria-label="Suivant"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {dragOffset !== 0 && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-16 z-20 flex justify-center">
+            <div className="rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-stone-700 backdrop-blur-xl shadow-sm">
+              Glissez pour explorer
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -1228,6 +1316,35 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
         )}
       </div>
     ),
+    'contribution': () => (
+      <div className="space-y-6">
+        <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+              <Heart size={22} fill="currentColor" strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-stone-800 mb-2">{t.contribution}</h3>
+              <p className="text-sm text-stone-500 leading-relaxed">
+                {t.contributionDesc}
+              </p>
+            </div>
+          </div>
+
+          <DishSuggestionForm
+            onSubmit={async (dish) => {
+              const success = await dbService.submitDishSuggestion(dish);
+              if (success) {
+                showAlert("Suggestion envoyée avec succès. Merci pour votre contribution !", "success");
+                return true;
+              }
+              showAlert("Erreur lors de l'envoi de la suggestion.", "error");
+              return false;
+            }}
+          />
+        </div>
+      </div>
+    ),
     'security': () => (
       <AccountSecurityView
         currentUser={currentUser}
@@ -1245,6 +1362,7 @@ const ProfileSubViewRenderer = ({ profileSubView, setProfileSubView, currentUser
           <h3 className="text-[10px] font-black uppercase text-stone-400 mb-6">{t.privacyMenu}</h3>
           <div className="space-y-6">
             <div className="flex items-start justify-between">
+              <DishSuggestionForm onSubmit={(dish) => dbService.submitDishSuggestion(dish)} />
               <div className="pr-4">
                 <h4 className="text-sm font-bold text-stone-700 mb-1">{t.tracking}</h4>
                 <p className="text-[10px] text-stone-400 leading-relaxed">{t.trackingDesc}</p>
@@ -1328,6 +1446,7 @@ export default function App() {
   const [authStep, setAuthStep] = useState<'form' | 'otp'>('form');
   const [sentOtp, setSentOtp] = useState('');
   const [otpInput, setOtpInput] = useState('');
+  const otpRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   useEffect(() => {
     // Initial Auth Check
@@ -1371,8 +1490,8 @@ export default function App() {
           dbService.setCurrentUser(userObj);
           setHasLoadedAtLeastOnce(true);
 
-          // If no remote profile was found, create one now to ensure persistence
-          if (!remoteProfile) {
+          // ONLY re-create remote profile if it's missing AND the user is actually logged in
+          if (!remoteProfile && sessionUser.id) {
             await dbService.syncUserToCloud(userObj);
           }
         } catch (err) {
@@ -1740,11 +1859,20 @@ export default function App() {
         const success = await dbService.deleteAccount(currentUser.id);
         setIsAuthLoading(false);
         if (success) {
-          setCurrentUser(null);
+          // IMPORTANT: Clear both local and app state immediately
           dbService.setCurrentUser(null);
-          setActiveTab('home');
+          setCurrentUser(null);
           setProfileSubView(null);
-          showAlert("Votre compte et vos données ont été supprimés.", "success");
+          setActiveTab('home');
+          setHistory(['home']);
+          setAuthMode('login');
+          setAuthStep('form');
+          setAuthFormData({ name: '', email: '', password: '' });
+
+          // Small delay before alert to ensure UI paints the auth screen
+          setTimeout(() => {
+            showAlert("Votre compte et vos données ont été supprimés.", "success");
+          }, 100);
         } else {
           showAlert("Une erreur est survenue lors de la suppression.", "error");
         }
@@ -1790,22 +1918,20 @@ export default function App() {
     setIsAuthLoading(true);
     setAuthError(null);
     try {
-      // 1. Générer code OTP à 4 chiffres
+      // Step 1: Send OTP to verify email ownership before creating the account
       const otp = Math.floor(1000 + Math.random() * 9000).toString();
       setSentOtp(otp);
-
-      // 2. Envoyer l'email via dbService (EmailJS simulation/REST)
+      setOtpInput('');
       const success = await dbService.sendEmail(authFormData.email.trim(), authFormData.name.trim(), otp);
-
-      if (success) {
-        setAuthStep('otp');
-        showAlert("Un code de validation à 4 chiffres a été envoyé à " + authFormData.email, "info");
-      } else {
-        throw new Error("Erreur lors de l'envoi de l'email. Veuillez réessayer.");
+      if (!success) {
+        throw new Error("Impossible d'envoyer le code de vérification. Vérifiez votre adresse email.");
       }
+      // Transition to OTP step
+      setAuthStep('otp');
+      // Auto-focus first OTP digit after transition
+      setTimeout(() => { otpRefs[0]?.current?.focus(); }, 400);
     } catch (err: any) {
-      setAuthError(err.message || "Erreur de communication.");
-      showAlert("Échec de l'envoi", "error");
+      setAuthError(err.message || "Erreur lors de l'envoi du code.");
     } finally {
       setIsAuthLoading(false);
     }
@@ -1821,13 +1947,41 @@ export default function App() {
     setIsAuthLoading(true);
     setAuthError(null);
     try {
-      const data = await dbService.signUp(authFormData.email.trim(), authFormData.password, authFormData.name.trim());
+      // 1. Try to sign up
+      let data;
+      try {
+        data = await dbService.signUp(authFormData.email.trim(), authFormData.password, authFormData.name.trim());
+      } catch (err: any) {
+        // 2. If user already exists (ghost account), we try to log them in directly
+        // because they proved ownership via OTP.
+        if (err.message?.includes("User already registered") || err.message?.includes("already exists")) {
+          console.log("Ghost account detected, attempting recovery login...");
+          data = await dbService.signIn(authFormData.email.trim(), authFormData.password);
+        } else {
+          throw err;
+        }
+      }
 
       if (data?.session) {
-        showAlert("Compte créé avec succès ! Bienvenue.", "success");
+        // Force profile creation to ensure they exist in user_profiles now
+        const userObj: User = {
+          id: data.session.user.id,
+          name: authFormData.name.trim(),
+          email: authFormData.email.trim(),
+          favorites: [],
+          shoppingList: [],
+          joinedDate: new Date().toLocaleDateString(),
+          settings: { darkMode: isDark, language: 'fr', unitSystem: 'metric' }
+        };
+        await dbService.syncUserToCloud(userObj);
+        setCurrentUser(userObj);
+        dbService.setCurrentUser(userObj);
+
+        showAlert("Compte récupéré et activé ! Bienvenue.", "success");
         setAuthStep('form');
+        setAuthFormData({ name: '', email: '', password: '' });
       } else {
-        showAlert("Validation réussie ! Votre compte est créé.", "success");
+        showAlert("Activation réussie ! Connectez-vous maintenant.", "success");
         setAuthMode('login');
         setAuthStep('form');
         setAuthFormData(prev => ({ ...prev, password: '' }));
@@ -3056,7 +3210,8 @@ export default function App() {
                       profileSubView === 'notifications' ? t.notifications :
                         profileSubView === 'shopping' ? "Ma liste de courses" :
                           profileSubView === 'about' ? t.about :
-                            t.settings}
+                            profileSubView === 'contribution' ? t.contribution :
+                              t.settings}
                 </h2>
               </div>
               {isOffline && (
@@ -3205,6 +3360,16 @@ export default function App() {
               <Settings size={20} />
             </div>
             <span className="font-black text-stone-800 text-sm tracking-tight">{t.settings}</span>
+          </div>
+          <ChevronRight size={18} className="text-stone-300" />
+        </button>
+
+        <button onClick={() => setProfileSubView('contribution')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+              <Heart size={20} />
+            </div>
+            <span className="font-black text-stone-800 text-sm tracking-tight">{t.contribution}</span>
           </div>
           <ChevronRight size={18} className="text-stone-300" />
         </button>
@@ -3793,180 +3958,569 @@ export default function App() {
     );
   };
 
+
+  const handleOtpDigitChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const digits = otpInput.split('');
+    // Fill array to length 4
+    while (digits.length < 4) digits.push('');
+    digits[index] = value.slice(-1);
+    const newOtp = digits.join('');
+    setOtpInput(newOtp);
+    setAuthError(null);
+    if (value && index < 3) {
+      otpRefs[index + 1]?.current?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpInput[index] && index > 0) {
+      otpRefs[index - 1]?.current?.focus();
+    }
+  };
+
   const renderAuth = () => (
-    <div className={`flex-1 flex flex-col justify-center min-h-screen relative overflow-hidden ${isDark ? 'bg-[#0f0f11]' : 'bg-[#faf9f6]'}`}>
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className={`absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full blur-3xl opacity-70 animate-blob ${isDark ? 'bg-[#fb5607]/5' : 'bg-[#fb5607]/10 mix-blend-multiply'}`}></div>
-        <div className={`absolute top-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-3xl opacity-70 animate-blob animation-delay-2000 ${isDark ? 'bg-amber-400/5' : 'bg-amber-400/10 mix-blend-multiply'}`}></div>
-        <div className={`absolute -bottom-[20%] left-[20%] w-[80vw] h-[80vw] rounded-full blur-3xl opacity-70 animate-blob animation-delay-4000 ${isDark ? 'bg-emerald-500/5' : 'bg-emerald-500/10 mix-blend-multiply'}`}></div>
+    <div className={`flex-1 flex flex-col min-h-screen relative overflow-hidden ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#faf8f5]'}`}>
+      {/* ─── HERO SECTION ─── */}
+      <div className="relative overflow-hidden" style={{ height: '42vh', minHeight: 220, maxHeight: 320 }}>
+        {/* Gradient background */}
+        <div className={`absolute inset-0 ${isDark
+          ? 'bg-gradient-to-br from-[#1a0a02] via-[#2a1005] to-[#0c0c0e]'
+          : 'bg-gradient-to-br from-[#fb5607] via-[#e8490a] to-[#c43a04]'}`} />
+
+        {/* Radial glow overlay */}
+        <div className="absolute inset-0" style={{
+          background: isDark
+            ? 'radial-gradient(ellipse 80% 60% at 50% 80%, rgba(251,86,7,0.18) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,255,255,0.12) 0%, transparent 70%)'
+        }} />
+
+        {/* Animated food emojis floating in background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          {[{ e: '🍲', x: '8%', y: '12%', delay: '0s', size: '2rem', dur: '6s' },
+          { e: '🥘', x: '78%', y: '8%', delay: '1.4s', size: '1.6rem', dur: '8s' },
+          { e: '🍗', x: '88%', y: '55%', delay: '0.8s', size: '1.8rem', dur: '7s' },
+          { e: '🫙', x: '5%', y: '65%', delay: '2s', size: '1.5rem', dur: '9s' },
+          { e: '🥜', x: '60%', y: '75%', delay: '1s', size: '1.4rem', dur: '6.5s' },
+          { e: '🌶️', x: '35%', y: '10%', delay: '3s', size: '1.6rem', dur: '7.5s' },
+          ].map((item, i) => (
+            <span key={i} className="absolute" style={{
+              left: item.x, top: item.y, fontSize: item.size,
+              opacity: isDark ? 0.25 : 0.35,
+              animation: `authFloat ${item.dur} ease-in-out infinite`,
+              animationDelay: item.delay,
+              filter: 'blur(0.5px)'
+            }}>{item.e}</span>
+          ))}
+        </div>
+
+        {/* Brand content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 22, delay: 0.1 }}
+            className="relative"
+          >
+            {/* Glow ring behind logo */}
+            <div className="absolute inset-0 rounded-[32px] blur-2xl" style={{
+              background: isDark ? 'rgba(251,86,7,0.35)' : 'rgba(255,255,255,0.3)',
+              transform: 'scale(1.3)'
+            }} />
+            <div className={`relative w-24 h-24 rounded-[28px] flex items-center justify-center border ${isDark
+              ? 'bg-[#fb5607]/20 border-[#fb5607]/30 shadow-[0_12px_40px_rgba(251,86,7,0.3)]'
+              : 'bg-white/20 border-white/40 shadow-[0_12px_40px_rgba(0,0,0,0.15)] backdrop-blur-md'
+              }`}>
+              <img
+                src="/images/chef_icon_v2.png"
+                className={`w-16 h-16 object-contain ${isDark ? '' : 'brightness-0 invert'}`}
+                alt="AfroCuisto Logo"
+              />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mt-4"
+          >
+            <h1 className="text-[30px] font-black tracking-tight leading-none text-white drop-shadow-sm">
+              Afro<span style={{ color: isDark ? '#fb8c60' : 'rgba(255,255,255,0.85)' }}>Cuisto</span>
+            </h1>
+            <p className="text-[11px] font-bold mt-1.5 tracking-[0.18em] uppercase" style={{
+              color: isDark ? 'rgba(251,86,7,0.7)' : 'rgba(255,255,255,0.65)'
+            }}>Le Goût de l'Excellence</p>
+          </motion.div>
+        </div>
+
+        {/* Bottom curved edge */}
+        <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ height: 40 }}>
+          <div className={`absolute bottom-0 left-[-5%] right-[-5%] rounded-t-[50%] ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#faf8f5]'}`}
+            style={{ height: 50 }} />
+        </div>
       </div>
 
-      <div className="relative z-10 px-8 py-10 w-full max-w-md mx-auto flex flex-col h-full justify-center">
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-10"
-        >
-          <div className={`w-32 h-32 p-5 rounded-[40px] mx-auto mb-6 backdrop-blur-xl border relative ${isDark ? 'bg-white/5 border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.3)]' : 'bg-white/60 border-white shadow-[0_20px_40px_rgba(0,0,0,0.04)]'}`}>
-            <div className={`absolute inset-0 rounded-[40px] border pointer-events-none ${isDark ? 'border-white/5' : 'border-stone-200/40'}`}></div>
-            <img src="/images/chef_icon_v2.png" className={`w-full h-full object-contain ${isDark ? 'logo-dark-mode' : ''}`} alt="AfroCuisto Logo" />
-          </div>
-          <h1 className={`text-[32px] font-black tracking-tight leading-none mb-3 ${isDark ? 'text-white' : 'text-stone-900'}`}>Afro<span className="text-[#fb5607]">Cuisto</span></h1>
-          <p className={`text-[13px] font-medium inline-block px-4 py-1.5 rounded-full shadow-sm backdrop-blur-md border ${isDark ? 'text-white/60 border-white/10 bg-white/5' : 'text-stone-500 border-stone-200/50 bg-white/50'}`}>Le Goût de l'Excellence</p>
-        </motion.div>
+      {/* ─── AUTH CARD SECTION ─── */}
+      <div className="flex-1 flex flex-col relative z-10 overflow-y-auto no-scrollbar">
+        <div className="px-6 pt-2 pb-10 w-full max-w-md mx-auto flex flex-col">
 
-        {/* Auth Box */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className={`w-full backdrop-blur-2xl px-6 py-8 rounded-[40px] border relative ${isDark ? 'bg-white/5 border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white/70 border-white/80 shadow-[0_30px_60px_rgba(0,0,0,0.06)]'}`}
-        >
-          {/* Mode Tabs */}
-          <div className={`p-1.5 rounded-[22px] flex mb-8 relative border ${isDark ? 'bg-white/5 border-white/10' : 'bg-stone-100/80 border-stone-200/30'}`}>
-            <motion.div
-              layoutId="auth-tab-pill"
-              className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-[18px] z-0 ${isDark ? 'bg-white/10 shadow-[0_4px_12px_rgba(0,0,0,0.2)] border border-white/10' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white'}`}
-              initial={false}
-              animate={{ x: authMode === 'login' ? 0 : '100%' }}
-              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-            />
-            <button onClick={() => { setAuthMode('login'); setAuthError(null); setAuthStep('form'); setOtpInput(''); }} className={`flex-1 py-3 text-[14px] font-bold z-10 transition-colors ${authMode === 'login' ? (isDark ? 'text-white' : 'text-stone-900') : (isDark ? 'text-white/40' : 'text-stone-400')}`}>Connexion</button>
-            <button onClick={() => { setAuthMode('signup'); setAuthError(null); setAuthStep('form'); setOtpInput(''); }} className={`flex-1 py-3 text-[14px] font-bold z-10 transition-colors ${authMode === 'signup' ? (isDark ? 'text-white' : 'text-stone-900') : (isDark ? 'text-white/40' : 'text-stone-400')}`}>Inscription</button>
-          </div>
-
-          <form onSubmit={authMode === 'login' ? handleLogin : (authStep === 'otp' ? handleVerifyOtp : handleSignup)} className="space-y-4 relative">
-            <AnimatePresence mode="popLayout">
-              {authMode === 'signup' && authStep === 'form' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, height: 'auto', scale: 1 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.9 }}
-                  transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
-                >
-                  <div className="relative group">
-                    <UserIcon size={20} className={`absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#fb5607] transition-colors ${isDark ? 'text-white/30' : 'text-stone-400'}`} />
-                    <input type="text" placeholder="Nom complet" required minLength={2} value={authFormData.name} onChange={e => setAuthFormData({ ...authFormData, name: e.target.value })} className={`w-full border rounded-full py-4 pl-12 pr-6 focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20 focus:border-[#fb5607]/40 font-bold text-sm transition-all shadow-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/25' : 'bg-white border-stone-200/60 text-stone-800 placeholder:text-stone-400'}`} />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {authStep === 'form' ? (
-              <>
-                <div className="relative group">
-                  <Mail size={20} className={`absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#fb5607] transition-colors ${isDark ? 'text-white/30' : 'text-stone-400'}`} />
-                  <input type="email" placeholder="Adresse email" required value={authFormData.email} onChange={e => setAuthFormData({ ...authFormData, email: e.target.value })} className={`w-full border rounded-full py-4 pl-12 pr-6 focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20 focus:border-[#fb5607]/40 font-bold text-sm transition-all shadow-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/25' : 'bg-white border-stone-200/60 text-stone-800 placeholder:text-stone-400'}`} />
-                </div>
-
-                <div className="relative group">
-                  <Lock size={20} className={`absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#fb5607] transition-colors ${isDark ? 'text-white/30' : 'text-stone-400'}`} />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Mot de passe"
-                    required
-                    minLength={6}
-                    value={authFormData.password}
-                    onChange={e => setAuthFormData({ ...authFormData, password: e.target.value })}
-                    className={`w-full border rounded-full py-4 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20 focus:border-[#fb5607]/40 font-bold text-sm transition-all shadow-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/25' : 'bg-white border-stone-200/60 text-stone-800 placeholder:text-stone-400'}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 transition-colors ${isDark ? 'text-white/30 hover:text-[#fb5607]' : 'text-stone-400 hover:text-[#fb5607]'}`}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </>
-            ) : (
+          {/* ── TAB SWITCHER ── */}
+          <AnimatePresence mode="wait">
+            {authStep === 'form' && (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6 py-4"
+                key="tabs"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
               >
-                <div className="text-center space-y-2">
-                  <p className={`text-sm font-bold ${isDark ? 'text-white/70' : 'text-stone-600'}`}>
-                    Entrez le code envoyé à <br />
-                    <span className="text-[#fb5607]">{authFormData.email}</span>
-                  </p>
-                </div>
-
-                <div className="flex justify-center gap-3">
-                  <input
-                    type="text"
-                    maxLength={4}
-                    value={otpInput}
-                    autoFocus
-                    onChange={e => setOtpInput(e.target.value.replace(/\D/g, ''))}
-                    placeholder="0 0 0 0"
-                    className={`w-40 text-center tracking-[1em] text-2xl font-black border rounded-2xl py-4 focus:outline-none focus:ring-2 focus:ring-[#fb5607]/20 border-[#fb5607]/40 ${isDark ? 'bg-white/5 text-white' : 'bg-white text-stone-800'}`}
+                <div className={`p-1 rounded-[20px] flex mb-6 relative border ${isDark ? 'bg-white/5 border-white/8' : 'bg-stone-100/90 border-stone-200/40'
+                  }`}>
+                  <motion.div
+                    className={`absolute inset-1 rounded-[16px] z-0 ${isDark
+                      ? 'shadow-[0_2px_12px_rgba(0,0,0,0.3)] border border-white/10'
+                      : 'bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] border border-white'
+                      }`}
+                    style={{
+                      background: isDark ? 'rgba(255,255,255,0.1)' : 'white',
+                      width: 'calc(50% - 4px)',
+                      left: authMode === 'login' ? 4 : 'auto',
+                      right: authMode === 'signup' ? 4 : 'auto',
+                    }}
+                    layoutId="auth-tab-pill-v2"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
-                </div>
-
-                <div className="flex flex-col items-center gap-4 pt-4">
                   <button
-                    type="button"
-                    onClick={() => setAuthStep('form')}
-                    className="text-[11px] font-black text-stone-400 uppercase tracking-widest hover:text-[#fb5607] transition-colors"
+                    onClick={() => { setAuthMode('login'); setAuthError(null); setOtpInput(''); }}
+                    className={`flex-1 py-3.5 text-[13px] font-bold z-10 relative transition-colors rounded-[16px] ${authMode === 'login'
+                      ? (isDark ? 'text-white' : 'text-stone-900')
+                      : (isDark ? 'text-white/35' : 'text-stone-400')
+                      }`}
                   >
-                    ← Modifier l'email
+                    Connexion
                   </button>
                   <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={isAuthLoading}
-                    className={`text-[11px] font-black uppercase tracking-widest transition-colors ${isAuthLoading ? 'text-stone-300' : 'text-[#fb5607] hover:underline'}`}
+                    onClick={() => { setAuthMode('signup'); setAuthError(null); setOtpInput(''); }}
+                    className={`flex-1 py-3.5 text-[13px] font-bold z-10 relative transition-colors rounded-[16px] ${authMode === 'signup'
+                      ? (isDark ? 'text-white' : 'text-stone-900')
+                      : (isDark ? 'text-white/35' : 'text-stone-400')
+                      }`}
                   >
-                    Renvoyer le code
+                    Inscription
                   </button>
                 </div>
               </motion.div>
             )}
+          </AnimatePresence>
 
-            <AnimatePresence>
-              {authError && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className="bg-rose-50 border border-rose-100/50 p-3 rounded-[16px] flex items-center gap-3">
-                  <AlertCircle size={16} className="text-rose-500 shrink-0" />
-                  <p className="text-[11px] font-bold text-rose-600 leading-tight">{authError}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* ── FORM AREA ── */}
+          <AnimatePresence mode="wait">
 
-            {authMode === 'login' && (
-              <div className="flex justify-end pt-1 pb-3">
-                <button type="button" className={`text-[11px] font-bold transition-colors px-2 ${isDark ? 'text-white/40 hover:text-[#fb5607]' : 'text-stone-500 hover:text-[#fb5607]'}`}>Mot de passe oublié ?</button>
-              </div>
+            {/* ── LOGIN FORM ── */}
+            {authMode === 'login' && authStep === 'form' && (
+              <motion.div
+                key="login-form"
+                initial={{ opacity: 0, x: -24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <form onSubmit={handleLogin} className="space-y-3.5">
+                  {/* Email */}
+                  <div className="relative group">
+                    <Mail size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#fb5607] ${isDark ? 'text-white/25' : 'text-stone-400'
+                      }`} />
+                    <input
+                      id="login-email"
+                      type="email"
+                      placeholder="Adresse email"
+                      required
+                      autoComplete="email"
+                      value={authFormData.email}
+                      onChange={e => { setAuthFormData({ ...authFormData, email: e.target.value }); setAuthError(null); }}
+                      className={`w-full rounded-[16px] border py-4 pl-11 pr-4 text-[14px] font-semibold focus:outline-none transition-all ${isDark
+                        ? 'bg-white/6 border-white/10 text-white placeholder:text-white/20 focus:border-[#fb5607]/50 focus:bg-white/9'
+                        : 'bg-white border-stone-200/70 text-stone-900 placeholder:text-stone-400 focus:border-[#fb5607]/40 focus:shadow-[0_0_0_3px_rgba(251,86,7,0.08)]'
+                        }`}
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="relative group">
+                    <Lock size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#fb5607] ${isDark ? 'text-white/25' : 'text-stone-400'
+                      }`} />
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Mot de passe"
+                      required
+                      minLength={6}
+                      autoComplete="current-password"
+                      value={authFormData.password}
+                      onChange={e => { setAuthFormData({ ...authFormData, password: e.target.value }); setAuthError(null); }}
+                      className={`w-full rounded-[16px] border py-4 pl-11 pr-12 text-[14px] font-semibold focus:outline-none transition-all ${isDark
+                        ? 'bg-white/6 border-white/10 text-white placeholder:text-white/20 focus:border-[#fb5607]/50 focus:bg-white/9'
+                        : 'bg-white border-stone-200/70 text-stone-900 placeholder:text-stone-400 focus:border-[#fb5607]/40 focus:shadow-[0_0_0_3px_rgba(251,86,7,0.08)]'
+                        }`}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${isDark ? 'text-white/25 hover:text-[#fb5607]' : 'text-stone-400 hover:text-[#fb5607]'
+                        }`}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+
+                  {/* Forgot password */}
+                  <div className="flex justify-end">
+                    <button type="button" className={`text-[11.5px] font-bold transition-colors py-1 ${isDark ? 'text-white/30 hover:text-[#fb5607]' : 'text-stone-400 hover:text-[#fb5607]'
+                      }`}>
+                      Mot de passe oublié ?
+                    </button>
+                  </div>
+
+                  {/* Error */}
+                  <AnimatePresence>
+                    {authError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className={`overflow-hidden rounded-[14px] border flex items-start gap-2.5 p-3 ${isDark ? 'bg-rose-500/10 border-rose-500/20' : 'bg-rose-50 border-rose-100'
+                          }`}
+                      >
+                        <AlertCircle size={15} className="text-rose-500 mt-0.5 shrink-0" />
+                        <p className="text-[12px] font-semibold text-rose-600 leading-snug">{authError}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Submit */}
+                  <motion.button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full bg-[#fb5607] text-white py-4 rounded-[16px] font-black text-[13px] uppercase tracking-[0.14em] flex justify-center items-center gap-2 transition-all mt-1"
+                    style={{ boxShadow: '0 12px 32px rgba(251,86,7,0.28)' }}
+                  >
+                    {isAuthLoading ? (
+                      <><Loader size={18} className="animate-spin" /><span>Connexion...</span></>
+                    ) : (
+                      <><span>Se connecter</span><ChevronRight size={16} /></>
+                    )}
+                  </motion.button>
+
+                  {/* Switch to signup */}
+                  <p className={`text-center text-[12px] font-medium pt-1 ${isDark ? 'text-white/25' : 'text-stone-400'
+                    }`}>
+                    Pas encore de compte ?{' '}
+                    <button type="button"
+                      onClick={() => { setAuthMode('signup'); setAuthError(null); }}
+                      className="text-[#fb5607] font-bold hover:underline"
+                    >
+                      Créer un compte
+                    </button>
+                  </p>
+                </form>
+              </motion.div>
             )}
 
-            <button type="submit" disabled={isAuthLoading} className={`w-full bg-[#fb5607] text-white py-4 mt-2 rounded-full font-black text-sm uppercase tracking-widest flex justify-center items-center shadow-[0_15px_30px_rgba(251,86,7,0.25)] transition-all ${isAuthLoading ? 'opacity-80 cursor-wait' : 'hover:bg-[#eb4b05] active:scale-[0.98]'}`}>
-              {isAuthLoading ? <Loader size={20} className="animate-spin" /> : (authMode === 'login' ? 'Se connecter' : (authStep === 'otp' ? 'Vérifier & S\'inscrire' : "C'est parti !"))}
-            </button>
-          </form>
-        </motion.div>
+            {/* ── SIGNUP FORM (Step 1: Info) ── */}
+            {authMode === 'signup' && authStep === 'form' && (
+              <motion.div
+                key="signup-form"
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 24 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <form onSubmit={handleSignup} className="space-y-3.5">
+                  {/* Step indicator */}
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-6 rounded-full bg-[#fb5607] flex items-center justify-center">
+                        <span className="text-white text-[10px] font-black">1</span>
+                      </div>
+                      <span className={`text-[11px] font-bold ${isDark ? 'text-white' : 'text-stone-700'}`}>Vos infos</span>
+                    </div>
+                    <div className={`h-px flex-1 ${isDark ? 'bg-white/10' : 'bg-stone-200'}`} />
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${isDark ? 'border-white/15 bg-white/5' : 'border-stone-200 bg-stone-100'
+                        }`}>
+                        <span className={`text-[10px] font-black ${isDark ? 'text-white/30' : 'text-stone-400'
+                          }`}>2</span>
+                      </div>
+                      <span className={`text-[11px] font-bold ${isDark ? 'text-white/30' : 'text-stone-400'
+                        }`}>Vérification</span>
+                    </div>
+                  </div>
+
+                  {/* Full name */}
+                  <div className="relative group">
+                    <UserIcon size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#fb5607] ${isDark ? 'text-white/25' : 'text-stone-400'
+                      }`} />
+                    <input
+                      id="signup-name"
+                      type="text"
+                      placeholder="Nom complet"
+                      required
+                      minLength={2}
+                      autoComplete="name"
+                      value={authFormData.name}
+                      onChange={e => { setAuthFormData({ ...authFormData, name: e.target.value }); setAuthError(null); }}
+                      className={`w-full rounded-[16px] border py-4 pl-11 pr-4 text-[14px] font-semibold focus:outline-none transition-all ${isDark
+                        ? 'bg-white/6 border-white/10 text-white placeholder:text-white/20 focus:border-[#fb5607]/50 focus:bg-white/9'
+                        : 'bg-white border-stone-200/70 text-stone-900 placeholder:text-stone-400 focus:border-[#fb5607]/40 focus:shadow-[0_0_0_3px_rgba(251,86,7,0.08)]'
+                        }`}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="relative group">
+                    <Mail size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#fb5607] ${isDark ? 'text-white/25' : 'text-stone-400'
+                      }`} />
+                    <input
+                      id="signup-email"
+                      type="email"
+                      placeholder="Adresse email"
+                      required
+                      autoComplete="email"
+                      value={authFormData.email}
+                      onChange={e => { setAuthFormData({ ...authFormData, email: e.target.value }); setAuthError(null); }}
+                      className={`w-full rounded-[16px] border py-4 pl-11 pr-4 text-[14px] font-semibold focus:outline-none transition-all ${isDark
+                        ? 'bg-white/6 border-white/10 text-white placeholder:text-white/20 focus:border-[#fb5607]/50 focus:bg-white/9'
+                        : 'bg-white border-stone-200/70 text-stone-900 placeholder:text-stone-400 focus:border-[#fb5607]/40 focus:shadow-[0_0_0_3px_rgba(251,86,7,0.08)]'
+                        }`}
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="relative group">
+                    <Lock size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#fb5607] ${isDark ? 'text-white/25' : 'text-stone-400'
+                      }`} />
+                    <input
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Mot de passe (min. 6 caractères)"
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                      value={authFormData.password}
+                      onChange={e => { setAuthFormData({ ...authFormData, password: e.target.value }); setAuthError(null); }}
+                      className={`w-full rounded-[16px] border py-4 pl-11 pr-12 text-[14px] font-semibold focus:outline-none transition-all ${isDark
+                        ? 'bg-white/6 border-white/10 text-white placeholder:text-white/20 focus:border-[#fb5607]/50 focus:bg-white/9'
+                        : 'bg-white border-stone-200/70 text-stone-900 placeholder:text-stone-400 focus:border-[#fb5607]/40 focus:shadow-[0_0_0_3px_rgba(251,86,7,0.08)]'
+                        }`}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${isDark ? 'text-white/25 hover:text-[#fb5607]' : 'text-stone-400 hover:text-[#fb5607]'
+                        }`}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+
+                  {/* Error */}
+                  <AnimatePresence>
+                    {authError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className={`overflow-hidden rounded-[14px] border flex items-start gap-2.5 p-3 ${isDark ? 'bg-rose-500/10 border-rose-500/20' : 'bg-rose-50 border-rose-100'
+                          }`}
+                      >
+                        <AlertCircle size={15} className="text-rose-500 mt-0.5 shrink-0" />
+                        <p className="text-[12px] font-semibold text-rose-600 leading-snug">{authError}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Submit */}
+                  <motion.button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full bg-[#fb5607] text-white py-4 rounded-[16px] font-black text-[13px] uppercase tracking-[0.14em] flex justify-center items-center gap-2 transition-all mt-1"
+                    style={{ boxShadow: '0 12px 32px rgba(251,86,7,0.28)' }}
+                  >
+                    {isAuthLoading ? (
+                      <><Loader size={18} className="animate-spin" /><span>Création en cours...</span></>
+                    ) : (
+                      <><span>Continuer</span><ChevronRight size={16} /></>
+                    )}
+                  </motion.button>
+
+                  {/* Switch to login */}
+                  <p className={`text-center text-[12px] font-medium pt-1 ${isDark ? 'text-white/25' : 'text-stone-400'
+                    }`}>
+                    Déjà un compte ?{' '}
+                    <button type="button"
+                      onClick={() => { setAuthMode('login'); setAuthError(null); }}
+                      className="text-[#fb5607] font-bold hover:underline"
+                    >
+                      Se connecter
+                    </button>
+                  </p>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── OTP VERIFICATION STEP (Step 2) ── */}
+            {authMode === 'signup' && authStep === 'otp' && (
+              <motion.div
+                key="otp-step"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {/* Step indicator */}
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-stone-100'
+                      }`}>
+                      <Check size={12} className="text-emerald-500" strokeWidth={3} />
+                    </div>
+                    <span className={`text-[11px] font-bold ${isDark ? 'text-white/30' : 'text-stone-400'
+                      }`}>Vos infos</span>
+                  </div>
+                  <div className="h-px flex-1 bg-[#fb5607]" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-6 h-6 rounded-full bg-[#fb5607] flex items-center justify-center">
+                      <span className="text-white text-[10px] font-black">2</span>
+                    </div>
+                    <span className={`text-[11px] font-bold ${isDark ? 'text-white' : 'text-stone-700'}`}>Vérification</span>
+                  </div>
+                </div>
+
+                {/* OTP prompt */}
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 rounded-[20px] bg-[#fb5607]/15 border border-[#fb5607]/25 flex items-center justify-center mx-auto mb-4">
+                    <Mail size={28} className="text-[#fb5607]" />
+                  </div>
+                  <h2 className={`text-[20px] font-black mb-2 ${isDark ? 'text-white' : 'text-stone-900'}`}>
+                    Vérification email
+                  </h2>
+                  <p className={`text-[13px] leading-relaxed ${isDark ? 'text-white/45' : 'text-stone-500'
+                    }`}>
+                    Un code à 4 chiffres a été envoyé à
+                  </p>
+                  <p className="text-[#fb5607] font-bold text-[13px] mt-0.5">{authFormData.email}</p>
+                </div>
+
+                {/* 4 OTP digit inputs */}
+                <form onSubmit={handleVerifyOtp}>
+                  <div className="flex gap-3 justify-center mb-6">
+                    {[0, 1, 2, 3].map(i => (
+                      <input
+                        key={i}
+                        ref={otpRefs[i]}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={otpInput[i] || ''}
+                        onChange={e => handleOtpDigitChange(i, e.target.value)}
+                        onKeyDown={e => handleOtpKeyDown(i, e)}
+                        onFocus={e => e.target.select()}
+                        className={`w-[60px] h-[68px] text-center text-[26px] font-black rounded-[16px] border-2 focus:outline-none transition-all ${otpInput[i]
+                          ? (isDark
+                            ? 'border-[#fb5607]/60 bg-[#fb5607]/15 text-white'
+                            : 'border-[#fb5607]/50 bg-[#fb5607]/8 text-stone-900')
+                          : (isDark
+                            ? 'border-white/12 bg-white/6 text-white'
+                            : 'border-stone-200 bg-white text-stone-900 focus:border-[#fb5607]/50 focus:shadow-[0_0_0_3px_rgba(251,86,7,0.1)]')
+                          }`}
+                        style={otpInput[i] && !isDark ? { boxShadow: '0 0 0 3px rgba(251,86,7,0.1)' } : {}}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Error */}
+                  <AnimatePresence>
+                    {authError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className={`overflow-hidden rounded-[14px] border flex items-start gap-2.5 p-3 mb-4 ${isDark ? 'bg-rose-500/10 border-rose-500/20' : 'bg-rose-50 border-rose-100'
+                          }`}
+                      >
+                        <AlertCircle size={15} className="text-rose-500 mt-0.5 shrink-0" />
+                        <p className="text-[12px] font-semibold text-rose-600 leading-snug">{authError}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Confirm button */}
+                  <motion.button
+                    type="submit"
+                    disabled={isAuthLoading || otpInput.length < 4}
+                    whileTap={{ scale: 0.97 }}
+                    className={`w-full py-4 rounded-[16px] font-black text-[13px] uppercase tracking-[0.14em] flex justify-center items-center gap-2 transition-all ${otpInput.length === 4 && !isAuthLoading
+                      ? 'bg-[#fb5607] text-white'
+                      : (isDark ? 'bg-white/8 text-white/25' : 'bg-stone-100 text-stone-300')
+                      }`}
+                    style={otpInput.length === 4 && !isAuthLoading ? { boxShadow: '0 12px 32px rgba(251,86,7,0.28)' } : {}}
+                  >
+                    {isAuthLoading
+                      ? <><Loader size={18} className="animate-spin" /><span>Vérification...</span></>
+                      : <><CheckCircle2 size={18} /><span>Confirmer mon compte</span></>}
+                  </motion.button>
+
+                  {/* Resend + back */}
+                  <div className="flex items-center justify-between mt-5">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthStep('form'); setAuthError(null); setOtpInput(''); }}
+                      className={`text-[12px] font-bold flex items-center gap-1 transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-stone-400 hover:text-stone-600'
+                        }`}
+                    >
+                      <ChevronLeft size={14} /> Modifier
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isAuthLoading}
+                      className={`text-[12px] font-bold flex items-center gap-1 transition-colors ${isDark ? 'text-[#fb5607]/70 hover:text-[#fb5607]' : 'text-[#fb5607]/80 hover:text-[#fb5607]'
+                        }`}
+                    >
+                      <RefreshCw size={13} /> Renvoyer le code
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── FOOTER ── */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-10 text-center"
+          >
+            <div className="flex items-center justify-center gap-2 mb-3">
+              {['🇧🇯', '🇨🇮', '🇬🇭', '🇸🇳', '🇨🇲', '🇲🇱'].map((flag, i) => (
+                <span key={i} className="text-base" style={{ filter: 'grayscale(0.2)' }}>{flag}</span>
+              ))}
+            </div>
+            <p className={`text-[10.5px] font-medium ${isDark ? 'text-white/18' : 'text-stone-400'
+              }`}>
+              Rejoignez la communauté AfroCuisto 🍴
+            </p>
+          </motion.div>
+        </div>
       </div>
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 8s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2.5s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 5s;
-        }
-      `}} />
+          @keyframes authFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-12px) rotate(5deg); }
+            66% { transform: translateY(-6px) rotate(-3deg); }
+          }
+        `
+      }} />
     </div>
   );
 
