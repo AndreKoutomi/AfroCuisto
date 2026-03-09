@@ -1457,7 +1457,7 @@ export default function App() {
       if (!currentUser) {
         metaThemeColor.setAttribute('content', '#fb5607');
       } else {
-        metaThemeColor.setAttribute('content', isDark ? '#111113' : '#ffffff');
+        metaThemeColor.setAttribute('content', isDark ? '#000000' : '#ffffff');
       }
     }
 
@@ -1485,7 +1485,7 @@ export default function App() {
   const renderHome = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Sleek Persistent Header */}
-      <header className={`px-8 pt-5 pb-5 sticky top-0 z-[500] w-full left-0 right-0 transition-all duration-500 flex flex-col ${isScrolled ? (isDark ? 'bg-[#111113]/98 border-b border-white/5 shadow-xl' : 'bg-white/98 backdrop-blur-2xl border-b border-stone-100 shadow-xl shadow-stone-200/40') : (isDark ? 'bg-[#111113]' : 'bg-white')}`}>
+      <header className={`px-8 pt-5 pb-5 sticky top-0 z-[500] w-full left-0 right-0 transition-all duration-500 flex flex-col ${isScrolled ? (isDark ? 'bg-[#000000]/98 border-b border-white/8 shadow-xl' : 'bg-white/98 backdrop-blur-2xl border-b border-stone-100 shadow-xl shadow-stone-200/40') : (isDark ? 'bg-[#000000]' : 'bg-white')}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <motion.div
@@ -1554,7 +1554,7 @@ export default function App() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={`fixed inset-0 z-[600] flex flex-col ${isDark ? '' : 'search-overlay-light'}`}
-            style={{ background: isDark ? 'rgba(10,10,12,0.96)' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
+            style={{ background: isDark ? '#000000' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
           >
             {/* Search Header */}
             <div className="px-5 pb-4 pt-10 flex items-center gap-3">
@@ -1603,7 +1603,7 @@ export default function App() {
                           setSearchQuery('');
                         }}
                         className={`rounded-2xl flex items-center gap-4 p-3 active:scale-[0.98] transition-all cursor-pointer overflow-hidden ${isDark ? '' : 'bg-stone-50 border border-stone-100'}`}
-                        style={isDark ? { background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)' } : {}}
+                        style={isDark ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' } : {}}
                       >
                         <img
                           src={recipe.image}
@@ -2046,7 +2046,7 @@ export default function App() {
   const renderExplorer = () => (
     <div className="flex-1 flex flex-col pb-44">
       {/* Immersive Search Header */}
-      <header className={`px-6 pt-7 pb-6 sticky top-0 z-40 transition-all ${isDark ? 'bg-[#111113]/95 border-b border-white/5 shadow-xl shadow-black/20' : 'bg-white/90 backdrop-blur-2xl'}`}>
+      <header className={`px-6 pt-7 pb-6 sticky top-0 z-40 transition-all ${isDark ? 'bg-[#000000]/95 border-b border-white/8 shadow-xl shadow-black/40' : 'bg-white/90 backdrop-blur-2xl'}`}>
         <div className="flex items-center justify-between mb-6">
           <h1 className={`text-3xl font-black shrink-0 ${isDark ? 'text-white' : 'text-stone-900'}`}>{selectedCategory || 'Explorer'}</h1>
           {isOffline && (
@@ -2316,7 +2316,7 @@ export default function App() {
     const favoriteRecipes = dbService.getFavorites(currentUser!, allRecipes);
 
     return (
-      <div className={`flex-1 flex flex-col pb-44 pt-4 transition-colors ${isDark ? 'bg-[#111113]' : 'bg-stone-50'}`}>
+      <div className={`flex-1 flex flex-col pb-44 pt-4 transition-colors ${isDark ? 'bg-black' : 'bg-stone-50'}`}>
         <header className="px-6 pt-4 pb-2 flex items-center justify-between">
           <h1 className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>{t.favorites}</h1>
           {isOffline && (
@@ -3054,8 +3054,8 @@ export default function App() {
     const totalXOF = list.reduce((acc, i) => acc + (parseFloat(i.priceXOF ?? '0') || 0), 0);
 
     return (
-      <div className={`flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-[#111113]' : 'bg-stone-50'}`}>
-        <header className={`px-6 pt-10 pb-6 sticky top-0 z-[100] border-b flex flex-col gap-1 transition-all duration-500 ${isDark ? 'bg-[#111113]/95 border-white/5' : 'bg-white/95 backdrop-blur-2xl border-stone-100'}`}>
+      <div className={`flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-[#000000]' : 'bg-stone-50'}`}>
+        <header className={`px-6 pt-10 pb-6 sticky top-0 z-[100] border-b flex flex-col gap-1 transition-all duration-500 ${isDark ? 'bg-[#000000]/95 border-white/8' : 'bg-white/95 backdrop-blur-2xl border-stone-100'}`}>
           <div className="flex items-center justify-between">
             <h2 className={`text-[24px] font-black tracking-tight leading-none ${isDark ? 'text-white' : 'text-stone-900'}`}>{t.myShoppingList}</h2>
             {isOffline && (
@@ -3143,7 +3143,7 @@ export default function App() {
   };
 
   const renderAuth = () => (
-    <div className={`flex-1 flex flex-col min-h-screen relative overflow-hidden ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#faf8f5]'}`}>
+    <div className={`flex-1 flex flex-col min-h-screen relative overflow-hidden ${isDark ? 'bg-[#000000]' : 'bg-[#faf8f5]'}`}>
       {/* ─── HERO SECTION ─── */}
       <div className="relative overflow-hidden" style={{ height: '42vh', minHeight: 220, maxHeight: 320 }}>
         {/* Gradient background */}
@@ -3219,7 +3219,7 @@ export default function App() {
 
         {/* Bottom curved edge */}
         <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ height: 32 }}>
-          <div className={`absolute bottom-0 left-0 right-0 rounded-t-[30px] ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#faf8f5]'}`}
+          <div className={`absolute bottom-0 left-0 right-0 rounded-t-[30px] ${isDark ? 'bg-[#000000]' : 'bg-[#faf8f5]'}`}
             style={{ height: 32 }} />
         </div>
       </div>
@@ -3694,7 +3694,7 @@ export default function App() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className={`h-screen max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,4px)] transition-colors duration-300 ${isDark ? 'dark bg-[#111113]' : 'bg-stone-50'}`}
+      className={`h-screen max-w-md mx-auto relative overflow-hidden flex flex-col shadow-2xl pt-[env(safe-area-inset-top,4px)] transition-colors duration-300 ${isDark ? 'dark bg-[#000000]' : 'bg-stone-50'}`}
     >
       {renderAuth()}
       <ModernAlertComponent
@@ -3712,7 +3712,7 @@ export default function App() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className={`h-screen max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-colors duration-300 pt-[env(safe-area-inset-top,4px)] ${isDark ? 'dark bg-[#111113]' : 'bg-stone-50'}`}
+      className={`h-screen max-w-md mx-auto shadow-2xl relative overflow-hidden flex flex-col transition-colors duration-300 pt-[env(safe-area-inset-top,4px)] ${isDark ? 'dark bg-[#000000]' : 'bg-stone-50'}`}
     >
       <main onScroll={onMainScroll} ref={mainScrollRef as any} className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar relative min-h-0">
         <AnimatePresence mode="wait">
