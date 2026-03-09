@@ -2360,10 +2360,10 @@ export default function App() {
   };
 
   const renderProfile = () => (
-    <div className="flex-1 flex flex-col pb-44 pt-4 relative bg-stone-50">
+    <div className={`flex-1 flex flex-col pb-44 pt-4 relative ${isDark ? 'bg-black' : 'bg-stone-50'}`}>
       <AnimatePresence>
         {profileSubView && (
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className={`absolute inset-0 z-50 p-6 pt-6 flex flex-col ${isDark ? 'bg-[#111113]' : 'bg-white'}`}>
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springTransition} className={`absolute inset-0 z-50 p-6 pt-6 flex flex-col ${isDark ? 'bg-black' : 'bg-white'}`}>
             <header className="flex items-center justify-between mb-8 shrink-0">
               <div className="flex items-center gap-4">
                 <button onClick={() => setProfileSubView(null)} className="p-2 btn-back-circle bg-stone-50 rounded-full"><ChevronLeft size={20} /></button>
@@ -2474,15 +2474,15 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <header className="flex flex-col items-center py-10">
+      <header className={`flex flex-col items-center py-10 ${isDark ? 'text-white' : ''}`}>
         <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden mb-4 bg-stone-100">
           <img
             src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name}`}
             className="w-full h-full object-cover"
           />
         </div>
-        <h2 className="text-2xl font-bold text-stone-800">{currentUser?.name}</h2>
-        <p className="text-stone-500 text-sm">{currentUser?.email}</p>
+        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-stone-800'}`}>{currentUser?.name}</h2>
+        <p className={`text-sm ${isDark ? 'text-white/50' : 'text-stone-500'}`}>{currentUser?.email}</p>
 
         {/* Cloud Connection Status + Refresh */}
         <div className="mt-4 flex items-center gap-2">
@@ -2497,7 +2497,7 @@ export default function App() {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => window.location.reload()}
             title="Actualiser les recettes"
-            className={`w-8 h-8 rounded-full flex items-center justify-center border border-stone-100 shadow-sm bg-white transition-colors ${isSyncing ? 'text-[#fb5607]' : 'text-stone-400 hover:text-stone-600'}`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border shadow-sm transition-colors ${isDark ? 'bg-white/8 border-white/10' : 'bg-white border-stone-100'} ${isSyncing ? 'text-[#fb5607]' : (isDark ? 'text-white/40 hover:text-white/70' : 'text-stone-400 hover:text-stone-600')}`}
           >
             <RefreshCw size={14} strokeWidth={2.5} />
           </motion.button>
@@ -2505,50 +2505,50 @@ export default function App() {
       </header>
 
       <section className="px-6 space-y-3">
-        <button onClick={() => setProfileSubView('personalInfo')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+        <button onClick={() => setProfileSubView('personalInfo')} className={`w-full flex items-center justify-between p-5 rounded-[32px] border shadow-sm active:scale-95 transition-all ${isDark ? 'bg-[#111111] border-white/8 hover:bg-[#1a1a1a]' : 'bg-white border-stone-100'}`}>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDark ? 'bg-white/8 text-white/60' : 'bg-stone-50 text-stone-600'}`}>
               <UserIcon size={20} />
             </div>
-            <span className="font-black text-stone-800 text-sm tracking-tight">{t.personalInfo}</span>
+            <span className={`font-black text-sm tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>{t.personalInfo}</span>
           </div>
-          <ChevronRight size={18} className="text-stone-300" />
+          <ChevronRight size={18} className={isDark ? 'text-white/25' : 'text-stone-300'} />
         </button>
 
         {/* New Shopping List Menu */}
 
-        <button onClick={() => setProfileSubView('settings')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+        <button onClick={() => setProfileSubView('settings')} className={`w-full flex items-center justify-between p-5 rounded-[32px] border shadow-sm active:scale-95 transition-all ${isDark ? 'bg-[#111111] border-white/8 hover:bg-[#1a1a1a]' : 'bg-white border-stone-100'}`}>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDark ? 'bg-white/8 text-white/60' : 'bg-stone-50 text-stone-600'}`}>
               <Settings size={20} />
             </div>
-            <span className="font-black text-stone-800 text-sm tracking-tight">{t.settings}</span>
+            <span className={`font-black text-sm tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>{t.settings}</span>
           </div>
-          <ChevronRight size={18} className="text-stone-300" />
+          <ChevronRight size={18} className={isDark ? 'text-white/25' : 'text-stone-300'} />
         </button>
 
-        <button onClick={() => setProfileSubView('contribution')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+        <button onClick={() => setProfileSubView('contribution')} className={`w-full flex items-center justify-between p-5 rounded-[32px] border shadow-sm active:scale-95 transition-all ${isDark ? 'bg-[#111111] border-white/8 hover:bg-[#1a1a1a]' : 'bg-white border-stone-100'}`}>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDark ? 'bg-white/8 text-white/60' : 'bg-stone-50 text-stone-600'}`}>
               <Heart size={20} />
             </div>
-            <span className="font-black text-stone-800 text-sm tracking-tight">{t.contribution}</span>
+            <span className={`font-black text-sm tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>{t.contribution}</span>
           </div>
-          <ChevronRight size={18} className="text-stone-300" />
+          <ChevronRight size={18} className={isDark ? 'text-white/25' : 'text-stone-300'} />
         </button>
 
-        <button onClick={() => setProfileSubView('about')} className="w-full flex items-center justify-between p-5 bg-white rounded-[32px] border border-stone-100 shadow-sm active:scale-95 transition-all">
+        <button onClick={() => setProfileSubView('about')} className={`w-full flex items-center justify-between p-5 rounded-[32px] border shadow-sm active:scale-95 transition-all ${isDark ? 'bg-[#111111] border-white/8 hover:bg-[#1a1a1a]' : 'bg-white border-stone-100'}`}>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-600">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDark ? 'bg-white/8 text-white/60' : 'bg-stone-50 text-stone-600'}`}>
               <Info size={20} />
             </div>
-            <span className="font-black text-stone-800 text-sm tracking-tight">{t.about}</span>
+            <span className={`font-black text-sm tracking-tight ${isDark ? 'text-white' : 'text-stone-800'}`}>{t.about}</span>
           </div>
-          <ChevronRight size={18} className="text-stone-300" />
+          <ChevronRight size={18} className={isDark ? 'text-white/25' : 'text-stone-300'} />
         </button>
 
 
-        <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 bg-rose-50 rounded-3xl text-rose-600 font-bold mt-6"><LogOut size={20} /> {t.logout}</button>
+        <button onClick={handleLogout} className={`w-full flex items-center gap-3 p-4 rounded-3xl font-bold mt-6 ${isDark ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-rose-50 text-rose-600'}`}><LogOut size={20} /> {t.logout}</button>
       </section>
     </div>
   );

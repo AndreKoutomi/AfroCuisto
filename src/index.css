@@ -54,9 +54,20 @@
   background-color: #000000 !important;
 }
 
-/* Global catch-all: any element with a white-ish bg class inside .dark */
+/* Global catch-all: any element with a white-ish bg class inside .dark
+   → use #111111 (card elevation) rather than pure black to avoid wiping out card layers.
+   Pure black (#000000) is reserved for page backgrounds only. */
 .dark [class*="bg-white"],
 .dark [class*="bg-stone-50"] {
+  background-color: #111111 !important;
+}
+
+/* Page-level backgrounds that must be pure black */
+.dark body,
+.dark main,
+.dark .bg-white.rounded-t-\[32px\],
+.dark .bg-\[\#faf8f5\],
+.dark .bg-\[\#faf9f6\] {
   background-color: #000000 !important;
 }
 
@@ -601,4 +612,222 @@
   background-color: #111111 !important;
   border-color: rgba(255, 255, 255, 0.10) !important;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.80), 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ==========================================================================
+   PROFILE SUB-VIEWS — Complete AMOLED Dark Mode
+   (AccountSecurityView, PersonalInfoView, ProfileSubViewRenderer,
+    DishSuggestionForm — these components have no isDark access)
+   ========================================================================== */
+
+/* ── Profile main page ───────────────────────────────────────────────────── */
+/* Header user info */
+.dark .renderProfile h2,
+.dark h2.text-2xl.font-bold {
+  color: #ffffff !important;
+}
+
+.dark p.text-stone-500 {
+  color: #888888 !important;
+}
+
+/* Profile menu buttons (bg-white rounded-[32px]) */
+.dark section.px-6 button {
+  background-color: #111111 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.dark section.px-6 button:active {
+  background-color: #1a1a1a !important;
+}
+
+.dark section.px-6 button span {
+  color: #ffffff !important;
+}
+
+/* ── Settings sub-view ───────────────────────────────────────────────────── */
+.dark .space-y-3>div.flex.items-center.justify-between.p-4,
+.dark .space-y-3>div.p-4,
+.dark .space-y-3>button.w-full.flex,
+.dark .space-y-3>button {
+  background-color: #111111 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .space-y-3 span.font-bold.text-stone-700,
+.dark .space-y-3 span.font-bold.text-stone-600 {
+  color: #e0e0e0 !important;
+}
+
+/* Language buttons (inactive state) */
+.dark .space-y-3 button.flex-1.bg-white {
+  background-color: #1a1a1a !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: #888888 !important;
+}
+
+.dark .space-y-3 button.flex-1.bg-white:active {
+  background-color: #222222 !important;
+}
+
+/* Units button */
+.dark .space-y-3 button.px-3.py-1\.5.bg-white {
+  background-color: #1a1a1a !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+/* ── Security sub-view ───────────────────────────────────────────────────── */
+.dark .space-y-3 button.w-full.flex.items-center.justify-between.p-4.bg-stone-50,
+.dark .space-y-4 button.w-full.flex {
+  background-color: #111111 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .space-y-4 div.bg-stone-50.p-6.rounded-3xl,
+.dark .space-y-4 div.bg-stone-50 {
+  background-color: #111111 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .space-y-4 h3.text-\[10px\].font-black.uppercase.text-stone-400,
+.dark .space-y-4 p.mt-4.text-\[10px\].text-stone-400 {
+  color: #666666 !important;
+}
+
+/* Inline auth-code send button */
+.dark .space-y-4 button.bg-stone-100 {
+  background-color: #2a2a2a !important;
+  color: #a0a0a0 !important;
+}
+
+/* ── PersonalInfoView ───────────────────────────────────────────────────── */
+.dark .space-y-6 div.bg-stone-50.p-6.rounded-3xl,
+.dark .space-y-6 div.bg-stone-50 {
+  background-color: #111111 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .space-y-6 h3.text-xs.font-black.uppercase.text-stone-400 {
+  color: #666666 !important;
+}
+
+.dark .space-y-6 label.text-\[10px\].font-bold.text-stone-400 {
+  color: #666666 !important;
+}
+
+.dark .space-y-6 p.font-bold.text-stone-800 {
+  color: #ffffff !important;
+}
+
+.dark .space-y-6 p.font-bold.text-stone-400 {
+  color: #888888 !important;
+}
+
+.dark .space-y-6 p.text-\[9px\].text-stone-300 {
+  color: #555555 !important;
+}
+
+.dark .space-y-6 .border-b.border-stone-100 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Cancel button in personalInfo edit */
+.dark .flex.gap-3 button.bg-stone-100 {
+  background-color: #1a1a1a !important;
+  color: #888888 !important;
+}
+
+/* ── Privacy sub-view ───────────────────────────────────────────────────── */
+.dark .space-y-6 div.bg-stone-50.p-6.rounded-3xl.border.border-stone-100 h3 {
+  color: #666666 !important;
+}
+
+.dark .space-y-6 div.flex.items-start.justify-between h4 {
+  color: #e0e0e0 !important;
+}
+
+.dark .space-y-6 div.flex.items-start.justify-between p {
+  color: #888888 !important;
+}
+
+/* Toggle thumb in privacy */
+.dark div.w-10.h-6.bg-stone-200.rounded-full {
+  background-color: #2a2a2a !important;
+}
+
+.dark div.w-10.h-6.bg-stone-200.rounded-full div.bg-white {
+  background-color: #666666 !important;
+}
+
+/* ── Contribution sub-view (DishSuggestionForm) ─────────────────────────── */
+.dark .space-y-6 div.bg-stone-50.p-6.rounded-3xl>div.flex.items-start h3.text-base.font-black {
+  color: #ffffff !important;
+}
+
+.dark .space-y-6 div.bg-stone-50.p-6.rounded-3xl>div.flex.items-start p.text-sm {
+  color: #888888 !important;
+}
+
+/* DishSuggestionForm specific */
+.dark form.space-y-4 input,
+.dark form.space-y-4 textarea,
+.dark form.space-y-4 select {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.dark form.space-y-4 input::placeholder,
+.dark form.space-y-4 textarea::placeholder {
+  color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.dark form.space-y-4 input:focus,
+.dark form.space-y-4 textarea:focus,
+.dark form.space-y-4 select:focus {
+  border-color: rgba(251, 86, 7, 0.50) !important;
+  background-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+.dark form.space-y-4 label {
+  color: #666666 !important;
+}
+
+.dark form.space-y-4 button:disabled {
+  background-color: #1a1a1a !important;
+  color: #444444 !important;
+}
+
+/* ── Notifications empty state ───────────────────────────────────────────── */
+.dark div.flex.flex-col.items-center.justify-center.py-20 h3 {
+  color: #ffffff !important;
+}
+
+.dark div.flex.flex-col.items-center.justify-center.py-20 p {
+  color: #888888 !important;
+}
+
+.dark div.w-16.h-16.bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* ── "About" sub-view ───────────────────────────────────────────────────── */
+.dark .space-y-8 h2.text-2xl.font-black {
+  color: #ffffff !important;
+}
+
+.dark .space-y-8 p.text-stone-500 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ── Sub-view wrapper and back header ────────────────────────────────────── */
+.dark .profileSubView-wrapper,
+.dark div.flex.flex-col.h-full.bg-white {
+  background-color: #000000 !important;
+}
+
+/* Ensure the sub-view slide container keeps a black bg */
+.dark motion div.absolute.inset-0 {
+  background-color: #000000 !important;
 }
