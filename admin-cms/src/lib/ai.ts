@@ -17,95 +17,156 @@ class AIService {
     // 1️⃣ Gestion de la clé API
     // ---------------------------------------------------------------------
     private getApiKey(): string {
-        const model = this.getModel();
-        const isGemini = model.startsWith('gemini');
-
         // Priorité absolue au localStorage pour la personnalisation utilisateur
         const userKey = localStorage.getItem('gemini_api_key');
         if (userKey) return userKey;
 
-        // Repli sur les clés globales
-        if (isGemini) {
-            return (import.meta as any).env.VITE_GEMINI_API_KEY || '';
-        } else {
-            return (import.meta as any).env.VITE_OPENAI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+        // Repli sur la clé globale
+        return (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+    }
+
+    async testKey(key: string, model: string, baseUrl?: string): Promise<{ success: boolean; message: string }> {
+        const isOpenAI = model.startsWith('gpt');
+        try {
+            if (isOpenAI) {
+                const endpoint = `${baseUrl?.replace(/\/$/, '') || 'https://api.openai.com/v1'}/chat/completions`;
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [{ role: 'user', content: 'Say hi' }],
+                        max_tokens: 5
+                    })
+                });
+                if (!response.ok) {
+                    const err = await response.text();
+                    return { success: false, message: `Erreur OpenAI: ${response.status} - ${err}` };
+                }
+                return { success: true, message: 'Connexion OpenAI réussie !' };
+            } else {
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: 'hi' }] }],
+                        generationConfig: { maxOutputTokens: 5 }
+                    })
+                });
+                if (!response.ok) {
+                    const err = await response.text();
+                    return { success: false, message: `Erreur Gemini: ${response.status} - ${err}` };
+                }
+                return { success: true, message: 'Connexion Gemini réussie !' };
+            }
+        } catch (err: any) {
+            return { success: false, message: `Erreur de connexion: ${err.message}` };
         }
     }
 
-    private getBaseUrl(): string {
-        return localStorage.getItem('ai_base_url') || '';
-    }
-
     // ---------------------------------------------------------------------
-    // 2️⃣ Gestion du modèle (Gemini ou OpenAI)
+    // 2️⃣ Gestion du modèle (Gemini Only)
     // ---------------------------------------------------------------------
-    /** Retourne le modèle actuellement sélectionné (stocké en localStorage ou env) */
     private getModel(): string {
-        return localStorage.getItem('gemini_model') || (import.meta as any).env.VITE_AI_MODEL || DEFAULT_MODEL;
+        let model = localStorage.getItem('gemini_model') || (import.meta as any).env.VITE_AI_MODEL || DEFAULT_MODEL;
+
+        // Allow Gemini and GPT models
+        const isSupported = model.startsWith('gemini') || model.startsWith('gpt');
+        if (!isSupported) {
+            console.warn(`Modèle non supporté (${model}), retour à ${DEFAULT_MODEL}`);
+            return DEFAULT_MODEL;
+        }
+        return model;
     }
 
-    /** Permet de changer le modèle depuis l'UI (ex. via Settings) */
     setModel(modelId: string) {
         localStorage.setItem('gemini_model', modelId);
     }
 
     // ---------------------------------------------------------------------
-    // 3️⃣ Méthode générique d'appel IA (supporte Gemini et OpenAI)
+    // 3️⃣ Méthode d'appel Gemini
     // ---------------------------------------------------------------------
     private async callModel(prompt: string, systemPrompt: string): Promise<string> {
         const key = this.getApiKey();
         if (!key) throw new Error('Clé API manquante. Configurez-la dans les Réglages.');
 
-        const model = this.getModel();
-        const customUrl = this.getBaseUrl();
-        const isGemini = model.startsWith('gemini');
+        let model = this.getModel();
+        const isOpenAI = model.startsWith('gpt');
+        const customBaseUrl = localStorage.getItem('ai_base_url');
 
-        let endpoint = '';
-        if (isGemini) {
-            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-        } else {
-            // Utilisation du customUrl ou de l'URL par défaut d'OpenAI
-            const baseUrl = customUrl.replace(/\/$/, '') || 'https://api.openai.com/v1';
-            endpoint = `${baseUrl}/chat/completions`;
-        }
-
-        const body = isGemini
-            ? {
-                contents: [{ parts: [{ text: `${systemPrompt}\n\nUser request: ${prompt}` }] }],
-                generationConfig: {
-                    temperature: 0.8,
-                    responseMimeType: 'application/json'
+        if (isOpenAI) {
+            const endpoint = `${customBaseUrl?.replace(/\/$/, '') || 'https://api.openai.com/v1'}/chat/completions`;
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${key}`
                 },
+                body: JSON.stringify({
+                    model,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: prompt || "Génère les données demandées." }
+                    ],
+                    temperature: 0.7,
+                    response_format: { type: "json_object" }
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.text();
+                throw new Error(`Erreur OpenAI (${response.status}): ${err}`);
             }
-            : {
-                model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: prompt },
-                ],
-                temperature: 0.8,
-                response_format: { type: "json_object" } // Standard OpenAI JSON mode
+
+            const json = await response.json();
+            return json.choices[0].message.content;
+        } else {
+            // Logic for Google Gemini
+            const tryFetch = async (version: string, modelName: string) => {
+                const endpoint = `https://generativelanguage.googleapis.com/${version}/models/${modelName}:generateContent?key=${key}`;
+                const body = {
+                    contents: [{ parts: [{ text: `${systemPrompt}\n\nUser request: ${prompt}` }] }],
+                    generationConfig: {
+                        temperature: 0.8,
+                        responseMimeType: 'application/json'
+                    },
+                };
+                return fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
             };
 
-        const headers: HeadersInit = { 'Content-Type': 'application/json' };
-        if (!isGemini) {
-            (headers as any)['Authorization'] = `Bearer ${key}`;
-        }
+            // Tentative 1: v1beta avec le modèle sélectionné
+            let response = await tryFetch('v1beta', model);
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body),
-        });
-        if (!response.ok) {
-            const err = await response.text();
-            throw new Error(`Erreur API (${response.status}): ${err}`);
-        }
-        const json = await response.json();
-        if (isGemini) {
-            return json.candidates[0].content.parts[0].text;
-        } else {
-            return json.choices[0].message.content;
+            // Fallback 1: Si 404, tenter v1
+            if (response.status === 404) {
+                response = await tryFetch('v1', model);
+            }
+
+            // Fallback 2: Si toujours 404 et ce n'est pas le défaut, forcer le défaut
+            if (response.status === 404 && model !== DEFAULT_MODEL) {
+                console.warn(`Modèle ${model} non trouvé, repli sur ${DEFAULT_MODEL}`);
+                response = await tryFetch('v1beta', DEFAULT_MODEL);
+            }
+
+            if (!response.ok) {
+                const err = await response.text();
+                throw new Error(`Erreur API Gemini (${response.status}): ${err}`);
+            }
+
+            const json = await response.json();
+            try {
+                return json.candidates[0].content.parts[0].text;
+            } catch (e) {
+                throw new Error('Format de réponse Gemini invalide ou contenu bloqué.');
+            }
         }
     }
 

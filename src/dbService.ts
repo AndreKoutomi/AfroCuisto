@@ -291,29 +291,44 @@ export const dbService = {
         }
     },
 
-    async submitDishSuggestion(dish: DishSuggestionPayload): Promise<boolean> {
+    // --- Dish Suggestion Fallback (Email) ---
+    async sendDishSuggestionEmail(dish: any): Promise<{ success: boolean; error?: string }> {
         try {
-            if (!supabase) return false;
+            const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_k3w11sm';
+            const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_huya44j'; 
+            const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '5bxF5hiV8eLRjESo4';
 
-            const extraDetails = [
-                dish.region ? `Région / origine: ${dish.region}` : null,
-                dish.category ? `Catégorie: ${dish.category}` : null,
-                dish.cooking_time ? `Temps estimé: ${dish.cooking_time}` : null,
-                dish.submitter_name ? `Nom du contributeur: ${dish.submitter_name}` : null,
-                dish.submitter_email ? `Email du contributeur: ${dish.submitter_email}` : null,
-            ].filter(Boolean).join('\n');
+            const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service_id: serviceId,
+                    template_id: templateId,
+                    user_id: publicKey,
+                    template_params: {
+                        to_name: "André Koutomi",
+                        message: `NOUVELLE SUGGESTION : ${dish.name}\nIngrédients: ${dish.ingredients}\nDescription: ${dish.description}\nPar: ${dish.submitter_name || "Anonyme"} (${dish.submitter_email || "N/A"})`,
+                        otp_code: "NOTICE: Suggestion Recue",
+                        dish_name: dish.name,
+                    }
+                })
+            });
 
-            const finalDescription = extraDetails
-                ? `${dish.description.trim()}\n\n---\nInformations complémentaires\n${extraDetails}`
-                : dish.description.trim();
+            if (!response.ok) {
+                const text = await response.text();
+                return { success: false, error: `EmailJS Error: ${text}` };
+            }
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: `Email Error: ${(err).message}` };
+        }
+    },
 
-            const primaryPayload = {
-                name: dish.name.trim(),
-                ingredients: dish.ingredients.trim(),
-                description: finalDescription,
-            };
+    async submitDishSuggestion(dish: any): Promise<{ success: boolean; error?: string }> {
+        try {
+            if (!supabase) return { success: false, error: 'Supabase client not initialized' };
 
-            const fallbackPayload = {
+            const fullPayload = {
                 name: dish.name.trim(),
                 ingredients: dish.ingredients.trim(),
                 description: dish.description.trim(),
@@ -324,26 +339,29 @@ export const dbService = {
                 submitter_email: dish.submitter_email?.trim() || null,
             };
 
-            let error: unknown = null;
+            const { error: insertError } = await supabase.from('dish_suggestions').insert([fullPayload]);
 
-            const primaryResult = await supabase
-                .from('dish_suggestions')
-                .insert([primaryPayload]);
-
-            error = primaryResult.error;
-
-            if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST204') {
-                const fallbackResult = await supabase
-                    .from('dish_suggestions')
-                    .insert([fallbackPayload]);
-                error = fallbackResult.error;
+            if (insertError) {
+                if (insertError.code === '42P01' || insertError.code === 'PGRST205' || insertError.message?.includes('cache')) {
+                    console.warn('Table missing, using email fallback...');
+                    return await this.sendDishSuggestionEmail(dish);
+                }
+                
+                if (insertError.code === 'PGRST204' || insertError.message?.includes('column')) {
+                    const minimalPayload = {
+                        name: dish.name.trim(),
+                        ingredients: dish.ingredients.trim(),
+                        description: dish.description.trim()
+                    };
+                    const { error: minError } = await supabase.from('dish_suggestions').insert([minimalPayload]);
+                    if (!minError) return { success: true };
+                }
+                return { success: false, error: insertError.message };
             }
-
-            if (error) throw error;
-            return true;
+            return { success: true };
         } catch (err) {
-            console.error('Submit dish suggestion error:', err);
-            return false;
+            console.error('Submission failed, trying last resort fallback:', err);
+            return await this.sendDishSuggestionEmail(dish);
         }
     },
 

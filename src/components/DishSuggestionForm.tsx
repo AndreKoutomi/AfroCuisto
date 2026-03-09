@@ -18,6 +18,24 @@ interface DishSuggestionFormProps {
 const inputClassName = "w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-[#fb5607] focus:ring-4 focus:ring-[#fb5607]/10";
 const labelClassName = "mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-stone-400";
 
+const CATEGORIES = [
+    "Pâtes et Céréales (Wɔ̌)",
+    "Sauces (Nùsúnnú)",
+    "Plats de Résistance & Ragoûts",
+    "Protéines & Grillades",
+    "Street Food & Snacks (Amuse-bouche)",
+    "Boissons & Douceurs",
+    "Condiments & Accompagnements",
+    "Autre"
+];
+
+const REGIONS = [
+    "Alibori", "Atacora", "Atlantique", "Borgou",
+    "Collines", "Couffo", "Donga", "Littoral",
+    "Mono", "Ouémé", "Plateau", "Zou",
+    "Diaspora", "Nationale / Tout le pays", "Autre Afrique", "Autre"
+];
+
 const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => {
     const [formData, setFormData] = useState<DishSuggestionPayload>({
         name: '',
@@ -95,25 +113,29 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label htmlFor="dish-region" className={labelClassName}>Région / origine</label>
-                    <input
+                    <select
                         id="dish-region"
-                        type="text"
-                        className={inputClassName}
+                        className={`${inputClassName} appearance-none cursor-pointer bg-no-repeat`}
+                        style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")', backgroundPosition: 'right 16px center' }}
                         value={formData.region}
                         onChange={(e) => handleChange('region', e.target.value)}
-                        placeholder="Ex: Mono, Ouémé, diaspora..."
-                    />
+                    >
+                        <option value="" disabled>Sélectionner une région...</option>
+                        {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
                 </div>
                 <div>
                     <label htmlFor="dish-category" className={labelClassName}>Catégorie</label>
-                    <input
+                    <select
                         id="dish-category"
-                        type="text"
-                        className={inputClassName}
+                        className={`${inputClassName} appearance-none cursor-pointer bg-no-repeat`}
+                        style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")', backgroundPosition: 'right 16px center' }}
                         value={formData.category}
                         onChange={(e) => handleChange('category', e.target.value)}
-                        placeholder="Ex: Sauce, grillade, boisson..."
-                    />
+                    >
+                        <option value="" disabled>Sélectionner une catégorie...</option>
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
                 </div>
             </div>
 

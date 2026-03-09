@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Recipe } from "./types";
 
 const GEMINI_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || (process.env.GEMINI_API_KEY as string);
-const OPENAI_KEY = (import.meta as any).env.VITE_OPENAI_API_KEY || (process.env.OPENAI_API_KEY as string);
+const ANTHROPIC_KEY = (import.meta as any).env.VITE_ANTHROPIC_API_KEY || (process.env.ANTHROPIC_API_KEY as string);
 const AI_MODEL = (import.meta as any).env.VITE_AI_MODEL || "gemini-1.5-flash";
 
 const genAI = GEMINI_KEY ? new GoogleGenerativeAI(GEMINI_KEY) : null;
@@ -23,28 +23,31 @@ export async function getAIRecipeRecommendation(recipes: Recipe[], userName: str
     `;
 
     try {
-        if (AI_MODEL.startsWith("gpt") && OPENAI_KEY) {
-            // Utilisation de GPT-4o via OpenAI API
-            const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        if (AI_MODEL.startsWith("claude") && ANTHROPIC_KEY) {
+            // Utilisation d'Anthropic Claude
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${OPENAI_KEY}`
+                    "x-api-key": ANTHROPIC_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-dangerous-direct-browser-access": "true"
                 },
                 body: JSON.stringify({
                     model: AI_MODEL,
+                    max_tokens: 150,
                     messages: [
-                        { role: "system", content: "Tu es un assistant culinaire expert d'AfroCuisto." },
                         { role: "user", content: prompt }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 150
+                    ]
                 })
             });
 
-            if (!response.ok) throw new Error(`OpenAI Error: ${response.statusText}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Anthropic Error: ${errorData.error?.message || response.statusText}`);
+            }
             const json = await response.json();
-            return json.choices[0].message.content.trim();
+            return json.content[0].text.trim();
         } else if (genAI) {
             // Utilisation de Gemini
             const model = genAI.getGenerativeModel({ model: AI_MODEL.includes("gemini") ? AI_MODEL : "gemini-1.5-flash" });

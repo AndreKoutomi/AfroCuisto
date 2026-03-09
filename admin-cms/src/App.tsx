@@ -6,8 +6,10 @@ import { RecipeForm } from './pages/RecipeForm';
 import { SectionsManager } from './pages/SectionsManager';
 import { SectionForm } from './pages/SectionForm';
 import { Feedback } from './pages/Feedback';
+import { Contributions } from './pages/Contributions';
 import { UsersPage } from './pages/Users';
 import { Settings } from './pages/Settings';
+import { Transactions } from './pages/Transactions';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -18,8 +20,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (location.pathname === '/sections/create') return 'Nouvelle Section';
     if (location.pathname === '/sections/edit/') return 'Modifier la Section';
     if (location.pathname === '/feedback') return 'Retours Clients';
+    if (location.pathname === '/contributions') return 'Contributions Utilisateur';
     if (location.pathname === '/dashboard') return 'Tableau de bord';
     if (location.pathname === '/users') return 'Utilisateurs';
+    if (location.pathname === '/transactions') return 'Transactions';
     if (location.pathname === '/settings') return 'Réglages IA';
     return 'Bienvenue sur AfroCuisto';
   };
@@ -27,7 +31,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const getBreadcrumb = () => {
     if (location.pathname.startsWith('/sections')) return 'Pages / Sections';
     if (location.pathname.startsWith('/users')) return 'Pages / Utilisateurs';
+    if (location.pathname.startsWith('/transactions')) return 'Pages / Transactions';
     if (location.pathname.startsWith('/settings')) return 'Réglages / IA';
+    if (location.pathname.startsWith('/contributions')) return 'Pages / Contributions';
     return 'Pages / Tableau de bord';
   };
 
@@ -88,7 +94,9 @@ function App() {
           <Route path="/sections/create" element={<SectionForm />} />
           <Route path="/sections/edit/:id" element={<SectionForm />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="/feedback" element={<Feedback />} />
+          <Route path="/contributions" element={<Contributions />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </AppLayout>

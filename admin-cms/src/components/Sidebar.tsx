@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookText, LayoutGrid, MessageSquare, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, BookText, LayoutGrid, MessageSquare, Users, Settings, Heart, CreditCard } from 'lucide-react';
 
 export function Sidebar() {
     return (
@@ -44,11 +44,25 @@ export function Sidebar() {
                     <span>Utilisateurs</span>
                 </NavLink>
                 <NavLink
+                    to="/transactions"
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                >
+                    <CreditCard size={20} style={{ marginRight: '8px' }} />
+                    <span>Transactions</span>
+                </NavLink>
+                <NavLink
                     to="/feedback"
                     className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 >
                     <MessageSquare size={20} style={{ marginRight: '8px' }} />
                     <span>Retour client</span>
+                </NavLink>
+                <NavLink
+                    to="/contributions"
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                >
+                    <Heart size={20} style={{ marginRight: '8px' }} />
+                    <span>Contributions Utilisateur</span>
                     <span className="badge badge-primary text-[10px] ml-auto">NEW</span>
                 </NavLink>
                 <NavLink
