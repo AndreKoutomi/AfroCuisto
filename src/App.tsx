@@ -1454,20 +1454,23 @@ export default function App() {
     // 2. Update the <meta name="theme-color"> tag dynamically
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', isDark ? '#111113' : '#BF4E30');
+      if (!currentUser) {
+        metaThemeColor.setAttribute('content', '#fb5607');
+      } else {
+        metaThemeColor.setAttribute('content', isDark ? '#111113' : '#ffffff');
+      }
     }
 
     // 3. Update Android status bar icon colors via Capacitor SystemBars plugin
     if (Capacitor.isNativePlatform()) {
       SystemBars.setStyle({
-        // Dark style = light/white icons (for dark backgrounds)
-        // Light style = dark icons (for light backgrounds)
-        style: isDark ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
+        // On orange background (!currentUser), we want light icons (Style.Dark)
+        style: !currentUser ? SystemBarsStyle.Dark : (isDark ? SystemBarsStyle.Dark : SystemBarsStyle.Light),
       }).catch(() => {
         // Silently fail on platforms that don't support this
       });
     }
-  }, [isDark]);
+  }, [isDark, currentUser]);
 
   const navItems = [
     { id: 'home', iconId: 'home', label: t.home },
@@ -3215,9 +3218,9 @@ export default function App() {
         </div>
 
         {/* Bottom curved edge */}
-        <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ height: 40 }}>
-          <div className={`absolute bottom-0 left-[-5%] right-[-5%] rounded-t-[50%] ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#faf8f5]'}`}
-            style={{ height: 50 }} />
+        <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ height: 32 }}>
+          <div className={`absolute bottom-0 left-0 right-0 rounded-t-[30px] ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#faf8f5]'}`}
+            style={{ height: 32 }} />
         </div>
       </div>
 
