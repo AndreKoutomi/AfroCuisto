@@ -120,47 +120,141 @@
   background-color: #222222 !important;
 }
 
-/* ── 4. Tailwind text classes → high contrast ───────────────────────────── */
+/* ── 4. Text classes → high contrast AMOLED ─────────────────────────────── */
+
+/* Tailwind stone text scale */
 .dark .text-stone-900,
 .dark .text-stone-800,
 .dark .text-\[\#000000\],
-.dark .text-\[\#1a1a1a\] {
+.dark .text-\[\#1a1a1a\],
+.dark .text-\[\#111827\] {
   color: #ffffff !important;
 }
 
 .dark .text-stone-700 {
-  color: #e0e0e0 !important;
+  color: #e8e8e8 !important;
 }
 
 .dark .text-stone-600 {
-  color: #b0b0b0 !important;
+  color: #c0c0c0 !important;
 }
 
 .dark .text-stone-500 {
-  color: #888888 !important;
+  color: #909090 !important;
 }
 
 .dark .text-stone-400 {
-  color: #666666 !important;
+  color: #707070 !important;
 }
 
 .dark .text-stone-300 {
-  color: #444444 !important;
+  color: #505050 !important;
 }
 
-/* Inline style text overrides */
-.dark [style*="color: #111827"],
-.dark [style*="color: #1a1a1a"],
-.dark [style*="color: rgb(17, 24, 39)"],
-.dark [style*="color: '#111827'"] {
+/* Tailwind gray/slate text */
+.dark .text-gray-900,
+.dark .text-gray-800 {
   color: #ffffff !important;
 }
 
-.dark [style*="color: #374151"],
-.dark [style*="color: #6b7280"],
-.dark [style*="color: #9ca3af"] {
-  color: rgba(255, 255, 255, 0.6) !important;
+.dark .text-gray-700 {
+  color: #e0e0e0 !important;
 }
+
+.dark .text-gray-600 {
+  color: #b8b8b8 !important;
+}
+
+.dark .text-gray-500 {
+  color: #8a8a8a !important;
+}
+
+.dark .text-gray-400 {
+  color: #686868 !important;
+}
+
+.dark .text-slate-800,
+.dark .text-slate-900 {
+  color: #ffffff !important;
+}
+
+.dark .text-slate-700 {
+  color: #e0e0e0 !important;
+}
+
+/* Universal element-level fallback for dark mode:
+   Any p / h / span / label / li / td inside .dark gets white text
+   UNLESS it has an explicit color class or accent color inline style.
+   Using lower specificity than class selectors so explicit overrides win. */
+.dark p,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark span,
+.dark label,
+.dark li,
+.dark td,
+.dark th,
+.dark div>small,
+.dark blockquote {
+  color: inherit;
+}
+
+/* Set root color inheritance chain */
+.dark body {
+  color: #ffffff;
+}
+
+.dark main,
+.dark section,
+.dark article,
+.dark div:not([class*="text-"]) {
+  color: inherit;
+}
+
+/* ── Inline style colour overrides (React style={{}}) ─────────────────────── */
+
+/* Near-black / dark gray → white (strong text) */
+.dark [style*="color: #1a1a1a"],
+.dark [style*="color: '#1a1a1a'"],
+.dark [style*="color: #111827"],
+.dark [style*="color: '#111827'"],
+.dark [style*="color: #0f172a"],
+.dark [style*="color: #292524"],
+.dark [style*="color: rgb(17, 24, 39)"],
+.dark [style*="color: rgb(26, 26, 26)"] {
+  color: #ffffff !important;
+}
+
+/* Dark gray → white (medium-strong text) */
+.dark [style*="color: #374151"],
+.dark [style*="color: '#374151'"],
+.dark [style*="color: rgb(55, 65, 81)"] {
+  color: #ffffff !important;
+}
+
+/* Medium gray → white/65 (secondary text) */
+.dark [style*="color: #6b7280"],
+.dark [style*="color: '#6b7280'"],
+.dark [style*="color: rgb(107, 114, 128)"] {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Light gray → white/50 (muted / meta text) */
+.dark [style*="color: #9ca3af"],
+.dark [style*="color: '#9ca3af'"],
+.dark [style*="color: rgb(156, 163, 175)"],
+.dark [style*="color: #d1d5db"],
+.dark [style*="color: '#d1d5db'"],
+.dark [style*="color: rgb(209, 213, 219)"],
+.dark [style*="color: #e5e7eb"],
+.dark [style*="color: '#e5e7eb'"] {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
 
 /* ── 5. Borders ─────────────────────────────────────────────────────────── */
 .dark .border-white,
