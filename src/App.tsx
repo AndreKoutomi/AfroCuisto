@@ -61,7 +61,7 @@ import { dbService } from './dbService';
 import { translations, LanguageCode } from './translations';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
-import { SystemBars, SystemBarsStyle } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 // --- Constants & Config ---
 const springTransition = { type: 'spring', stiffness: 700, damping: 36, mass: 0.35 };
@@ -1462,14 +1462,24 @@ export default function App() {
       }
     }
 
-    // 3. Update Android status bar icon colors via Capacitor SystemBars plugin
+    // 3. Update Android status bar via Capacitor StatusBar plugin
     if (Capacitor.isNativePlatform()) {
-      SystemBars.setStyle({
-        // On orange background (!currentUser), we want light icons (Style.Dark)
-        style: !currentUser ? SystemBarsStyle.Dark : (isDark ? SystemBarsStyle.Dark : SystemBarsStyle.Light),
-      }).catch(() => {
-        // Silently fail on platforms that don't support this
-      });
+      const applyStatusBar = async () => {
+        try {
+          if (!currentUser) {
+            // Background for login screen (orange or dark)
+            await StatusBar.setBackgroundColor({ color: isDark ? '#1a0a02' : '#fb5607' });
+            await StatusBar.setStyle({ style: Style.Light });
+          } else {
+            // Theme-based background for logged-in users
+            await StatusBar.setBackgroundColor({ color: isDark ? '#000000' : '#ffffff' });
+            await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
+          }
+        } catch (error) {
+          console.error('StatusBar error:', error);
+        }
+      };
+      applyStatusBar();
     }
   }, [isDark, currentUser]);
 
