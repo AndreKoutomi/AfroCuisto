@@ -1467,13 +1467,15 @@ export default function App() {
       const applyStatusBar = async () => {
         try {
           if (!currentUser) {
-            // Background for login screen (orange or dark)
-            await StatusBar.setBackgroundColor({ color: isDark ? '#1a0a02' : '#fb5607' });
-            await StatusBar.setStyle({ style: Style.Light });
+            // LOGIN PAGE: Transparent overlay to show the orange gradient
+            await StatusBar.setOverlaysWebView({ overlay: true });
+            // Style.Dark = White icons (best for orange/dark backgrounds)
+            await StatusBar.setStyle({ style: Style.Dark });
           } else {
-            // Theme-based background for logged-in users
+            // INSIDE APP: Standard non-overlay behavior
+            await StatusBar.setOverlaysWebView({ overlay: false });
             await StatusBar.setBackgroundColor({ color: isDark ? '#000000' : '#ffffff' });
-            await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
+            await StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
           }
         } catch (error) {
           console.error('StatusBar error:', error);
