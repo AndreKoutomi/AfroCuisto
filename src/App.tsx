@@ -2899,13 +2899,14 @@ export default function App() {
                 transition={springTransition}
                 className="absolute inset-x-0 top-0"
               >
-                <div className="relative h-[48vh] w-full shrink-0 bg-[#fff8f3] overflow-hidden">
-                  <div className="absolute -top-12 -right-20 w-[300px] h-[300px] md:w-[450px] md:h-[450px] rounded-full overflow-hidden shadow-2xl shadow-orange-900/10 border-[16px] border-[#fff8f3] z-10">
+                <div className="relative h-[48vh] w-full shrink-0 overflow-hidden">
+                  <div className="absolute inset-0 w-full h-full z-10 bg-stone-100">
                     <img src={recipe.image} className="w-full h-full object-cover" alt={recipe.name} />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/10 pointer-events-none"></div>
                   </div>
 
                   <div className="absolute left-6 top-10 flex flex-col gap-5 z-20 items-center">
-                    <button onClick={goBack} className="w-12 h-12 bg-transparent flex items-center justify-center text-stone-400 hover:text-stone-800 transition-colors pointer-events-auto">
+                    <button onClick={goBack} className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-stone-800 shadow-lg shadow-black/10 transition-colors pointer-events-auto">
                       <ChevronLeft size={28} strokeWidth={2.5} />
                     </button>
                     <div className="h-2"></div>
@@ -3204,7 +3205,7 @@ export default function App() {
 
     return (
       <div className={`flex-1 flex flex-col pb-44 animate-in fade-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-[#000000]' : 'bg-stone-50'}`}>
-        <header className={`px-6 pt-10 pb-6 sticky top-0 z-[100] border-b flex flex-col gap-1 transition-all duration-500 ${isDark ? 'bg-[#000000]/95 border-white/8' : 'bg-white/95 backdrop-blur-2xl border-stone-100'}`}>
+        <header className={`px-6 pt-10 pb-6 sticky top-0 z-[100] flex flex-col gap-1 transition-all duration-500 ${isDark ? 'bg-[#000000]/95' : 'bg-stone-50/95 backdrop-blur-2xl'}`}>
           <div className="flex items-center justify-between">
             <h2 className={`text-[24px] font-black tracking-tight leading-none ${isDark ? 'text-white' : 'text-stone-900'}`}>{t.myShoppingList}</h2>
             {isOffline && (
