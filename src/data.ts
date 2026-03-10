@@ -11,8 +11,10 @@
  * ============================================================================
  */
 
-import { Recipe } from './types';
+import { Recipe } from './types'; // Importation du modèle de données
 
+// "recipes" est un tableau (une liste) qui contient toutes les recettes par défaut.
+// Chaque recette est un "objet" avec des propriétés comme id, name, ingredients, etc.
 export const recipes: Recipe[] = [
   // --- Pâtes et Céréales (Wɔ̌) ---
   {
@@ -26,6 +28,7 @@ export const recipes: Recipe[] = [
     cookTime: "20 min",
     image: "/images/pate_blanche_1772192522680.png",
     description: "La pâte de maïs blanche, aliment de base consommé quotidiennement au Bénin.",
+    // Liste des ingrédients nécessaires
     ingredients: [
       { item: "Farine de maïs fine", amount: "500g" },
       { item: "Eau", amount: "1.5L" },
@@ -33,6 +36,7 @@ export const recipes: Recipe[] = [
     ],
     techniqueTitle: "Le Pétrissage",
     techniqueDescription: "Utiliser une spatule en bois (longue) pour pétrir énergiquement la pâte contre les parois de la marmite.",
+    // Les étapes de préparation numérotées
     steps: [
       "Porter l'eau à ébullition dans une grande marmite.",
       "Prélever un bol d'eau bouillante et y délayer une petite partie de la farine pour faire une bouillie légère.",

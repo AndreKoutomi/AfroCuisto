@@ -11,26 +11,30 @@
  * ============================================================================
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react'; // Importation des outils de base de React
 
+// Définition de la structure des données envoyées par le formulaire
 export interface DishSuggestionPayload {
-    name: string;
-    ingredients: string;
-    description: string;
-    region?: string;
-    category?: string;
-    cooking_time?: string;
-    submitter_name?: string;
-    submitter_email?: string;
+    name: string; // Nom du plat
+    ingredients: string; // Liste des ingrédients
+    description: string; // Description ou méthode
+    region?: string; // Région (optionnel)
+    category?: string; // Catégorie (optionnel)
+    cooking_time?: string; // Temps de cuisson (optionnel)
+    submitter_name?: string; // Nom de celui qui envoie
+    submitter_email?: string; // Email de celui qui envoie
 }
 
+// Propriétés acceptées par le composant (ici une fonction de soumission)
 interface DishSuggestionFormProps {
     onSubmit: (dish: DishSuggestionPayload) => Promise<boolean> | boolean;
 }
 
+// Styles graphiques (Tailwind CSS) pour les champs de saisie et les textes
 const inputClassName = "w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-[#fb5607] focus:ring-4 focus:ring-[#fb5607]/10";
 const labelClassName = "mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-stone-400";
 
+// Liste des catégories possibles pour le menu déroulant
 const CATEGORIES = [
     "Pâtes et Céréales (Wɔ̌)",
     "Sauces (Nùsúnnú)",
@@ -42,6 +46,7 @@ const CATEGORIES = [
     "Autre"
 ];
 
+// Liste des régions du Bénin
 const REGIONS = [
     "Alibori", "Atacora", "Atlantique", "Borgou",
     "Collines", "Couffo", "Donga", "Littoral",
@@ -49,7 +54,9 @@ const REGIONS = [
     "Diaspora", "Nationale / Tout le pays", "Autre Afrique", "Autre"
 ];
 
+// Le composant principal du formulaire
 const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => {
+    // État (mémoire) du formulaire pour stocker ce que l'utilisateur écrit
     const [formData, setFormData] = useState<DishSuggestionPayload>({
         name: '',
         ingredients: '',
@@ -60,8 +67,11 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
         submitter_name: '',
         submitter_email: '',
     });
+
+    // État pour savoir si l'envoi est en cours (pour désactiver le bouton)
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Vérifie si les champs obligatoires sont remplis
     const isValid = useMemo(() => {
         return Boolean(
             formData.name.trim() &&
@@ -70,16 +80,19 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
         );
     }, [formData]);
 
+    // Fonction pour mettre à jour la mémoire du formulaire quand on tape au clavier
     const handleChange = (field: keyof DishSuggestionPayload, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    // Fonction déclenchée quand on clique sur "Envoyer"
     const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        if (!isValid || isSubmitting) return;
+        event.preventDefault(); // Empêche le rechargement de la page
+        if (!isValid || isSubmitting) return; // Arrête si invalide ou déjà en cours
 
-        setIsSubmitting(true);
+        setIsSubmitting(true); // Indique que le chargement commence
         try {
+            // Appel de la fonction onSubmit passée par le parent (App.tsx)
             const success = await onSubmit({
                 name: formData.name.trim(),
                 ingredients: formData.ingredients.trim(),
@@ -91,6 +104,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 submitter_email: formData.submitter_email?.trim() || undefined,
             });
 
+            // Si l'envoi a réussi, on vide le formulaire
             if (success) {
                 setFormData({
                     name: '',
@@ -104,12 +118,14 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 });
             }
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false); // Fin du chargement
         }
     };
 
+    // Ce qui est affiché à l'écran (HTML/JSX)
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Champ pour le nom du plat */}
             <div>
                 <label htmlFor="dish-name" className={labelClassName}>Nom du plat</label>
                 <input
@@ -123,6 +139,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 />
             </div>
 
+            {/* Sélections de Région et Catégorie en deux colonnes */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label htmlFor="dish-region" className={labelClassName}>Région / origine</label>
@@ -152,6 +169,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 </div>
             </div>
 
+            {/* Informations sur l'expéditeur */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label htmlFor="dish-submit-name" className={labelClassName}>Votre nom</label>
@@ -177,6 +195,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 </div>
             </div>
 
+            {/* Temps de cuisson */}
             <div>
                 <label htmlFor="dish-cooking-time" className={labelClassName}>Temps estimé</label>
                 <input
@@ -189,6 +208,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 />
             </div>
 
+            {/* Zone de texte pour les ingrédients */}
             <div>
                 <label htmlFor="dish-ingredients" className={labelClassName}>Ingrédients principaux</label>
                 <textarea
@@ -201,6 +221,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 />
             </div>
 
+            {/* Zone de texte pour la description */}
             <div>
                 <label htmlFor="dish-description" className={labelClassName}>Description / méthode</label>
                 <textarea
@@ -213,6 +234,7 @@ const DishSuggestionForm: React.FC<DishSuggestionFormProps> = ({ onSubmit }) => 
                 />
             </div>
 
+            {/* Bouton de validation final */}
             <button
                 type="submit"
                 disabled={!isValid || isSubmitting}

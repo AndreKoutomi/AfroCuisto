@@ -11,12 +11,17 @@
  * ============================================================================
  */
 
+// L'objet "translations" contient tous les textes que l'utilisateur verra à l'écran.
+// Il est organisé par code de langue (fr: français, en: anglais, es: espagnol).
 export const translations = {
+    // ----------------------------
+    // SECTION FRANÇAIS (FR)
+    // ----------------------------
     fr: {
-        settings: "Paramètres",
-        darkMode: "Mode Sombre",
-        language: "Langue",
-        units: "Unités de mesure",
+        settings: "Paramètres", // Titre de la page des réglages
+        darkMode: "Mode Sombre", // Bouton pour passer en mode nuit
+        language: "Langue", // Option de changement de langue
+        units: "Unités de mesure", // Choix entre grammes et onces
         security: "Sécurité du compte",
         privacy: "Confidentialité",
         personalInfo: "Informations personnelles",
@@ -56,7 +61,8 @@ export const translations = {
         french: "Français",
         english: "Anglais",
         spanish: "Espagnol",
-        // Home
+
+        // --- Accueil (Home) ---
         hello: "Bonjour",
         homeSlogan: "L'âme de la cuisine béninoise",
         searchPlaceholder: "Chercher un plat, une envie...",
@@ -73,19 +79,23 @@ export const translations = {
         trending: "Tendances actuelles",
         viewAll: "Voir tout",
         allResults: "Voir tous les résultats",
-        // Tabs
+
+        // --- Barre de navigation (Tabs) ---
         home: "Accueil",
         explorer: "Explorer",
         favorites: "Favoris",
         shoppingList: "Courses",
         profile: "Profil",
-        // Explorer
+
+        // --- Explorer ---
         allRecipes: "Toutes les recettes",
         noResults: "Aucun résultat trouvé.",
-        // Favorites
+
+        // --- Favoris ---
         noFavorites: "Pas encore de favoris",
         noFavoritesDesc: "Enregistrez vos plats préférés pour les retrouver ici !",
-        // Detail
+
+        // --- Détails d'une recette ---
         ingredients: "Ingrédients",
         preparation: "Préparation",
         nutrition: "Valeurs Nutritionnelles (est.)",
@@ -99,7 +109,8 @@ export const translations = {
         cookTime: "Cuisson",
         level: "Niveau",
         loadingVideo: "Chargement Vidéo...",
-        // Categories
+
+        // --- Catégories ---
         catPates: "Pâtes",
         catSauces: "Sauces",
         catGrillades: "Grillades",
@@ -128,14 +139,16 @@ export const translations = {
         southDesc: "Sublime mariage de produits marins, d'huile rouge et de maïs.",
         centerDesc: "Terre de tubercules, de sauces gluantes et de viandes fumées.",
         northDesc: "Saveurs robustes, céréales anciennes et grillades épicées.",
-        // Shopping List
+
+        // --- Liste de courses ---
         myShoppingList: "Ma Liste de Courses",
         noShoppingItems: "Votre liste est vide",
         noShoppingItemsDesc: "Ajoutez des ingrédients depuis vos recettes préférées !",
         clearList: "Vider la liste",
         purchased: "Acheté",
         toBuy: "À acheter",
-        // Reviews
+
+        // --- Avis et Notes ---
         reviewsTitle: "Votre avis",
         ratingLabel: "Notez ce plat",
         commentPlaceholder: "Laissez un commentaire sur votre expérience...",
@@ -143,6 +156,10 @@ export const translations = {
         reviewSuccess: "Merci pour votre retour !",
         reviewError: "Erreur lors de l'envoi. Réessayez.",
     },
+
+    // ----------------------------
+    // SECTION ANGLAIS (EN)
+    // ----------------------------
     en: {
         settings: "Settings",
         darkMode: "Dark Mode",
@@ -187,7 +204,6 @@ export const translations = {
         french: "French",
         english: "English",
         spanish: "Spanish",
-        // Home
         hello: "Hello",
         homeSlogan: "The soul of Beninese cuisine",
         searchPlaceholder: "Search for a dish, a craving...",
@@ -204,19 +220,15 @@ export const translations = {
         trending: "Trending Now",
         viewAll: "View all",
         allResults: "View all results",
-        // Tabs
         home: "Home",
         explorer: "Explore",
         favorites: "Favorites",
         shoppingList: "Shopping",
         profile: "Profile",
-        // Explorer
         allRecipes: "All recipes",
         noResults: "No results found.",
-        // Favorites
         noFavorites: "No favorites yet",
         noFavoritesDesc: "Save your favorite dishes to find them here!",
-        // Detail
         ingredients: "Ingredients",
         preparation: "Preparation",
         nutrition: "Nutritional Values (est.)",
@@ -230,7 +242,6 @@ export const translations = {
         cookTime: "Cooking",
         level: "Level",
         loadingVideo: "Loading Video...",
-        // Categories
         catPates: "Dough",
         catSauces: "Sauces",
         catGrillades: "Grill",
@@ -259,14 +270,12 @@ export const translations = {
         southDesc: "Sublime marriage of seafood, red oil, and corn.",
         centerDesc: "Land of tubers, sticky sauces, and smoked meats.",
         northDesc: "Robust flavors, ancient grains, and spicy grilled meats.",
-        // Shopping List
         myShoppingList: "My Shopping List",
         noShoppingItems: "Your list is empty",
         noShoppingItemsDesc: "Add ingredients from your favorite recipes!",
         clearList: "Clear List",
         purchased: "Purchased",
         toBuy: "To buy",
-        // Reviews
         reviewsTitle: "Your review",
         ratingLabel: "Rate this dish",
         commentPlaceholder: "Leave a comment about your experience...",
@@ -274,6 +283,10 @@ export const translations = {
         reviewSuccess: "Thank you for your feedback!",
         reviewError: "Error during submission. Try again.",
     },
+
+    // ----------------------------
+    // SECTION ESPAGNOL (ES)
+    // ----------------------------
     es: {
         settings: "Ajustes",
         darkMode: "Modo Oscuro",
@@ -297,7 +310,7 @@ export const translations = {
         emailAddr: "Correo Electrónico",
         memberSince: "Miembro desde",
         noNotifications: "No hay notificaciones",
-        notificationDesc: "¡Te avisaremos cuando haya algo nuevo!",
+        notificationDesc: "¡Te avisaremos cuando haya algo nouveau!",
         changePassword: "Cambiar Contraseña",
         changeEmail: "Cambiar Correo Electrónico",
         currentPassword: "Contraseña Actual",
@@ -318,7 +331,6 @@ export const translations = {
         french: "Francés",
         english: "Inglés",
         spanish: "Español",
-        // Home
         hello: "Hola",
         homeSlogan: "El alma de la cocina beninesa",
         searchPlaceholder: "Buscar un plato, un antojo...",
@@ -335,19 +347,15 @@ export const translations = {
         trending: "Tendencias Actuales",
         viewAll: "Ver todo",
         allResults: "Ver todos los resultados",
-        // Tabs
         home: "Inicio",
         explorer: "Explorar",
         favorites: "Favoritos",
         shoppingList: "Compras",
         profile: "Perfil",
-        // Explorer
         allRecipes: "Todas las recetas",
         noResults: "No se encontraron resultados.",
-        // Favorites
         noFavorites: "Sin favoritos aún",
         noFavoritesDesc: "¡Guarda tus platos favoritos para verlos aquí!",
-        // Detail
         ingredients: "Ingredientes",
         preparation: "Preparación",
         nutrition: "Valores Nutricionales (est.)",
@@ -361,7 +369,6 @@ export const translations = {
         cookTime: "Cocción",
         level: "Nivel",
         loadingVideo: "Cargando Vídeo...",
-        // Categories
         catPates: "Pastas",
         catSauces: "Salsas",
         catGrillades: "Parrilla",
@@ -390,21 +397,20 @@ export const translations = {
         southDesc: "Sublime combinación de productos marinos, aceite rojo y maíz.",
         centerDesc: "Tierra de tubérculos, salsas pegajosas y carnes ahumadas.",
         northDesc: "Sabores robustos, cereales ancestrales y parrillada picante.",
-        // Shopping List
         myShoppingList: "Mi Lista de Compras",
         noShoppingItems: "Tu lista está vacía",
         noShoppingItemsDesc: "¡Agregue ingredientes de sus recetas favoritas!",
         clearList: "Vaciar lista",
         purchased: "Comprado",
         toBuy: "Por comprar",
-        // Reviews
         reviewsTitle: "Tu opinión",
         ratingLabel: "Califica este plato",
-        commentPlaceholder: "Deja un comentario sobre tu experiencia...",
+        commentPlaceholder: "Deja un commentaire sobre tu experiencia...",
         submitReview: "Enviar mi opinión",
         reviewSuccess: "¡Gracias por tus comentarios!",
         reviewError: "Error al enviar. Inténtalo de nuevo.",
     }
 };
 
+// Type exporté pour aider le code à savoir quelles langues sont possibles
 export type LanguageCode = keyof typeof translations;

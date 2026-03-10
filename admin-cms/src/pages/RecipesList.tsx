@@ -11,12 +11,13 @@
  * ============================================================================
  */
 
-import { useEffect, useState, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
-import { Plus, Edit2, Trash2, Search, RefreshCw, ChefHat, Clock, MapPin, Filter, X, Sparkles } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { RecipeAIWizard } from '../components/RecipeAIWizard';
+import { useEffect, useState, useMemo } from 'react'; // Hooks React pour le cycle de vie et le calcul optimisé
+import { supabase } from '../lib/supabase'; // Client pour communiquer avec la base de données
+import { Plus, Edit2, Trash2, Search, RefreshCw, ChefHat, Clock, MapPin, Filter, X, Sparkles } from 'lucide-react'; // Collection d'icônes
+import { Link, useSearchParams } from 'react-router-dom'; // Outils de navigation
+import { RecipeAIWizard } from '../components/RecipeAIWizard'; // Composant assistant IA
 
+// Définition des catégories avec leurs couleurs pour l'affichage
 const CATEGORIES = [
     { value: "Pâtes et Céréales (Wɔ̌)", label: "Pâtes & Céréales", color: '#d97706', bg: '#fef3c7' },
     { value: "Sauces (Nùsúnnú)", label: "Sauces", color: '#059669', bg: '#d1fae5' },
@@ -27,26 +28,33 @@ const CATEGORIES = [
     { value: "Condiments & Accompagnements", label: "Condiments", color: '#65a30d', bg: '#ecfccb' },
 ];
 
+// Styles pour les badges de difficulté
 const DIFFICULTY_META: Record<string, { color: string; bg: string }> = {
     'Facile': { color: '#059669', bg: '#d1fae5' },
     'Moyen': { color: '#d97706', bg: '#fef3c7' },
     'Difficile': { color: '#dc2626', bg: '#fee2e2' },
 };
 
+// Fonction utilitaire pour trouver le style d'une catégorie
 function getCategoryMeta(cat: string) {
     return CATEGORIES.find(c => c.value === cat) || { label: cat, color: '#6b7280', bg: '#f3f4f6' };
 }
 
+// Composant principal de la page
 export function RecipesList() {
+    // Gestion de l'URL pour la recherche (mémoriser ce qu'on cherche)
     const [searchParams, setSearchParams] = useSearchParams();
-    const [recipes, setRecipes] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
-    const [filterCategory, setFilterCategory] = useState('');
-    const [filterDifficulty, setFilterDifficulty] = useState('');
-    const [showAIWizard, setShowAIWizard] = useState(false);
 
+    // Etats de la page
+    const [recipes, setRecipes] = useState<any[]>([]); // Liste de toutes les recettes
+    const [loading, setLoading] = useState(true); // Est-ce qu'on charge les données ?
+    const [deletingId, setDeletingId] = useState<string | null>(null); // Id de la recette en cours de suppression
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || ''); // Texte de recherche
+    const [filterCategory, setFilterCategory] = useState(''); // Filtre par catégorie
+    const [filterDifficulty, setFilterDifficulty] = useState(''); // Filtre par difficulté
+    const [showAIWizard, setShowAIWizard] = useState(false); // Est-ce qu'on montre l'assistant IA ?
+
+    // Fonction pour charger les recettes depuis Supabase
     async function fetchRecipes() {
         try {
             setLoading(true);
@@ -60,18 +68,22 @@ export function RecipesList() {
         }
     }
 
+    // On charge les recettes au premier affichage
     useEffect(() => { fetchRecipes(); }, []);
 
+    // Mise à jour de la barre de recherche selon l'URL
     useEffect(() => {
         const q = searchParams.get('q');
         if (q !== null) setSearchTerm(q);
     }, [searchParams]);
 
+    // Mise à jour de l'URL quand on tape dans la recherche
     useEffect(() => {
         if (searchTerm) setSearchParams({ q: searchTerm }, { replace: true });
         else { searchParams.delete('q'); setSearchParams(searchParams, { replace: true }); }
     }, [searchTerm]);
 
+    // Filtrage dynamique de la liste des recettes (sans recharger la page)
     const filteredRecipes = useMemo(() => {
         return recipes.filter(r => {
             const matchSearch = !searchTerm || r.name.toLowerCase().includes(searchTerm.toLowerCase()) || (r.region || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -81,12 +93,14 @@ export function RecipesList() {
         });
     }, [recipes, searchTerm, filterCategory, filterDifficulty]);
 
+    // Fonction de suppression d'une recette
     async function handleDelete(id: string) {
         if (!window.confirm('Supprimer cette recette ?')) return;
         setDeletingId(id);
         try {
             const { error } = await supabase.from('recipes').delete().eq('id', id);
             if (error) throw error;
+            // On retire la recette de l'écran sans tout recharger
             setRecipes(prev => prev.filter(r => r.id !== id));
         } catch (err) {
             console.error('Failed to delete:', err);
@@ -98,6 +112,7 @@ export function RecipesList() {
 
     const hasActiveFilters = searchTerm || filterCategory || filterDifficulty;
 
+    // Styles CSS réutilisables dans le code
     const inputStyle: React.CSSProperties = {
         height: '42px', borderRadius: '12px',
         border: '1.5px solid #e5e7eb', fontSize: '13px', fontWeight: 500,
@@ -110,10 +125,11 @@ export function RecipesList() {
         border: '1px solid #f0f0f0', boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
     };
 
+    // --- RENDU VISUEL (HTML) ---
     return (
         <div style={{ maxWidth: '1200px', width: '100%', boxSizing: 'border-box' }}>
 
-            {/* ── Page Header ── */}
+            {/* En-tête de la page */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
                 <div>
                     <p style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
@@ -126,6 +142,7 @@ export function RecipesList() {
                         Ajoutez, modifiez et organisez le catalogue de plats de l'application.
                     </p>
                 </div>
+                {/* Boutons d'action (Refresh, IA, Ajout) */}
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button
                         onClick={fetchRecipes}
@@ -167,7 +184,7 @@ export function RecipesList() {
                 </div>
             </div>
 
-            {/* ── Stats bar ── */}
+            {/* Barre de statistiques (Chiffres clés) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
                 {[
                     { label: 'Total recettes', value: recipes.length, icon: ChefHat, color: 'var(--primary)', bg: '#fff5f0' },
@@ -190,9 +207,8 @@ export function RecipesList() {
                 })}
             </div>
 
-            {/* ── Filters bar ── */}
+            {/* Barre de filtres (Recherche et Sélecteurs) */}
             <div style={{ ...cardStyle, padding: '16px 20px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                {/* Search */}
                 <div style={{ flex: '1 1 220px', position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: '13px' }} />
                     <input
@@ -204,7 +220,6 @@ export function RecipesList() {
                     />
                 </div>
 
-                {/* Category filter */}
                 <select
                     value={filterCategory}
                     onChange={e => setFilterCategory(e.target.value)}
@@ -214,7 +229,6 @@ export function RecipesList() {
                     {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
 
-                {/* Difficulty filter */}
                 <select
                     value={filterDifficulty}
                     onChange={e => setFilterDifficulty(e.target.value)}
@@ -226,7 +240,6 @@ export function RecipesList() {
                     <option value="Difficile">Difficile</option>
                 </select>
 
-                {/* Clear */}
                 {hasActiveFilters && (
                     <button
                         onClick={() => { setSearchTerm(''); setFilterCategory(''); setFilterDifficulty(''); }}
@@ -242,9 +255,10 @@ export function RecipesList() {
                 )}
             </div>
 
-            {/* ── Recipe list ── */}
+            {/* Tableau des recettes */}
             <div style={{ ...cardStyle, overflowX: 'auto' }}>
                 {loading ? (
+                    // On affiche des barres de chargement (shimmer) si c'est en cours
                     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {[1, 2, 3, 4, 5].map(i => (
                             <div key={i} style={{
@@ -255,6 +269,7 @@ export function RecipesList() {
                         ))}
                     </div>
                 ) : filteredRecipes.length === 0 ? (
+                    // Si rien ne correspond à la recherche
                     <div style={{ textAlign: 'center', padding: '64px 24px' }}>
                         <div style={{ width: '60px', height: '60px', background: '#f3f4f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                             <ChefHat size={28} color="#d1d5db" />
@@ -264,7 +279,7 @@ export function RecipesList() {
                     </div>
                 ) : (
                     <div>
-                        {/* Table header */}
+                        {/* En-tête du tableau (noms des colonnes) */}
                         <div style={{
                             display: 'grid',
                             gridTemplateColumns: '56px 1fr 130px 160px 100px 110px',
@@ -279,7 +294,7 @@ export function RecipesList() {
                             ))}
                         </div>
 
-                        {/* Rows */}
+                        {/* Liste des lignes (Une ligne par recette) */}
                         <div style={{ padding: '8px 12px 12px' }}>
                             {filteredRecipes.map((recipe, idx) => {
                                 const catMeta = getCategoryMeta(recipe.category);
@@ -303,7 +318,7 @@ export function RecipesList() {
                                         onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                                     >
-                                        {/* Image */}
+                                        {/* Colonne 1 : Image du plat */}
                                         <div style={{ width: '48px', height: '48px', borderRadius: '12px', overflow: 'hidden', background: '#f3f4f6', flexShrink: 0 }}>
                                             {recipe.image ? (
                                                 <img
@@ -319,7 +334,7 @@ export function RecipesList() {
                                             )}
                                         </div>
 
-                                        {/* Name */}
+                                        {/* Colonne 2 : Nom et Temps de préparation */}
                                         <div style={{ minWidth: 0 }}>
                                             <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                 {recipe.name}
@@ -332,7 +347,7 @@ export function RecipesList() {
                                             )}
                                         </div>
 
-                                        {/* Region */}
+                                        {/* Colonne 3 : Région d'origine */}
                                         <p style={{ margin: 0, fontSize: '12px', color: '#6b7280', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {recipe.region ? (
                                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -341,7 +356,7 @@ export function RecipesList() {
                                             ) : '—'}
                                         </p>
 
-                                        {/* Category */}
+                                        {/* Colonne 4 : Badge de Catégorie */}
                                         <span style={{
                                             display: 'inline-block', fontSize: '10px', fontWeight: 700,
                                             color: catMeta.color, background: catMeta.bg,
@@ -352,7 +367,7 @@ export function RecipesList() {
                                             {catMeta.label || recipe.category || '—'}
                                         </span>
 
-                                        {/* Difficulty */}
+                                        {/* Colonne 5 : Badge de Difficulté */}
                                         {recipe.difficulty ? (
                                             <span style={{
                                                 display: 'inline-block', fontSize: '10px', fontWeight: 700,
@@ -365,7 +380,7 @@ export function RecipesList() {
                                             <span style={{ color: '#d1d5db', fontSize: '13px' }}>—</span>
                                         )}
 
-                                        {/* Actions */}
+                                        {/* Colonne 6 : Boutons Modifier / Supprimer */}
                                         <div style={{ display: 'flex', gap: '6px' }}>
                                             <Link
                                                 to={`/recipes/edit/${recipe.id}`}
@@ -401,7 +416,7 @@ export function RecipesList() {
                             })}
                         </div>
 
-                        {/* Footer count */}
+                        {/* Bas du tableau : Compteur de résultats */}
                         <div style={{ padding: '12px 20px', borderTop: '1px solid #f3f4f6', background: '#fafafa', borderRadius: '0 0 20px 20px' }}>
                             <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af', fontWeight: 600 }}>
                                 {filteredRecipes.length} recette{filteredRecipes.length !== 1 ? 's' : ''} affichée{filteredRecipes.length !== 1 ? 's' : ''}
@@ -412,6 +427,7 @@ export function RecipesList() {
                 )}
             </div>
 
+            {/* Styles d'animation CSS */}
             <style>{`
                 @keyframes shimmer {
                     0%   { background-position: -200% 0; }
@@ -423,6 +439,7 @@ export function RecipesList() {
                 }
             `}</style>
 
+            {/* Fenêtre surgissante (Modal) de l'assistant IA */}
             {showAIWizard && (
                 <RecipeAIWizard
                     onClose={() => setShowAIWizard(false)}
