@@ -421,6 +421,34 @@ export function SectionForm() {
                                     );
                                 })()}
 
+                                {/* ── BANNIERE (works exactly like dynamic_carousel) ── */}
+                                {(() => {
+                                    const isActive = formData.type === 'banner';
+                                    return (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, type: 'banner' }))}
+                                            style={{ border: isActive ? '2.5px solid #ec4899' : '2px solid #f0f0f0', background: isActive ? '#fdf2f8' : '#fafafa', borderRadius: '18px', padding: '14px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.2s', position: 'relative' }}>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', color: '#ec4899' }}><CheckCircle2 size={14} /></div>}
+                                            {/* Premium banner mockup */}
+                                            <div style={{ width: '100%', aspectRatio: '9/7', position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                                                {/* Main area */}
+                                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #ec4899, #be185d)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                                    <div style={{ width: '70%', height: '4px', background: '#fff', borderRadius: '2px' }} />
+                                                    <div style={{ width: '50%', height: '3px', background: 'rgba(255,255,255,0.7)', borderRadius: '2px' }} />
+                                                    <div style={{ position: 'absolute', bottom: '8px', display: 'flex', gap: '3px' }}>
+                                                        <div style={{ width: '10px', height: '3px', borderRadius: '2px', background: '#fff' }} />
+                                                        <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+                                                        <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: isActive ? '#ec4899' : '#374151' }}>Bannière</p>
+                                                <p style={{ margin: 0, fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>Pleine largeur</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })()}
+
                                 {/* ── HORIZONTAL LIST ── */}
                                 {(() => {
                                     const isActive = formData.type === 'horizontal_list';
@@ -597,6 +625,7 @@ export function SectionForm() {
                                 <Info size={15} color="#9ca3af" style={{ flexShrink: 0, marginTop: '1px' }} />
                                 <p style={{ margin: 0, fontSize: '11px', color: '#6b7280', fontWeight: 500, lineHeight: 1.6 }}>
                                     {formData.type === 'dynamic_carousel' && "Carrousel de cartes premium style bancaire — dégradé coloré, image à droite, contenu à gauche, aperçu de la carte suivante. Style moderne pour les sections vedettes."}
+                                    {formData.type === 'banner' && "Bannière promotionnelle ou de mise en avant — similaire au carrousel dynamique visuellement, offrant un format grand écran immersif."}
                                     {formData.type === 'horizontal_list' && "Rangée de cards défilantes en scroll horizontal. Format compact adapté aux sections secondaires avec beaucoup de plats."}
                                     {formData.type === 'horizontal_list_v2' && "Scroll horizontal premium avec cards élégantes et image circulaire débordante. Idéal pour mettre en avant une sélection ciblée comme des suggestions."}
                                     {formData.type === 'vertical_list_1' && "Liste verticale avec une seule colonne. Format épuré avec image, nom et infos complémentaires sur chaque ligne."}
@@ -605,7 +634,7 @@ export function SectionForm() {
                             </div>
 
                             {/* Options conditionnelles */}
-                            {formData.type === 'dynamic_carousel' && (() => {
+                            {(formData.type === 'dynamic_carousel' || formData.type === 'banner') && (() => {
                                 const isAutoplay = formData.config?.autoplay === true || formData.config?.autoplay === 'true';
                                 const intervalMs = parseInt(formData.config?.autoplay_interval) || 3000;
                                 const intervalSec = intervalMs / 1000;

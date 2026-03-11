@@ -64,7 +64,7 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
         const interval = setInterval(() => {
             const container = scrollRef.current;
             if (container) {
-                const cardWidth = 280 + 16;
+                const cardWidth = section?.type === 'banner' ? 330 + 16 : 280 + 16;
                 const maxScroll = container.scrollWidth - container.clientWidth;
 
                 console.log(`[Carousel Debug] Rolling: ${container.scrollLeft} / ${maxScroll}`);
@@ -130,6 +130,86 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
             >
                 {recipes.map((recipe, index) => {
                     const isFavorite = isFav(recipe.id);
+
+                    if (section?.type === 'banner') {
+                        return (
+                            <div
+                                key={recipe.id}
+                                onClick={() => setSelectedRecipe(recipe)}
+                                style={{
+                                    flexShrink: 0,
+                                    width: '330px',
+                                    scrollSnapAlign: 'start',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                }}
+                            >
+                                <div style={{
+                                    width: '100%',
+                                    height: '150px',
+                                    borderRadius: '16px',
+                                    background: '#ff5722',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '20px 24px',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 4px 15px rgba(255, 87, 34, 0.25)',
+                                }}>
+                                    {/* Left Content */}
+                                    <div style={{ flex: 1, zIndex: 10, maxWidth: '55%' }}>
+                                        <h3 style={{
+                                            margin: 0, fontSize: '24px', fontWeight: 900, color: '#fff',
+                                            lineHeight: 1.1, letterSpacing: '-0.02em',
+                                            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                                        }}>
+                                            {recipe.name}
+                                        </h3>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                            {/* Rating Badge */}
+                                            <div style={{
+                                                display: 'flex', alignItems: 'center', gap: '4px',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                                                padding: '4px 10px', borderRadius: '20px',
+                                                backdropFilter: 'blur(4px)'
+                                            }}>
+                                                <Star size={12} fill="#fff" color="#fff" strokeWidth={0} />
+                                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#fff' }}>
+                                                    {(4.0 + (index % 5) * 0.2).toFixed(1)}
+                                                </span>
+                                            </div>
+                                            {/* Prep Time Badge */}
+                                            <div style={{
+                                                display: 'flex', alignItems: 'center', gap: '4px',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                                                padding: '4px 10px', borderRadius: '20px',
+                                                backdropFilter: 'blur(4px)'
+                                            }}>
+                                                <Clock size={12} color="#fff" strokeWidth={2.5} />
+                                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#fff' }}>
+                                                    {recipe.prepTime}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Image */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        right: '-20px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: '140px',
+                                        height: '140px',
+                                        borderRadius: '50%',
+                                        zIndex: 5,
+                                    }}>
+                                        <img src={recipe.image} alt={recipe.name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', boxShadow: '-4px 4px 15px rgba(0,0,0,0.15)', backgroundColor: '#fff' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
 
                     // Dynamic widths based on the visual style (narrow, medium, wide pattern)
                     const widths = ['280px', '280px', '280px'];

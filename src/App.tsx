@@ -105,7 +105,7 @@ const DifficultyBadge = ({ difficulty, t }: { difficulty: Difficulty; t: any }) 
   const label = labels[difficulty] || difficulty || '—';
 
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight border ${colorClass}`}>
+    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight border ${colorClass}`}>
       {label}
     </span>
   );
@@ -1755,7 +1755,7 @@ export default function App() {
 
           if (sectionRecipes.length === 0) return null;
 
-          if (section.type === 'dynamic_carousel' || section.type === 'featured') {
+          if (section.type === 'dynamic_carousel' || section.type === 'featured' || section.type === 'banner') {
             return (
               <FeaturedCarousel
                 key={section.id}
@@ -1929,7 +1929,7 @@ export default function App() {
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
                             style={{
-                              width: 36, height: 36, borderRadius: 12,
+                              width: 36, height: 36, borderRadius: '50%',
                               background: isFav ? '#ef4444' : (isDark ? '#374151' : '#111827'),
                               border: 'none', color: '#ffffff',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2143,25 +2143,25 @@ export default function App() {
 
   const renderExplorer = () => (
     <div className="flex-1 flex flex-col pb-44">
-      {/* Immersive Search Header */}
-      <header className={`px-6 pt-7 pb-6 sticky top-0 z-40 transition-all ${isDark ? 'bg-[#000000]/95 border-b border-white/8 shadow-xl shadow-black/40' : 'bg-white/90 backdrop-blur-2xl'}`}>
-        <div className="flex items-center justify-between mb-6">
-          <h1 className={`text-3xl font-black shrink-0 ${isDark ? 'text-white' : 'text-stone-900'}`}>{selectedCategory || 'Explorer'}</h1>
+      {/* Immersive Search Header -> Now using Home page style button */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 24px 16px', position: 'sticky', top: 0, background: isDark ? '#000000ff' : '#f3f4f6', zIndex: 50 }}>
+        <h1 className={`text-2xl font-black shrink-0 ${isDark ? 'text-white' : 'text-stone-900'} tracking-tight`}>
+          {selectedCategory || t.explorer}
+        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           {isOffline && (
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-rose-500">
               <WifiOff size={22} />
             </motion.div>
           )}
-        </div>
-        <div className="relative group">
-          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-white/30 group-focus-within:text-[#fb5607]' : 'text-stone-400 group-focus-within:text-terracotta'}`} size={20} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder={t.searchDishRegion}
-            className={`w-full rounded-full py-4 pl-12 pr-4 shadow-sm focus:outline-none focus:ring-2 transition-all font-bold text-sm ${isDark ? 'bg-white/10 border border-white/10 text-white placeholder:text-white/20 focus:ring-white/20 focus:border-white/30' : 'bg-white border border-stone-100/80 text-stone-900 focus:ring-terracotta/20 focus:border-terracotta/30'}`}
-          />
+          {isSyncing && !isOffline && (
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}>
+              <Wifi size={14} style={{ color: '#fb5607' }} />
+            </motion.div>
+          )}
+          <button onClick={() => setIsSearchExpanded(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <Search size={24} style={{ color: isDark ? '#ffffff' : '#111827' }} />
+          </button>
         </div>
       </header>
 
