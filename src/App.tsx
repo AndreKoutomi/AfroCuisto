@@ -1524,9 +1524,10 @@ export default function App() {
       const applyStatusBar = async () => {
         try {
           if (!currentUser) {
-            // LOGIN PAGE: Transparent overlay to show the orange gradient
-            await StatusBar.setOverlaysWebView({ overlay: true });
-            // Style.Dark = White icons (best for orange/dark backgrounds)
+            // LOGIN PAGE: Solid color matching the gradient top to merge seamlessly
+            await StatusBar.setOverlaysWebView({ overlay: false });
+            await StatusBar.setBackgroundColor({ color: isDark ? '#1a0a02' : '#fb5607' });
+            // Style.Dark = White icons
             await StatusBar.setStyle({ style: Style.Dark });
           } else {
             // INSIDE APP: Standard non-overlay behavior
