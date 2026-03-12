@@ -83,6 +83,15 @@ const layoutTransition = { type: 'spring', stiffness: 500, damping: 32 };
 const normalizeString = (str: string) =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+const getInitials = (name: string | undefined | null) => {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 // --- Sub-Components & Helpers ---
 
 // Petit badge pour afficher la difficulté d'une recette avec une couleur spécifique
@@ -390,63 +399,6 @@ const PersonalInfoView = ({ currentUser, setCurrentUser, t, showAlert }: any) =>
   const [isEditing, setIsEditing] = useState(false); // Mode édition activé ou non
   const [name, setName] = useState(currentUser?.name || ''); // Nom à modifier
   const [isSaving, setIsSaving] = useState(false); // Est-on en train d'enregistrer sur Internet ?
-  const fileInputRef = useRef<HTMLInputElement>(null); // Référence pour l'input caché de sélection de fichier
-
-  // Fonction pour changer la photo de profil
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && currentUser) {
-      // Restriction de taille à 2Mo
-      if (file.size > 2 * 1024 * 1024) {
-        showAlert("L'image est trop volumineuse. Veuillez choisir une image de moins de 2Mo.", "error");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const img = new Image();
-        img.src = reader.result as string;
-        img.onload = async () => {
-          // Utilisation d'un Canvas HTML pour redimensionner et compresser l'image (gain de place)
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 400;
-          const MAX_HEIGHT = 400;
-          let width = img.width;
-          let height = img.height;
-
-          // Calcul des proportions
-          if (width > height) {
-            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-          } else {
-            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          // Transformation en format texte compressé (Base64 JPEG)
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-          // Enregistrement local
-          const updatedUser = dbService.updateAvatar(currentUser.id, compressedBase64);
-          if (updatedUser) {
-            setCurrentUser({ ...updatedUser });
-            try {
-              // Tentative de synchronisation avec le serveur cloud
-              await dbService.syncUserToCloud(updatedUser);
-              showAlert(t.saveSuccess || "Photo de profil mise à jour !", "success");
-            } catch (err) {
-              showAlert("Erreur lors de la synchronisation cloud", "warning");
-            }
-          }
-        };
-      };
-      reader.readAsDataURL(file); // Lecture du fichier sélectionné
-    }
-  };
-
   // Fonction pour enregistrer le nouveau nom
   const handleSave = async () => {
     if (!currentUser || !name.trim()) return;
@@ -469,28 +421,12 @@ const PersonalInfoView = ({ currentUser, setCurrentUser, t, showAlert }: any) =>
     <div className="space-y-6">
       <div className="flex flex-col items-center mb-6">
         <div className="relative group">
-          <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-stone-100">
-            <img
-              src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name}`}
-              className="w-full h-full object-cover"
-              alt="Avatar"
-            />
+          <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-stone-100 flex items-center justify-center">
+            <span className="text-4xl font-black text-terracotta tracking-tight">
+              {getInitials(currentUser?.name)}
+            </span>
           </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute bottom-0 right-0 p-2.5 bg-terracotta text-white rounded-full shadow-lg border-2 border-white hover:scale-110 active:scale-95 transition-all"
-          >
-            <Camera size={18} />
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleAvatarChange}
-          />
         </div>
-        <p className="mt-3 text-[10px] font-black text-stone-400 uppercase tracking-widest">{t.changeProfilePhoto}</p>
       </div>
 
       <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100">
@@ -1590,144 +1526,7 @@ export default function App() {
 
 
 
-        <AnimatePresence>
-          {isSearchExpanded && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`fixed inset-0 z-[600] flex flex-col ${isDark ? '' : 'search-overlay-light'}`}
-              style={{ background: isDark ? '#000000' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
-            >
-              {/* Search Header */}
-              <div className="px-5 pb-4 pt-10 flex items-center gap-3">
-                <button
-                  onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${isDark ? 'bg-white/10 text-white border-white/10' : 'bg-stone-100 text-stone-600 border-stone-200/50'}`}
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex-1 relative"
-                >
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#fb5607]" size={18} />
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder={t.searchPlaceholder}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full rounded-full py-3.5 pl-11 pr-5 focus:outline-none font-bold text-[15px] transition-all ${isDark ? 'bg-white/10 border border-white/10 text-white placeholder:text-white/30 focus:border-[#fb5607]/60 focus:bg-white/15' : 'bg-stone-50 border border-stone-200/40 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#fb5607]/10'}`}
-                  />
-                </motion.div>
-              </div>
 
-              {/* Results area */}
-              <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-20">
-                {searchQuery.length > 0 ? (
-                  <div className="space-y-2.5 mt-2">
-                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
-                      {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length} résultat(s)
-                    </p>
-                    {allRecipes
-                      .filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery)))
-                      .map((recipe, i) => (
-                        <motion.div
-                          key={recipe.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.04 }}
-                          onClick={() => {
-                            setSelectedRecipe(recipe);
-                            setIsSearchExpanded(false);
-                            setSearchQuery('');
-                          }}
-                          className={`rounded-2xl flex items-center gap-4 p-3 active:scale-[0.98] transition-all cursor-pointer overflow-hidden ${isDark ? '' : 'bg-stone-50 border border-stone-100'}`}
-                          style={isDark ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' } : {}}
-                        >
-                          <img
-                            src={recipe.image}
-                            className="w-14 h-14 rounded-xl object-cover shrink-0"
-                            alt={recipe.name}
-                            onError={e => { (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><rect fill=%22%23333%22/></svg>'; }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-bold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-stone-900'}`}>{recipe.name}</h4>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <span className="text-[10px] bg-[#fb5607]/20 text-[#fb5607] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">{recipe.region}</span>
-                              <span className={`text-[10px] font-bold flex items-center gap-1 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
-                                <Clock size={9} /> {recipe.prepTime}
-                              </span>
-                            </div>
-                          </div>
-                          <ChevronRight size={16} className={`shrink-0 ${isDark ? 'text-white/25' : 'text-stone-300'}`} />
-                        </motion.div>
-                      ))}
-                    {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length === 0 && (
-                      <div className="py-20 text-center">
-                        <div className="text-5xl mb-4">🔍</div>
-                        <p className={`font-bold ${isDark ? 'text-white/50' : 'text-stone-400'}`}>Aucun résultat pour</p>
-                        <p className="text-[#fb5607] font-black text-lg mt-1">"{searchQuery}"</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-8 mt-4">
-                    {/* Trending tags */}
-                    <div>
-                      <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
-                        <span className="w-1.5 h-1.5 bg-[#fb5607] rounded-full"></span> Tendances
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {['Sauces', 'Ablo', 'Pôyô', 'Aloko', 'Boissons', 'Tchatchanga', 'Piron'].map(tag => (
-                          <button
-                            key={tag}
-                            onClick={() => setSearchQuery(tag)}
-                            className={`px-4 py-2 category-button active:scale-95 transition-all ${isDark ? 'border-white/10 text-white/70' : 'border-stone-200 text-stone-600'}`}
-                            style={{ background: isDark ? 'rgba(251, 86, 7, 0.07)' : 'rgba(251, 86, 7, 0.15)', borderRadius: '20px' }}
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Recent / Suggested recipes */}
-                    <div>
-                      <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
-                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span> Suggestions du chef
-                      </h3>
-                      <div className="space-y-2">
-                        {allRecipes.slice(0, 5).map((recipe, i) => (
-                          <motion.div
-                            key={recipe.id}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.06 }}
-                            onClick={() => { setSelectedRecipe(recipe); setIsSearchExpanded(false); }}
-                            className={`flex items-center gap-3 p-3 rounded-2xl active:scale-[0.97] transition-all cursor-pointer ${isDark ? '' : 'bg-stone-50'}`}
-                            style={isDark ? { background: 'rgba(255,255,255,0.05)' } : {}}
-                          >
-                            <img src={recipe.image} className="w-10 h-10 rounded-xl object-cover" alt={recipe.name} />
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-bold truncate ${isDark ? 'text-white/80' : 'text-stone-800'}`}>{recipe.name}</p>
-                              <p className={`text-[10px] ${isDark ? 'text-white/30' : 'text-stone-400'}`}>{recipe.region}</p>
-                            </div>
-                            <ChevronRight size={14} className={`shrink-0 ${isDark ? 'text-white/20' : 'text-stone-300'}`} />
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
 
 
@@ -2626,11 +2425,10 @@ export default function App() {
       </AnimatePresence>
 
       <header className={`flex flex-col items-center py-10 ${isDark ? 'text-white' : ''}`}>
-        <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden mb-4 bg-stone-100">
-          <img
-            src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name}`}
-            className="w-full h-full object-cover"
-          />
+        <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden mb-4 bg-stone-100 flex items-center justify-center">
+          <span className="text-3xl font-black text-terracotta tracking-tight">
+            {getInitials(currentUser?.name)}
+          </span>
         </div>
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-stone-800'}`}>{currentUser?.name}</h2>
         <p className={`text-sm ${isDark ? 'text-white/50' : 'text-stone-500'}`}>{currentUser?.email}</p>
@@ -3839,6 +3637,145 @@ export default function App() {
           {activeTab === 'profile' && <motion.div key="profile" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={springTransition} className="h-full">{renderProfile()}</motion.div>}
         </AnimatePresence>
       </main>
+
+      <AnimatePresence>
+        {isSearchExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className={`fixed inset-0 z-[600] flex flex-col ${isDark ? '' : 'search-overlay-light'}`}
+            style={{ background: isDark ? '#000000' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
+          >
+            {/* Search Header */}
+            <div className="px-5 pb-4 pt-10 flex items-center gap-3">
+              <button
+                onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${isDark ? 'bg-white/10 text-white border-white/10' : 'bg-stone-100 text-stone-600 border-stone-200/50'}`}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+                className="flex-1 relative"
+              >
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#fb5607]" size={18} />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full rounded-full py-3.5 pl-11 pr-5 focus:outline-none font-bold text-[15px] transition-all ${isDark ? 'bg-white/10 border border-white/10 text-white placeholder:text-white/30 focus:border-[#fb5607]/60 focus:bg-white/15' : 'bg-stone-50 border border-stone-200/40 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#fb5607]/10'}`}
+                />
+              </motion.div>
+            </div>
+
+            {/* Results area */}
+            <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-20">
+              {searchQuery.length > 0 ? (
+                <div className="space-y-2.5 mt-2">
+                  <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
+                    {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length} résultat(s)
+                  </p>
+                  {allRecipes
+                    .filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery)))
+                    .map((recipe, i) => (
+                      <motion.div
+                        key={recipe.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        onClick={() => {
+                          setSelectedRecipe(recipe);
+                          setIsSearchExpanded(false);
+                          setSearchQuery('');
+                        }}
+                        className={`rounded-2xl flex items-center gap-4 p-3 active:scale-[0.98] transition-all cursor-pointer overflow-hidden ${isDark ? '' : 'bg-stone-50 border border-stone-100'}`}
+                        style={isDark ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' } : {}}
+                      >
+                        <img
+                          src={recipe.image}
+                          className="w-14 h-14 rounded-xl object-cover shrink-0"
+                          alt={recipe.name}
+                          onError={e => { (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><rect fill=%22%23333%22/></svg>'; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className={`font-bold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-stone-900'}`}>{recipe.name}</h4>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] bg-[#fb5607]/20 text-[#fb5607] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">{recipe.region}</span>
+                            <span className={`text-[10px] font-bold flex items-center gap-1 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
+                              <Clock size={9} /> {recipe.prepTime}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className={`shrink-0 ${isDark ? 'text-white/25' : 'text-stone-300'}`} />
+                      </motion.div>
+                    ))}
+                  {allRecipes.filter(r => normalizeString(r.name).includes(normalizeString(searchQuery)) || normalizeString(r.region).includes(normalizeString(searchQuery))).length === 0 && (
+                    <div className="py-20 text-center">
+                      <div className="text-5xl mb-4">🔍</div>
+                      <p className={`font-bold ${isDark ? 'text-white/50' : 'text-stone-400'}`}>Aucun résultat pour</p>
+                      <p className="text-[#fb5607] font-black text-lg mt-1">"{searchQuery}"</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-8 mt-4">
+                  {/* Trending tags */}
+                  <div>
+                    <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
+                      <span className="w-1.5 h-1.5 bg-[#fb5607] rounded-full"></span> Tendances
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {['Sauces', 'Ablo', 'Pôyô', 'Aloko', 'Boissons', 'Tchatchanga', 'Piron'].map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => setSearchQuery(tag)}
+                          className={`px-4 py-2 category-button active:scale-95 transition-all ${isDark ? 'border-white/10 text-white/70' : 'border-stone-200 text-stone-600'}`}
+                          style={{ background: isDark ? 'rgba(251, 86, 7, 0.07)' : 'rgba(251, 86, 7, 0.15)', borderRadius: '20px' }}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recent / Suggested recipes */}
+                  <div>
+                    <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? 'text-white/30' : 'text-stone-400'}`}>
+                      <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span> Suggestions du chef
+                    </h3>
+                    <div className="space-y-2">
+                      {allRecipes.slice(0, 5).map((recipe, i) => (
+                        <motion.div
+                          key={recipe.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.06 }}
+                          onClick={() => { setSelectedRecipe(recipe); setIsSearchExpanded(false); }}
+                          className={`flex items-center gap-3 p-3 rounded-2xl active:scale-[0.97] transition-all cursor-pointer ${isDark ? '' : 'bg-stone-50'}`}
+                          style={isDark ? { background: 'rgba(255,255,255,0.05)' } : {}}
+                        >
+                          <img src={recipe.image} className="w-10 h-10 rounded-xl object-cover" alt={recipe.name} />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold truncate ${isDark ? 'text-white/80' : 'text-stone-800'}`}>{recipe.name}</p>
+                            <p className={`text-[10px] ${isDark ? 'text-white/30' : 'text-stone-400'}`}>{recipe.region}</p>
+                          </div>
+                          <ChevronRight size={14} className={`shrink-0 ${isDark ? 'text-white/20' : 'text-stone-300'}`} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selectedRecipe && (

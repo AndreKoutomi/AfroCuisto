@@ -138,7 +138,7 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                                 onClick={() => setSelectedRecipe(recipe)}
                                 style={{
                                     flexShrink: 0,
-                                    width: '330px',
+                                    width: '380px',
                                     scrollSnapAlign: 'start',
                                     cursor: 'pointer',
                                     position: 'relative',
@@ -146,8 +146,8 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                             >
                                 <div style={{
                                     width: '100%',
-                                    height: '150px',
-                                    borderRadius: '16px',
+                                    height: '200px',
+                                    borderRadius: '28px',
                                     background: '#ff5722',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -191,6 +191,23 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                                                 </span>
                                             </div>
                                         </div>
+                                        {/* Region Badge */}
+                                        <div style={{ marginTop: '12px' }}>
+                                            <span style={{
+                                                display: 'inline-block',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                padding: '4px 12px',
+                                                borderRadius: '20px',
+                                                fontSize: '10px',
+                                                fontWeight: 900,
+                                                color: '#ff5722',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.08em'
+                                            }}>
+                                                {recipe.region}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Right Image */}
@@ -199,8 +216,8 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                                         right: '-20px',
                                         top: '50%',
                                         transform: 'translateY(-50%)',
-                                        width: '140px',
-                                        height: '140px',
+                                        width: '170px',
+                                        height: '170px',
                                         borderRadius: '50%',
                                         zIndex: 5,
                                     }}>
