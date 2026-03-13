@@ -1724,14 +1724,16 @@ export default function App() {
     if (Capacitor.isNativePlatform()) {
       const applyStatusBar = async () => {
         try {
+          // Always disable overlay first so the background color takes effect
+          await StatusBar.setOverlaysWebView({ overlay: false });
+
           if (!currentUser) {
-            // LOGIN PAGE: Solid color matching the gradient top to merge seamlessly
-            await StatusBar.setOverlaysWebView({ overlay: false });
+            // LOGIN PAGE: White background with dark (black) icons in light mode
+            //             Dark background with light (white) icons in dark mode
             await StatusBar.setBackgroundColor({ color: isDark ? '#1a0a02' : '#ffffff' });
             await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
           } else {
-            // INSIDE APP: Standard non-overlay behavior
-            await StatusBar.setOverlaysWebView({ overlay: false });
+            // INSIDE APP
             await StatusBar.setBackgroundColor({ color: isDark ? '#000000' : '#ffffff' });
             await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
           }
