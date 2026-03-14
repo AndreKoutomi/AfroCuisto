@@ -126,6 +126,33 @@ button {
   border-radius: 4px 0 0 4px;
 }
 
+/* Collapsed Sidebar Styles */
+.sidebar.collapsed {
+  width: 90px;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 2.5rem 1rem 2rem 1rem;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-nav {
+  padding: 2rem 0.5rem;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.sidebar.collapsed .nav-item span {
+  display: none;
+}
+
+.sidebar.collapsed .nav-item svg {
+  margin-right: 0 !important;
+}
+
 /* Main Content */
 .main-content {
   flex-grow: 1;

@@ -76,6 +76,8 @@ import { translations, LanguageCode } from './translations';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { PushNotifBanner, NotifCenter, usePushNotifications, PushNotif } from './components/PushNotifications';
+import { NotifDetail } from './components/NotifDetail';
 
 // --- Constants & Config ---
 const springTransition = { type: 'spring', stiffness: 700, damping: 36, mass: 0.35 };
@@ -1309,6 +1311,10 @@ export default function App() {
   const [kidPageIndex, setKidPageIndex] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isNotifCenterOpen, setIsNotifCenterOpen] = useState(false);
+  const [selectedNotifDetail, setSelectedNotifDetail] = useState<PushNotif | null>(null);
+  const { notifications, unreadCount, currentBanner, dismissBanner, markAllRead } = usePushNotifications();
+
   const [homeCarouselIndex, setHomeCarouselIndex] = useState(0);
   const homeTouchRef = useRef({ startX: 0, startY: 0 });
 
@@ -1364,6 +1370,10 @@ export default function App() {
   const goBackRef = useRef<() => void>(() => { });
 
   const goBack = () => {
+    // -2. Si le détail d'une notification est ouvert
+    if (selectedNotifDetail) { setSelectedNotifDetail(null); return; }
+    // -1. Si le centre de notifications est ouvert
+    if (isNotifCenterOpen) { setIsNotifCenterOpen(false); return; }
     // 0. Si la recherche plein écran est ouverte, on la ferme
     if (isSearchExpanded) { setIsSearchExpanded(false); return; }
     // 1. Si une recette est ouverte, on la ferme
@@ -1794,6 +1804,14 @@ export default function App() {
                 <Wifi size={14} style={{ color: '#fb5607' }} />
               </motion.div>
             )}
+            <button onClick={() => setIsNotifCenterOpen(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, position: 'relative' }}>
+              <Bell size={24} style={{ color: isDark ? '#ffffff' : '#111827' }} />
+              {unreadCount > 0 && (
+                <span style={{ position: 'absolute', top: -4, right: -4, background: '#F94D00', color: '#fff', fontSize: 10, fontWeight: 800, minWidth: 16, height: 16, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${isDark ? '#000' : '#f3f4f6'}` }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
             <button onClick={() => setIsSearchExpanded(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
               <Search size={24} style={{ color: isDark ? '#ffffff' : '#111827' }} />
             </button>
@@ -4050,6 +4068,32 @@ export default function App() {
         onConfirm={alertConfig.onConfirm}
         onClose={() => setAlertConfig(prev => ({ ...prev, show: false }))}
       />
+
+      {/* Notifications Push */}
+      <PushNotifBanner notif={currentBanner} onDismiss={dismissBanner} onViewMore={notif => setSelectedNotifDetail(notif)} isDark={isDark} />
+
+      <AnimatePresence>
+        {isNotifCenterOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsNotifCenterOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+          >
+            <div onClick={e => e.stopPropagation()}>
+              <NotifCenter notifications={notifications} onMarkAllRead={markAllRead} onClose={() => setIsNotifCenterOpen(false)} onViewMore={notif => setSelectedNotifDetail(notif)} isDark={isDark} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedNotifDetail && (
+          <NotifDetail notif={selectedNotifDetail} onClose={() => setSelectedNotifDetail(null)} isDark={isDark} />
+        )}
+      </AnimatePresence>
+
     </motion.div>
   );
 }

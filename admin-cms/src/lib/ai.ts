@@ -28,54 +28,58 @@ export interface AIServiceResponse {
 class AIService {
 
     // Récupère la clé secrète (API Key) pour parler à l'IA
-    private getApiKey(): string {
+    private getApiKey(provider: 'gemini' | 'openai' | 'anthropic'): string {
         // On regarde d'abord si l'utilisateur a enregistré sa propre clé dans son navigateur
+        // Note: On utilise 'gemini_api_key' comme stockage universel par simplicité pour l'admin
         const userKey = localStorage.getItem('gemini_api_key');
         if (userKey) return userKey;
 
-        // Sinon on utilise la clé par défaut du projet
-        return (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+        // Sinon on regarde les clés spécifiques dans l'env
+        const env = (import.meta as any).env;
+        if (provider === 'anthropic') return env.VITE_ANTHROPIC_API_KEY || '';
+        if (provider === 'openai') return env.VITE_OPENAI_API_KEY || '';
+        if (provider === 'gemini') return env.VITE_GEMINI_API_KEY || '';
+
+        return '';
     }
 
     // Fonction pour tester si une clé API est valide
     async testKey(key: string, model: string, baseUrl?: string): Promise<{ success: boolean; message: string }> {
-        const isOpenAI = model.startsWith('gpt'); // Vérifie si c'est un modèle de chez OpenAI (ChatGPT)
+        const isOpenAI = model.startsWith('gpt');
+        const isAnthropic = model.startsWith('claude');
         try {
-            if (isOpenAI) {
-                // Test pour OpenAI
+            if (isAnthropic) {
+                const endpoint = `${baseUrl?.replace(/\/$/, '') || 'https://api.anthropic.com/v1'}/messages`;
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'dangerously-allow-browser': 'true' },
+                    body: JSON.stringify({ model, messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 })
+                });
+                const text = await response.text();
+                if (!response.ok) return { success: false, message: `Erreur Claude (${response.status}): ${text.slice(0, 100)}` };
+                return { success: true, message: 'Connexion Claude réussie !' };
+            } else if (isOpenAI) {
                 const endpoint = `${baseUrl?.replace(/\/$/, '') || 'https://api.openai.com/v1'}/chat/completions`;
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${key}`
-                    },
-                    body: JSON.stringify({
-                        model,
-                        messages: [{ role: 'user', content: 'Say hi' }],
-                        max_tokens: 5
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                    body: JSON.stringify({ model, messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 })
                 });
+                const text = await response.text();
                 if (!response.ok) {
-                    const err = await response.text();
-                    return { success: false, message: `Erreur OpenAI: ${response.status} - ${err}` };
+                    if (text.trim().startsWith('<!doctype')) return { success: false, message: `Erreur: Le serveur OpenAI a renvoyé du HTML. Vérifiez votre Base URL.` };
+                    return { success: false, message: `Erreur OpenAI (${response.status}): ${text.slice(0, 100)}` };
                 }
                 return { success: true, message: 'Connexion OpenAI réussie !' };
             } else {
-                // Test pour Google Gemini
                 const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: 'hi' }] }],
-                        generationConfig: { maxOutputTokens: 5 }
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }], generationConfig: { maxOutputTokens: 5 } })
                 });
-                if (!response.ok) {
-                    const err = await response.text();
-                    return { success: false, message: `Erreur Gemini: ${response.status} - ${err}` };
-                }
+                const text = await response.text();
+                if (!response.ok) return { success: false, message: `Erreur Gemini (${response.status}): ${text.slice(0, 100)}` };
                 return { success: true, message: 'Connexion Gemini réussie !' };
             }
         } catch (err: any) {
@@ -87,8 +91,8 @@ class AIService {
     private getModel(): string {
         let model = localStorage.getItem('gemini_model') || (import.meta as any).env.VITE_AI_MODEL || DEFAULT_MODEL;
 
-        // Vérification si le modèle est supporté (Gemini ou GPT)
-        const isSupported = model.startsWith('gemini') || model.startsWith('gpt');
+        // Vérification si le modèle est supporté
+        const isSupported = model.startsWith('gemini') || model.startsWith('gpt') || model.startsWith('claude');
         if (!isSupported) {
             console.warn(`Modèle non supporté (${model}), retour à ${DEFAULT_MODEL}`);
             return DEFAULT_MODEL;
@@ -103,16 +107,63 @@ class AIService {
 
     // MÉTHODE INTERNE : Envoie une requête à l'IA et récupère la réponse brute
     private async callModel(prompt: string, systemPrompt: string): Promise<string> {
-        const key = this.getApiKey();
-        if (!key) throw new Error('Clé API manquante. Configurez-la dans les Réglages.');
-
         let model = this.getModel();
-        const isOpenAI = model.startsWith('gpt');
-        const customBaseUrl = localStorage.getItem('ai_base_url');
+        const isOpenAI = model.startsWith('gpt') || model.startsWith('o1');
+        const isAnthropic = model.startsWith('claude');
+        const isGemini = model.startsWith('gemini');
 
-        if (isOpenAI) {
-            // Logique pour les modèles OpenAI
-            const endpoint = `${customBaseUrl?.replace(/\/$/, '') || 'https://api.openai.com/v1'}/chat/completions`;
+        // Détection du fournisseur (fallback sur OpenAI si inconnu avec custom Base URL)
+        const env = (import.meta as any).env;
+        const customBaseUrl = localStorage.getItem('ai_base_url') || env.VITE_AI_BASE_URL;
+
+        const provider = isAnthropic ? 'anthropic' : (isGemini ? 'gemini' : 'openai');
+        const key = this.getApiKey(provider);
+
+        if (!key) throw new Error(`Clé API ${provider.toUpperCase()} manquante. Configurez-la dans les Réglages.`);
+
+        if (isAnthropic) {
+            // Logique pour Anthropic (Claude)
+            let baseUrl = customBaseUrl?.replace(/\/$/, '') || 'https://api.anthropic.com/v1';
+            const endpoint = `${baseUrl}/messages`;
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': key,
+                    'anthropic-version': '2023-06-01',
+                    'dangerously-allow-browser': 'true'
+                },
+                body: JSON.stringify({
+                    model,
+                    max_tokens: 4096,
+                    system: systemPrompt,
+                    messages: [{ role: 'user', content: prompt || "Génère les données demandées." }],
+                    temperature: 0.7
+                })
+            });
+
+            const text = await response.text();
+            if (!response.ok) {
+                if (text.trim().startsWith('<!doctype') || text.trim().startsWith('<html')) {
+                    throw new Error(`Le serveur Anthropic (ou proxy) a renvoyé du HTML au lieu de JSON (Erreur ${response.status}).`);
+                }
+                throw new Error(`Erreur Anthropic (${response.status}): ${text}`);
+            }
+            const json = JSON.parse(text);
+            return json.content[0].text;
+
+        } else if (isOpenAI || (customBaseUrl && !isGemini)) {
+            // Logique pour les modèles OpenAI ou Custom OpenAI-compatible via Base URL
+            let baseUrl = customBaseUrl?.replace(/\/$/, '') || 'https://api.openai.com/v1';
+
+            // Détection intelligente : si l'URL ne contient ni /v1 ni /chat, on ajoute /v1 pour les proxies standard
+            // Sauf si c'est déjà une URL complète d'endpoint.
+            if (!baseUrl.includes('/v1') && !baseUrl.includes('/chat') && !baseUrl.includes('/completions')) {
+                baseUrl += '/v1';
+            }
+
+            const endpoint = `${baseUrl}/chat/completions`;
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -126,28 +177,54 @@ class AIService {
                         { role: 'user', content: prompt || "Génère les données demandées." }
                     ],
                     temperature: 0.7,
-                    response_format: { type: "json_object" } // Demande à l'IA de répondre en format JSON
+                    // Note: On évite response_format car trop de proxies (comme yinli.one) ne le supportent pas correctement ou l'interprètent mal
                 })
             });
 
+            const text = await response.text();
             if (!response.ok) {
-                const err = await response.text();
-                throw new Error(`Erreur OpenAI (${response.status}): ${err}`);
+                if (text.trim().startsWith('<!doctype') || text.trim().startsWith('<html')) {
+                    throw new Error(`Le serveur a renvoyé du HTML (Erreur ${response.status}). Vérifiez votre Base URL : ${endpoint}`);
+                }
+                throw new Error(`Erreur API (${response.status}): ${text}`);
             }
 
-            const json = await response.json();
-            return json.choices[0].message.content;
+            try {
+                const json = JSON.parse(text);
+                // Si la réponse est déjà un objet JSON standard OpenAI
+                if (json.choices && json.choices[0] && json.choices[0].message) {
+                    return json.choices[0].message.content;
+                }
+                // Si la réponse est un format inattendu mais JSON
+                return text;
+            } catch (e) {
+                // Si text n'est pas du JSON, c'est peut-être une erreur texte du proxy
+                if (text.length > 0 && text.length < 500 && !text.includes('{')) {
+                    throw new Error(`Le serveur de l'IA a répondu : "${text}"`);
+                }
+                throw new Error(`Réponse invalide (non JSON). Début : ${text.slice(0, 100)}...`);
+            }
+
         } else {
             // Logique pour les modèles Google Gemini
             const tryFetch = async (version: string, modelName: string) => {
-                const endpoint = `https://generativelanguage.googleapis.com/${version}/models/${modelName}:generateContent?key=${key}`;
-                const body = {
+                let endpoint = '';
+                let body: any = {};
+                if (customBaseUrl) {
+                    const baseUrl = customBaseUrl.replace(/\/$/, '');
+                    endpoint = `${baseUrl}/${version}/models/${modelName}:generateContent?key=${key}`;
+                } else {
+                    endpoint = `https://generativelanguage.googleapis.com/${version}/models/${modelName}:generateContent?key=${key}`;
+                }
+
+                body = {
                     contents: [{ parts: [{ text: `${systemPrompt}\n\nUser request: ${prompt}` }] }],
                     generationConfig: {
                         temperature: 0.8,
                         responseMimeType: 'application/json'
                     },
                 };
+
                 return fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -155,20 +232,22 @@ class AIService {
                 });
             };
 
-            // On essaie différentes versions de l'API (v1beta puis v1)
             let response = await tryFetch('v1beta', model);
             if (response.status === 404) response = await tryFetch('v1', model);
             if (response.status === 404 && model !== DEFAULT_MODEL) {
                 response = await tryFetch('v1beta', DEFAULT_MODEL);
             }
 
+            const text = await response.text();
             if (!response.ok) {
-                const err = await response.text();
-                throw new Error(`Erreur API Gemini (${response.status}): ${err}`);
+                if (text.trim().startsWith('<!doctype') || text.trim().startsWith('<html')) {
+                    throw new Error(`L'API Gemini a renvoyé du HTML (Erreur ${response.status}). Vérifiez votre Base URL.`);
+                }
+                throw new Error(`Erreur API Gemini (${response.status}): ${text}`);
             }
 
-            const json = await response.json();
             try {
+                const json = JSON.parse(text);
                 return json.candidates[0].content.parts[0].text;
             } catch (e) {
                 throw new Error('Format de réponse Gemini invalide ou contenu bloqué.');
@@ -189,21 +268,80 @@ class AIService {
 
     // Génère une recette ENTIÈREMENT remplie (ingrédients, étapes...)
     async generateFullRecipe(dishName: string, context?: string): Promise<AIServiceResponse> {
-        const systemPrompt = `Tu es un chef cuisinier expert en cuisine africaine...`; // (Prompt tronqué pour la lisibilité)
-        // Note : Le prompt contient toutes les instructions pour que l'IA respecte le format JSON désiré.
+        const systemPrompt = `Tu es un chef cuisinier expert en cuisine africaine. 
+Ton rôle est de générer une fiche recette complète, authentique et détaillée au format JSON.
+Le contexte fourni par l'utilisateur est : ${context || "Aucun contexte supplémentaire"}.
+
+Tu DOIS répondre UNIQUEMENT avec un objet JSON valide respectant cette structure exacte :
+{
+  "name": "Nom du plat",
+  "alias": "Nom local ou alternatif",
+  "region": "Région ou pays d'origine",
+  "category": "Catégorie exacte parmi celles fournies",
+  "difficulty": "Facile, Moyen ou Difficile",
+  "prep_time": "Temps de préparation (ex: 20 min)",
+  "cook_time": "Temps de cuisson (ex: 1h 15min)",
+  "description": "Une description riche de 3-4 lignes sur l'histoire et la culture de ce plat",
+  "technique_title": "Nom d'une technique clé (ex: Le pilage du mil)",
+  "technique_description": "Explication de cette technique en 2-3 phrases",
+  "benefits": "Bienfaits nutritionnels ou santé",
+  "style": "Style de cuisson (ex: Grillade, Braisé, Mijoté)",
+  "type": "Type de plat (ex: Accompagnement, Plat principal)",
+  "base": "Ingrédient de base du plat (ex: Manioc, Riz, Mil)",
+  "ingredients": [
+    { "name": "Nom ingrédient", "quantity": "quantité", "unit": "unité", "category": "Catégorie (ex: Légumes, Viandes, Épices)", "notes": "optionnel" }
+  ],
+  "steps": [
+    { "order": 1, "title": "Titre étape", "description": "Description détaillée de l'étape" }
+  ],
+  "rating": 4.5,
+  "servings": 4
+}
+Assure-toi que les ingrédients et les étapes sont complets pour assurer la réussite du plat.`;
         try {
-            const text = await this.callModel(`Génère la fiche complète pour: ${dishName}`, systemPrompt);
-            const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-            const parsed = JSON.parse(cleaned);
-            return { data: parsed };
+            const text = await this.callModel(`Génère la fiche complète pour le plat : ${dishName}`, systemPrompt);
+            return { data: this.extractJson(text) };
         } catch (err: any) {
             return { error: err.message };
         }
     }
 
+    // Aide à extraire le JSON proprement même si l'IA ajoute du texte autour
+    private extractJson(text: string): any {
+        if (!text) throw new Error("Réponse vide de l'IA.");
+
+        // Nettoyage basique des backticks markdown
+        const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+        try {
+            return JSON.parse(cleaned);
+        } catch (e) {
+            // Tentative de recherche du premier { et dernier }
+            const start = cleaned.indexOf('{');
+            const end = cleaned.lastIndexOf('}');
+            if (start !== -1 && end !== -1 && end > start) {
+                try {
+                    return JSON.parse(cleaned.substring(start, end + 1));
+                } catch (e2) {
+                    console.error("Échec extraction JSON. Texte brut:", text);
+                    throw new Error("L'IA a renvoyé un format JSON corrompu.");
+                }
+            }
+            throw new Error(`L'IA n'a pas renvoyé de JSON valide. Réponse reçue : ${text.slice(0, 50)}...`);
+        }
+    }
+
     // Suggère des sections de plats pour animer la page d'accueil
     async suggestSections(catalogContext: string, goal: string): Promise<AIServiceResponse> {
-        const systemPrompt = `Expert UX Cuisine. Analyse ce catalogue et propose une section thématique...`;
+        const systemPrompt = `Expert UX Cuisine. Analyse ce catalogue de recettes et propose une section thématique pertinente.
+Catalogue actuel : ${catalogContext}
+Objectif : ${goal}
+
+Réponds avec un JSON :
+{
+  "theme": "titre de la section",
+  "explanation": "pourquoi cette section est pertinente"
+}`;
         try {
             const text = await this.callModel('', systemPrompt);
             return { data: JSON.parse(text) };
@@ -226,11 +364,15 @@ class AIService {
     // Crée une section entière de l'accueil
     async generateSection(type: string, theme: string, recipes: { id: string; name: string }[]): Promise<AIServiceResponse> {
         const catalogContext = recipes.map(r => `ID: ${r.id} | Nom: ${r.name}`).join('\n');
-        const systemPrompt = `You are an expert UX designer for an African cuisine app called "AfroCuisto"...`;
+        const systemPrompt = `Tu es un expert UX pour l'app AfroCuisto.
+Génère une section de type "${type}" sur le thème "${theme}".
+Utilise ces recettes :
+${catalogContext}
+
+Réponds uniquement en JSON sans texte autour.`;
         try {
             const text = await this.callModel('Generate the section JSON now.', systemPrompt);
-            const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            return { data: JSON.parse(cleanedText) };
+            return { data: this.extractJson(text) };
         } catch (err: any) {
             console.error('AI Generation error:', err);
             return { error: err.message };

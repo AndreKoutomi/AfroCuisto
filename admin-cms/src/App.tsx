@@ -11,6 +11,7 @@
  * ============================================================================
  */
 
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
@@ -23,8 +24,10 @@ import { Contributions } from './pages/Contributions';
 import { UsersPage } from './pages/Users';
 import { Settings } from './pages/Settings';
 import { Transactions } from './pages/Transactions';
+import { Notifications } from './pages/Notifications';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem('afrocuisto_sidebar_collapsed') === 'true');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -38,6 +41,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (location.pathname === '/users') return 'Utilisateurs';
     if (location.pathname === '/transactions') return 'Transactions';
     if (location.pathname === '/settings') return 'Réglages IA';
+    if (location.pathname === '/notifications') return 'Notifications Push';
     return 'Bienvenue sur AfroCuisto';
   };
 
@@ -47,6 +51,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (location.pathname.startsWith('/transactions')) return 'Pages / Transactions';
     if (location.pathname.startsWith('/settings')) return 'Réglages / IA';
     if (location.pathname.startsWith('/contributions')) return 'Pages / Contributions';
+    if (location.pathname.startsWith('/notifications')) return 'Pages / Notifications';
     return 'Pages / Tableau de bord';
   };
 
@@ -61,7 +66,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-container">
-      <Sidebar />
+      <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={(val: boolean) => {
+        setIsSidebarCollapsed(val);
+        localStorage.setItem('afrocuisto_sidebar_collapsed', String(val));
+      }} />
       <main className="main-content">
         <header className="topbar">
           <div>
@@ -110,6 +118,7 @@ function App() {
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/contributions" element={<Contributions />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </AppLayout>
