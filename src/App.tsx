@@ -1360,49 +1360,59 @@ export default function App() {
   };
 
   // Fonction pour revenir en arrière (Bouton physique Retour sur Android ou bouton virtuel)
+  // On utilise un ref pour que le listener Android voie toujours l'état le plus récent
+  const goBackRef = useRef<() => void>(() => { });
+
   const goBack = () => {
+    // 0. Si la recherche plein écran est ouverte, on la ferme
+    if (isSearchExpanded) { setIsSearchExpanded(false); return; }
     // 1. Si une recette est ouverte, on la ferme
-    if (selectedRecipe) {
-      setSelectedRecipe(null);
-      return;
-    }
-    // 2. Si on est dans un menu de sécurité, on revient au menu profil principal
-    if (profileSubView === 'Sécurité du compte' && securitySubView !== 'main') {
+    if (selectedRecipe) { setSelectedRecipe(null); return; }
+    // 2. Si on est dans une sous-vue de sécurité, on revient au menu sécurité principal
+    if (profileSubView === 'security' && securitySubView !== 'main') {
       setSecuritySubView('main');
       return;
     }
-    // 3. Si on est dans une sous-vue de profil (ex: paramètres), on revient au profil
-    if (profileSubView) {
-      setProfileSubView(null);
-      return;
-    }
-    // 4. Si on a des filtres de recherche actifs, on les efface
+    // 3. Si on est dans une sous-vue de profil (paramètres, à propos, etc.), on revient au profil
+    if (profileSubView) { setProfileSubView(null); return; }
+    // 4. Si des filtres de catégorie / région / recherche sont actifs, on les efface
     if (selectedCategory || selectedRegion || searchQuery) {
       setSelectedCategory(null);
       setSelectedRegion(null);
       setSearchQuery('');
       return;
     }
-    // 5. Sinon, on recule dans l'historique des onglets
+    // 5. Sur la page de connexion: OTP → formulaire → quitter
+    if (!currentUser) {
+      if (authStep === 'otp') { setAuthStep('form'); setOtpInput(''); return; }
+      if (authMode === 'signup') { setAuthMode('login'); return; }
+      CapacitorApp.exitApp();
+      return;
+    }
+    // 6. On recule dans l'historique des onglets
     if (history.length > 1) {
       const newHistory = [...history];
       newHistory.pop();
-      const prevTab = newHistory[newHistory.length - 1];
       setHistory(newHistory);
-      setActiveTab(prevTab);
+      setActiveTab(newHistory[newHistory.length - 1]);
       return;
     }
-    // 6. Si on est au tout début de l'appli, on propose de quitter l'application
+    // 7. On est tout au début — quitter l'application
     CapacitorApp.exitApp();
   };
 
+  // Mettre à jour la ref à chaque rendu pour que le listener ait toujours la version fraîche
   useEffect(() => {
-    const handleBackButton = () => {
-      goBack();
-    };
-    const listener = CapacitorApp.addListener('backButton', handleBackButton);
+    goBackRef.current = goBack;
+  });
+
+  // Enregistrer le listener Android UNE SEULE FOIS (pas de re-souscription à chaque changement d'état)
+  useEffect(() => {
+    const listener = CapacitorApp.addListener('backButton', () => {
+      goBackRef.current();
+    });
     return () => { listener.then(l => l.remove()); };
-  }, [selectedRecipe, profileSubView, selectedCategory, selectedRegion, searchQuery, history, securitySubView]);
+  }, []);
 
   // Dark mode: read from localStorage if user is not logged in, otherwise from user settings
   const savedDarkMode = typeof window !== 'undefined' ? localStorage.getItem('afrocuisto_dark_mode') === 'true' : false;
@@ -1724,18 +1734,21 @@ export default function App() {
     if (Capacitor.isNativePlatform()) {
       const applyStatusBar = async () => {
         try {
-          // Always disable overlay first so the background color takes effect
+          // Always disable overlay so the background color takes effect
           await StatusBar.setOverlaysWebView({ overlay: false });
 
           if (!currentUser) {
-            // LOGIN PAGE: White background with dark (black) icons in light mode
-            //             Dark background with light (white) icons in dark mode
-            await StatusBar.setBackgroundColor({ color: isDark ? '#1a0a02' : '#ffffff' });
-            await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
+            // LOGIN PAGE: Orange background → light (white) icons for contrast
+            await StatusBar.setBackgroundColor({ color: '#fb5607' });
+            await StatusBar.setStyle({ style: Style.Light }); // Light = white icons
+          } else if (isDark) {
+            // DARK MODE: Black background → light (white) icons
+            await StatusBar.setBackgroundColor({ color: '#000000' });
+            await StatusBar.setStyle({ style: Style.Light }); // Light = white icons
           } else {
-            // INSIDE APP
-            await StatusBar.setBackgroundColor({ color: isDark ? '#000000' : '#ffffff' });
-            await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
+            // LIGHT MODE: White background → dark (black) icons
+            await StatusBar.setBackgroundColor({ color: '#ffffff' });
+            await StatusBar.setStyle({ style: Style.Dark }); // Dark = black icons
           }
         } catch (error) {
           console.error('StatusBar error:', error);
