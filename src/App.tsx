@@ -163,7 +163,7 @@ const AUTOPLAY_DURATION = 4500;
 // Icônes personnalisées pour la barre de navigation
 const NavIcon = ({ id, active, isDark }: { id: string; active: boolean; isDark?: boolean }) => {
   // Couleur active : orange en mode clair, blanc en mode sombre AMOLED
-  const color = active ? (isDark ? '#ffffff' : '#F94D00') : 'rgba(255,255,255,0.65)';
+  const color = active ? (isDark ? '#F94D00' : '#F94D00') : 'rgba(255,255,255,0.65)';
   const icons: Record<string, React.ReactElement> = {
     home: active ? (
       // Icône Accueil (Home) pleine
@@ -1830,6 +1830,7 @@ export default function App() {
                 setSelectedRecipe={setSelectedRecipe}
                 currentUser={currentUser}
                 toggleFavorite={toggleFavorite}
+                isDark={isDark}
               />
             );
           }
@@ -1855,10 +1856,10 @@ export default function App() {
                         onClick={() => setSelectedRecipe(recipe)}
                         style={{
                           minWidth: '280px', height: '150px',
-                          background: isDark ? '#000000cc' : '#ffffff',
+                          background: isDark ? '#111111' : '#ffffff',
                           borderRadius: '24px',
                           borderWidth: '1px',
-                          borderColor: '#ffffff27',
+                          borderColor: '#ffffff15',
                           padding: '24px 110px 24px 24px',
                           position: 'relative',
                           boxShadow: isDark ? '0 8px 30px rgba(0, 0, 0, 1)' : '0 12px 30px rgba(0,0,0,0.06)',
@@ -1948,10 +1949,10 @@ export default function App() {
                         onClick={() => setSelectedRecipe(recipe)}
                         style={{
                           minWidth: '170px', width: '170px',
-                          background: isDark ? '#000000cc' : '#ffffff',
+                          background: isDark ? '#111111' : '#ffffff',
                           borderRadius: '28px',
                           borderWidth: '1px',
-                          borderColor: '#ffffff27',
+                          borderColor: '#ffffff15',
                           padding: '85px 20px 20px',
                           position: 'relative',
                           boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 12px 30px rgba(0,0,0,0.04)',
@@ -2298,6 +2299,7 @@ export default function App() {
                     setSelectedRecipe={setSelectedRecipe}
                     currentUser={currentUser}
                     toggleFavorite={toggleFavorite}
+                    isDark={isDark}
                   />
                 );
               }

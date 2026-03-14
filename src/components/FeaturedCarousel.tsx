@@ -22,6 +22,7 @@ interface FeaturedCarouselProps {
     setSelectedRecipe: (r: Recipe) => void;
     currentUser: User | null;
     toggleFavorite: (id: string) => void;
+    isDark?: boolean;
 }
 
 export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
@@ -29,7 +30,8 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
     recipes,
     setSelectedRecipe,
     currentUser,
-    toggleFavorite
+    toggleFavorite,
+    isDark
 }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
     const [isInteracting, setIsInteracting] = React.useState(false);
@@ -96,7 +98,7 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
             {section?.title && (
                 <div style={{ padding: '0 32px 16px ', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
+                        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: isDark ? '#ffffff' : '#111827', letterSpacing: '-0.02em' }}>
                             {section.title}
                         </h2>
                         {section?.subtitle && (
@@ -138,7 +140,7 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                                 onClick={() => setSelectedRecipe(recipe)}
                                 style={{
                                     flexShrink: 0,
-                                    width: '380px',
+                                    width: '340px',
                                     scrollSnapAlign: 'start',
                                     cursor: 'pointer',
                                     position: 'relative',
@@ -195,15 +197,16 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                                         <div style={{ marginTop: '12px' }}>
                                             <span style={{
                                                 display: 'inline-block',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                backgroundColor: isDark ? '#ffffff4d' : 'rgba(255, 255, 255, 0.95)',
+                                                boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
                                                 padding: '4px 12px',
                                                 borderRadius: '20px',
                                                 fontSize: '10px',
                                                 fontWeight: 900,
                                                 color: '#ff5722',
                                                 textTransform: 'uppercase',
-                                                letterSpacing: '0.08em'
+                                                letterSpacing: '0',
+                                                border: isDark ? '1px solid rgba(255, 87, 34, 0.3)' : 'none'
                                             }}>
                                                 {recipe.region}
                                             </span>
@@ -376,6 +379,6 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({
                     );
                 })}
             </div>
-        </section>
+        </section >
     );
 };
