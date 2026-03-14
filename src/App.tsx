@@ -1750,15 +1750,15 @@ export default function App() {
           if (!currentUser) {
             // LOGIN PAGE: Orange background → light (white) icons for contrast
             await StatusBar.setBackgroundColor({ color: '#fb5607' });
-            await StatusBar.setStyle({ style: Style.Light }); // Light = white icons
+            await StatusBar.setStyle({ style: Style.Dark }); // Dark style = Light text
           } else if (isDark) {
             // DARK MODE: Black background → light (white) icons
             await StatusBar.setBackgroundColor({ color: '#000000' });
-            await StatusBar.setStyle({ style: Style.Light }); // Light = white icons
+            await StatusBar.setStyle({ style: Style.Dark }); // Dark style = Light text
           } else {
             // LIGHT MODE: White background → dark (black) icons
             await StatusBar.setBackgroundColor({ color: '#ffffff' });
-            await StatusBar.setStyle({ style: Style.Dark }); // Dark = black icons
+            await StatusBar.setStyle({ style: Style.Light }); // Light style = Dark text
           }
         } catch (error) {
           console.error('StatusBar error:', error);

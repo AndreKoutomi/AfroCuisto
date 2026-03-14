@@ -153,7 +153,7 @@ export function PushNotifBanner({ notif, onDismiss, onViewMore, isDark }: PushBa
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     style={{
                         position: 'fixed',
-                        top: 16,
+                        top: 54,
                         left: 16,
                         right: 16,
                         zIndex: 9999,
